@@ -353,7 +353,10 @@ app.delete('/api/user/data/:dataType', requireAuth, async (req, res) => {
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback', 
-    passport.authenticate('google', { failureRedirect: '/login' }),
+    passport.authenticate('google', { 
+        failureRedirect: '/login',
+        failureMessage: true 
+    }),
     (req, res) => {
         console.log(`🔐 OAuth 콜백 처리 시작 - 사용자: ${req.user ? req.user.email : '없음'}`);
         console.log(`📋 세션 ID: ${req.sessionID}`);
@@ -362,7 +365,7 @@ app.get('/auth/google/callback',
         // 세션에 사용자 정보가 제대로 저장되었는지 확인
         if (!req.user) {
             console.error('❌ 사용자 정보가 없습니다');
-            return res.redirect('/login');
+            return res.redirect('/login?error=no_user');
         }
         
         // 명시적으로 세션에 사용자 정보 저장
@@ -373,11 +376,18 @@ app.get('/auth/google/callback',
         req.session.save((err) => {
             if (err) {
                 console.error('❌ 세션 저장 오류:', err);
-                return res.redirect('/login');
+                return res.redirect('/login?error=session_save');
             }
             console.log(`✅ 로그인 성공: ${req.user.name} (${req.user.email})`);
             console.log(`📱 세션 저장 완료, /planner로 리다이렉트`);
-            res.redirect('/planner');
+            
+            // 더 명확한 리디렉션
+            try {
+                res.redirect('/planner');
+            } catch (redirectError) {
+                console.error('❌ 리디렉션 오류:', redirectError);
+                res.redirect('/login?error=redirect_failed');
+            }
         });
     }
 );
