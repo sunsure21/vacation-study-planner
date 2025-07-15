@@ -19,8 +19,9 @@ if (process.env.VERCEL) {
 // 세션 설정
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key-here',
-    resave: true,
-    saveUninitialized: true,
+    resave: false, // 세션이 수정되지 않았다면 다시 저장하지 않음
+    saveUninitialized: false, // 초기화되지 않은 세션을 저장하지 않음
+    rolling: true, // 요청할 때마다 쿠키 만료시간 갱신
     cookie: { 
         secure: process.env.VERCEL ? true : false,
         httpOnly: true,
@@ -142,17 +143,14 @@ app.get('/planner', requireAuth, (req, res) => {
 
 // 세션 체크 API
 app.get('/check-session', (req, res) => {
-    res.json({ authenticated: req.isAuthenticated() });
+    const isAuth = req.isAuthenticated();
+    console.log(`세션 체크: ${isAuth ? '인증됨' : '인증 안됨'}`, req.user ? `사용자: ${req.user.email}` : '사용자 없음');
+    res.json({ authenticated: isAuth });
 });
 
 // 사용자 정보 API
 app.get('/api/user', requireAuth, (req, res) => {
     res.json(req.user);
-});
-
-// 세션 체크 API
-app.get('/check-session', (req, res) => {
-    res.json({ authenticated: req.isAuthenticated() });
 });
 
 // 사용자 데이터 저장 API
@@ -237,7 +235,15 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 app.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
-        res.redirect('/planner');
+        // 세션 저장을 확실히 한 후 리다이렉트
+        req.session.save((err) => {
+            if (err) {
+                console.error('세션 저장 오류:', err);
+                return res.redirect('/login');
+            }
+            console.log(`로그인 성공: ${req.user.name} (${req.user.email})`);
+            res.redirect('/planner');
+        });
     }
 );
 
