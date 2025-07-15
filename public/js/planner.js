@@ -340,7 +340,7 @@ async function loadDataFromStorage() {
     }
     
     try {
-        // Firestore에서 전체 데이터 로드
+        // KV 데이터베이스에서 전체 데이터 로드
         const response = await fetch('/api/user/data');
         if (response.ok) {
             const result = await response.json();
@@ -358,16 +358,16 @@ async function loadDataFromStorage() {
                 studyRecords = data.studyRecords || {};
                 completedSchedules = data.completedSchedules || {};
                 
-                console.log('Firestore에서 데이터를 성공적으로 로드했습니다.');
+                console.log('KV 데이터베이스에서 데이터를 성공적으로 로드했습니다.');
                 return;
             }
         }
     } catch (error) {
-        console.error('Firestore 데이터 로드 오류:', error);
+        console.error('KV 데이터 로드 오류:', error);
     }
     
-    // Firestore 로드 실패 시 로컬 스토리지 사용
-    console.log('Firestore 로드 실패. 로컬 스토리지를 사용합니다.');
+    // KV 로드 실패 시 로컬 스토리지 사용
+    console.log('KV 로드 실패. 로컬 스토리지를 사용합니다.');
     loadFromLocalStorage();
 }
 
@@ -470,7 +470,7 @@ async function saveDataToStorage() {
     localStorage.setItem(getUserStorageKey('studyRecords'), JSON.stringify(studyRecords));
     localStorage.setItem(getUserStorageKey('completedSchedules'), JSON.stringify(completedSchedules));
     
-    // Firestore에 저장
+    // KV 데이터베이스에 저장
     if (currentUser) {
         try {
             // 각 데이터 타입별로 저장
@@ -500,9 +500,9 @@ async function saveDataToStorage() {
                 }
             }
             
-            console.log('Firestore에 데이터 저장 완료');
+            console.log('KV 데이터베이스에 데이터 저장 완료');
         } catch (error) {
-            console.error('Firestore 저장 오류:', error);
+            console.error('KV 저장 오류:', error);
         }
     }
 }
