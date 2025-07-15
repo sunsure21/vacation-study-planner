@@ -903,138 +903,386 @@ body.modal-open {
 /* 반응형 디자인 */
 /* 작은 모바일 화면 */
 @media (max-width: 480px) {
+    body {
+        padding: 0;
+        font-size: 14px; /* 기본 폰트 크기 조정 */
+        line-height: 1.5;
+    }
+    
+    .container {
+        padding: 5px;
+        max-width: 100%;
+    }
+    
+    /* 전체 섹션 여백 최적화 */
+    .planner-screen {
+        padding: 10px 5px;
+    }
+    
+    .planner-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
     .setup-container {
         padding: 20px 15px;
-        margin: 10px;
+        margin: 5px;
+        border-radius: 15px;
     }
     
     .setup-header h1 {
-        font-size: 20px;
+        font-size: 22px;
+        margin-bottom: 8px;
+        line-height: 1.3;
     }
     
     .setup-header p {
         font-size: 14px;
+        margin-bottom: 30px;
+        line-height: 1.4;
     }
     
-    .action-buttons button {
-        min-width: 100px;
-        font-size: 12px;
-        padding: 8px 10px;
+    .setup-form-container h2 {
+        font-size: 20px;
+        margin-bottom: 20px;
     }
     
-    .day-cell {
-        height: 120px;
-        padding: 2px;
+    .form-group {
+        margin-bottom: 20px;
     }
     
-    .modal-content {
-        width: 98%;
-        margin: 2% auto;
-        padding: 15px;
-    }
-    
-    .modal-header h2 {
-        font-size: 18px;
+    .form-group label {
+        font-size: 15px;
+        margin-bottom: 6px;
     }
     
     .form-group input,
     .form-group select {
         font-size: 16px; /* iOS 줌 방지 */
-    }
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding: 10px;
+        padding: 14px 12px;
+        border-radius: 8px;
     }
     
-    .setup-container {
-        padding: 30px 20px;
-        max-width: 90%;
-    }
-    
-    .setup-header h1 {
-        font-size: 24px;
-    }
-    
-    .weekly-details {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .action-buttons {
+    .submit-btn {
+        font-size: 16px;
+        padding: 14px 20px;
+        min-height: 48px; /* 터치 타겟 최소 크기 */
         width: 100%;
-        justify-content: stretch;
+        border-radius: 10px;
+    }
+    
+    /* 헤더 최적화 */
+    .header {
+        padding: 10px 15px;
+        min-height: 60px;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+        margin: 0;
+    }
+    
+    /* 액션 버튼 최적화 */
+    .action-buttons {
+        gap: 10px;
         flex-wrap: wrap;
-        gap: 8px;
+        margin: 15px 0;
     }
     
     .action-buttons button {
-        flex: 1;
-        min-width: 120px;
+        min-width: 110px;
+        min-height: 44px; /* 터치 타겟 최소 크기 */
         font-size: 14px;
-        padding: 10px 12px;
+        padding: 12px 8px;
+        border-radius: 8px;
+        flex: 1;
     }
     
-    .time-section {
-        grid-template-columns: 1fr;
+    /* 로그아웃 버튼 최적화 */
+    .logout-btn {
+        min-height: 44px;
+        padding: 10px 16px;
+        font-size: 14px;
     }
     
-    .day-stats {
-        grid-template-columns: 1fr;
+    /* 섹션 헤더 최적화 */
+    .section-header {
+        margin-bottom: 15px;
+        padding: 0 5px;
     }
     
-    .modal-content {
-        margin: 5% auto;
-        width: 95%;
-        max-height: 90vh;
-        overflow-y: auto;
-        padding: 20px;
+    .section-header h2 {
+        font-size: 18px;
+        margin: 0;
     }
     
+    /* 캘린더 최적화 */
     .calendar-grid {
-        grid-template-columns: repeat(7, 1fr);
-        gap: 4px;
+        gap: 3px;
+        margin: 10px 0;
     }
     
     .day-cell {
-        height: 150px;
-        padding: 4px;
-        font-size: 12px;
+        height: 110px;
+        padding: 3px;
+        font-size: 11px;
+        border-radius: 6px;
+        min-height: 44px; /* 터치 타겟 고려 */
     }
     
     .day-number {
-        font-size: 11px;
-        margin-bottom: 2px;
+        font-size: 12px;
+        margin-bottom: 3px;
+        font-weight: 600;
     }
     
     .schedule-item {
-        font-size: 10px;
-        padding: 2px 4px;
+        font-size: 9px;
+        padding: 2px 3px;
         margin: 1px 0;
+        border-radius: 3px;
+        line-height: 1.2;
     }
     
     .day-summary {
-        font-size: 10px;
-    }
-    
-    .schedule-item {
-        font-size: 10px;
-        padding: 2px 4px;
-        margin-bottom: 2px;
+        font-size: 9px;
+        margin-top: 2px;
     }
     
     .daily-study-time {
-        font-size: 10px;
-        padding: 2px 4px;
+        font-size: 9px;
+        padding: 2px 3px;
+        border-radius: 3px;
     }
-} 
+    
+    /* 주간 디테일 최적화 */
+    .weekly-details {
+        margin: 15px 0;
+        padding: 0 5px;
+    }
+    
+    .week-card {
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+    }
+    
+    .week-card h3 {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    /* 모달 최적화 */
+    .modal-content {
+        width: 96%;
+        margin: 2% auto;
+        padding: 20px 15px;
+        border-radius: 12px;
+        max-height: 92vh;
+        overflow-y: auto;
+    }
+    
+    .modal-header {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+    
+    .modal-header h2 {
+        font-size: 18px;
+        margin: 0;
+        line-height: 1.3;
+    }
+    
+    .modal-close {
+        font-size: 24px;
+        padding: 8px;
+        min-width: 44px;
+        min-height: 44px;
+        top: 10px;
+        right: 10px;
+    }
+    
+    /* 모달 내 폼 최적화 */
+    .modal .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .modal .form-group label {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+    
+    .modal .form-group input,
+    .modal .form-group select,
+    .modal .form-group textarea {
+        font-size: 16px; /* iOS 줌 방지 */
+        padding: 12px;
+        border-radius: 8px;
+    }
+    
+    /* 모달 버튼 그룹 */
+    .modal-footer {
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .modal-footer button {
+        min-height: 44px;
+        font-size: 16px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        flex: 1;
+    }
+    
+    /* 평가 섹션 최적화 */
+    .evaluation-content {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .evaluation-item {
+        padding: 12px;
+        border-radius: 8px;
+    }
+    
+    .evaluation-label {
+        font-size: 13px;
+    }
+    
+    .evaluation-value {
+        font-size: 15px;
+    }
+    
+    /* 타입별 섹션 최적화 */
+    .type-section {
+        margin-bottom: 15px;
+    }
+    
+    .type-section h3 {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+    
+    /* 연결선 숨김 (모바일에서는 너무 복잡함) */
+    .flow-arrow {
+        display: none;
+    }
+    
+    /* 스크롤 개선 */
+    .calendar-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 10px;
+    }
+    
+    /* 입력 필드 터치 개선 */
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+        -webkit-appearance: none;
+        -webkit-border-radius: 8px;
+    }
+    
+    /* 토글 버튼 최적화 */
+    .type-btn {
+        min-height: 44px;
+        padding: 10px 12px;
+        font-size: 14px;
+        margin: 5px;
+        border-radius: 8px;
+    }
+    
+    /* MBTI 섹션 최적화 */
+    .mbti-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .mbti-buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .mbti-btn {
+        min-height: 48px; /* 터치 타겟 최적화 */
+        padding: 10px 6px;
+        font-size: 13px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .mbti-type {
+        font-size: 13px;
+        margin-bottom: 2px;
+        font-weight: 600;
+    }
+    
+    .mbti-name {
+        font-size: 10px;
+        line-height: 1.2;
+        opacity: 0.8;
+    }
+    
+    /* 연구 결과 섹션 */
+    .research-content {
+        padding: 12px;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
+    
+    .research-content h3 {
+        font-size: 15px;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+    
+    .research-content p {
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 8px;
+    }
+    
+    /* 스케줄 상세 정보 최적화 */
+    .schedule-details {
+        padding: 10px;
+        border-radius: 8px;
+    }
+    
+    .schedule-details h4 {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+    
+    .schedule-details p {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+    
+    /* 통계 카드 최적화 */
+    .stats-card {
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .stats-card h3 {
+        font-size: 15px;
+        margin-bottom: 8px;
+    }
+    
+    .stats-value {
+        font-size: 18px;
+        font-weight: 700;
+    }
+    
+    .stats-label {
+        font-size: 12px;
+        margin-top: 4px;
+    }
+}
 
 /* 주간 스케쥴 평가 섹션 */
 .weekly-evaluation-section {
@@ -1427,25 +1675,284 @@ body.modal-open {
 
 /* MBTI 모바일 반응형 */
 @media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .setup-container {
+        padding: 30px 20px;
+        max-width: 90%;
+        border-radius: 15px;
+    }
+    
+    .setup-header h1 {
+        font-size: 28px;
+        line-height: 1.3;
+    }
+    
+    .setup-header p {
+        font-size: 16px;
+        line-height: 1.4;
+    }
+    
+    /* 헤더 최적화 */
+    .header {
+        padding: 15px 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .header h1 {
+        font-size: 24px;
+        margin: 0;
+    }
+    
+    /* 주간 디테일 최적화 */
+    .weekly-details {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin: 20px 0;
+    }
+    
+    .week-card {
+        padding: 20px;
+        border-radius: 12px;
+    }
+    
+    /* 섹션 헤더 최적화 */
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .section-header h2 {
+        font-size: 20px;
+        margin: 0;
+    }
+    
+    /* 액션 버튼 최적화 */
+    .action-buttons {
+        width: 100%;
+        justify-content: stretch;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 15px 0;
+    }
+    
+    .action-buttons button {
+        flex: 1;
+        min-width: 130px;
+        min-height: 44px;
+        font-size: 15px;
+        padding: 12px 16px;
+        border-radius: 8px;
+    }
+    
+    /* 로그아웃 버튼 */
+    .logout-btn {
+        min-height: 44px;
+        padding: 12px 20px;
+        font-size: 15px;
+    }
+    
+    /* 시간 섹션 최적화 */
+    .time-section {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    /* 일일 통계 최적화 */
+    .day-stats {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    /* 캘린더 최적화 */
+    .calendar-grid {
+        gap: 5px;
+        margin: 15px 0;
+    }
+    
+    .day-cell {
+        height: 140px;
+        padding: 6px;
+        font-size: 12px;
+        border-radius: 8px;
+    }
+    
+    .day-number {
+        font-size: 13px;
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+    
+    .schedule-item {
+        font-size: 11px;
+        padding: 3px 5px;
+        margin: 2px 0;
+        border-radius: 4px;
+    }
+    
+    .day-summary {
+        font-size: 11px;
+        margin-top: 3px;
+    }
+    
+    .daily-study-time {
+        font-size: 11px;
+        padding: 3px 5px;
+        border-radius: 4px;
+    }
+    
+    /* 모달 최적화 */
+    .modal-content {
+        margin: 5% auto;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        padding: 25px 20px;
+        border-radius: 15px;
+    }
+    
+    .modal-header {
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+    }
+    
+    .modal-header h2 {
+        font-size: 20px;
+        line-height: 1.3;
+    }
+    
+    .modal-close {
+        font-size: 28px;
+        padding: 10px;
+        min-width: 44px;
+        min-height: 44px;
+        top: 15px;
+        right: 15px;
+    }
+    
+    /* 모달 폼 최적화 */
+    .modal .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .modal .form-group label {
+        font-size: 15px;
+        margin-bottom: 8px;
+    }
+    
+    .modal .form-group input,
+    .modal .form-group select,
+    .modal .form-group textarea {
+        font-size: 16px;
+        padding: 14px 12px;
+        border-radius: 8px;
+    }
+    
+    /* 모달 버튼 */
+    .modal-footer {
+        gap: 12px;
+        margin-top: 25px;
+        flex-wrap: wrap;
+    }
+    
+    .modal-footer button {
+        min-height: 44px;
+        font-size: 16px;
+        padding: 14px 20px;
+        border-radius: 8px;
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    /* 평가 섹션 최적화 */
+    .evaluation-content {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+    
+    .evaluation-item {
+        padding: 15px;
+        border-radius: 10px;
+    }
+    
+    .evaluation-label {
+        font-size: 14px;
+    }
+    
+    .evaluation-value {
+        font-size: 16px;
+    }
+    
+    /* 타입 버튼 최적화 */
+    .type-btn {
+        min-height: 44px;
+        padding: 12px 16px;
+        font-size: 15px;
+        margin: 5px;
+        border-radius: 8px;
+    }
+    
+    /* 폼 그룹 일반 최적화 */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px; /* iOS 줌 방지 */
+        padding: 14px 12px;
+        border-radius: 8px;
+    }
+    
+    /* 스크롤 개선 */
+    .calendar-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* MBTI 섹션 최적화 */
     .mbti-grid {
         grid-template-columns: 1fr;
         gap: 15px;
     }
     
     .mbti-buttons {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
     
     .mbti-btn {
         min-height: 50px;
-        padding: 10px 6px;
+        padding: 12px 8px;
+        font-size: 14px;
+        border-radius: 8px;
     }
     
     .mbti-type {
-        font-size: 13px;
+        font-size: 14px;
+        margin-bottom: 2px;
     }
     
     .mbti-name {
-        font-size: 10px;
+        font-size: 11px;
+        line-height: 1.2;
+    }
+    
+    /* 연구 결과 섹션 */
+    .research-content {
+        padding: 15px;
+        border-radius: 10px;
+    }
+    
+    .research-content h3 {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    .research-content p {
+        font-size: 14px;
+        line-height: 1.5;
     }
 }
