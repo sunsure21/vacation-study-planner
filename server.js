@@ -16,18 +16,44 @@ if (process.env.VERCEL) {
     app.set('trust proxy', 1);
 }
 
-// 세션 설정 - OAuth 친화적 설정
+// Redis 세션 저장소 설정 (Vercel 서버리스에서 세션 유지)
+let sessionStore;
+if (process.env.UPSTASH_REDIS_REST_URL) {
+    console.log('🔧 Redis 세션 저장소 설정 중...');
+    const RedisStore = require('connect-redis').default;
+    const { createClient } = require('redis');
+    
+    const redisClient = createClient({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        password: process.env.UPSTASH_REDIS_REST_TOKEN
+    });
+    
+    redisClient.connect().catch(console.error);
+    redisClient.on('error', (err) => console.log('Redis Client Error', err));
+    redisClient.on('connect', () => console.log('✅ Redis 연결 성공'));
+    
+    sessionStore = new RedisStore({
+        client: redisClient,
+        prefix: "session:",
+    });
+    console.log('✅ Redis 세션 저장소 설정 완료');
+} else {
+    console.log('⚠️ Redis URL 없음 - 메모리 세션 사용');
+    sessionStore = undefined;
+}
+
+// 세션 설정 - Redis 저장소 + OAuth 친화적 설정
 app.use(session({
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || 'your-secret-key-here',
     resave: false,
     saveUninitialized: false,
     rolling: true,
     cookie: { 
-        secure: process.env.VERCEL ? true : false, // HTTPS에서 secure 필요
+        secure: process.env.VERCEL ? true : false,
         httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7일로 연장
-        sameSite: process.env.VERCEL ? 'none' : 'lax', // OAuth cross-site 요청 허용
-        // domain 설정은 Vercel에서 자동 처리하므로 제거
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+        sameSite: process.env.VERCEL ? 'none' : 'lax',
     },
     name: 'vacation_planner_session'
 }));
@@ -146,30 +172,64 @@ app.get('/favicon.ico', (req, res) => {
     res.status(204).send();
 });
 
-// 인증 미들웨어
+// JWT 인증 미들웨어 (세션 대체용)
+function authenticateJWT(req, res, next) {
+    const token = req.cookies.auth_token;
+    
+    if (token) {
+        const jwt = require('jsonwebtoken');
+        try {
+            const decoded = jwt.verify(token, process.env.SESSION_SECRET || 'your-secret-key-here');
+            req.user = decoded;
+            console.log(`🎫 JWT 인증 성공: ${decoded.email}`);
+            return next();
+        } catch (err) {
+            console.log(`❌ JWT 인증 실패:`, err.message);
+        }
+    }
+    
+    // JWT 실패 시 세션 기반 인증 시도
+    const isAuth = req.isAuthenticated();
+    if (isAuth && req.user) {
+        console.log(`✅ 세션 인증 성공: ${req.user.email}`);
+        return next();
+    }
+    
+    return null; // 인증 실패
+}
+
+// 인증 미들웨어 (JWT + 세션 이중 체크)
 function requireAuth(req, res, next) {
     const isAuth = req.isAuthenticated();
     const userEmail = req.user ? req.user.email : null;
     const hasSession = !!req.session;
     const hasPassportData = !!(req.session && req.session.passport);
+    const hasJWT = !!req.cookies.auth_token;
     
     console.log(`🛡️ 인증 미들웨어 체크:`);
     console.log(`  - 요청 URL: ${req.url}`);
     console.log(`  - 세션 ID: ${req.sessionID}`);
     console.log(`  - 세션 존재: ${hasSession}`);
     console.log(`  - Passport 데이터: ${hasPassportData}`);
+    console.log(`  - JWT 토큰: ${hasJWT}`);
     console.log(`  - 인증 상태: ${isAuth}`);
     console.log(`  - 사용자: ${userEmail}`);
-    console.log(`  - req.user:`, req.user);
-    console.log(`  - req.session.passport:`, req.session.passport);
     
+    // JWT 인증 시도
+    const jwtResult = authenticateJWT(req, res, () => true);
+    if (jwtResult !== null) {
+        console.log(`✅ JWT 인증 통과 - ${req.user.email}`);
+        return next();
+    }
+    
+    // 세션 인증 시도
     if (isAuth && req.user) {
-        console.log(`✅ 인증 통과 - ${userEmail}`);
+        console.log(`✅ 세션 인증 통과 - ${userEmail}`);
         return next();
     }
     
     console.log(`❌ 인증 실패 - /login으로 리다이렉트`);
-    console.log(`  - 실패 이유: isAuth=${isAuth}, hasUser=${!!req.user}`);
+    console.log(`  - 실패 이유: isAuth=${isAuth}, hasUser=${!!req.user}, hasJWT=${hasJWT}`);
     res.redirect('/login');
 }
 
@@ -188,34 +248,48 @@ app.get('/planner', requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'planner.html'));
 });
 
-// 세션 체크 API
+// 세션 체크 API (JWT + 세션 이중 지원)
 app.get('/check-session', (req, res) => {
     const isAuth = req.isAuthenticated();
     const sessionID = req.sessionID;
-    const hasUser = !!req.user;
-    const userEmail = req.user ? req.user.email : null;
     const hasSession = !!req.session;
     const hasPassportData = !!(req.session && req.session.passport);
+    const hasJWT = !!req.cookies.auth_token;
     
     console.log(`🔍 세션 체크 요청:`);
     console.log(`  - 세션 ID: ${sessionID}`);
     console.log(`  - 세션 존재: ${hasSession}`);
     console.log(`  - Passport 데이터 존재: ${hasPassportData}`);
-    console.log(`  - 인증 상태: ${isAuth}`);
-    console.log(`  - 사용자 존재: ${hasUser}`);
-    console.log(`  - 사용자 이메일: ${userEmail}`);
-    console.log(`  - 쿠키:`, req.headers.cookie);
-    console.log(`  - 세션 전체:`, req.session);
-    console.log(`  - Passport 데이터:`, req.session.passport);
+    console.log(`  - JWT 토큰 존재: ${hasJWT}`);
+    console.log(`  - 기본 인증 상태: ${isAuth}`);
     
-    if (isAuth && hasUser) {
-        console.log(`✅ 세션 유효 - 사용자: ${userEmail}`);
-    } else {
-        console.log(`❌ 세션 무효 - 인증되지 않음`);
-        console.log(`  - 실패 이유: isAuth=${isAuth}, hasUser=${hasUser}`);
+    // JWT 인증 시도
+    let authenticatedUser = null;
+    if (hasJWT) {
+        const jwt = require('jsonwebtoken');
+        try {
+            const decoded = jwt.verify(req.cookies.auth_token, process.env.SESSION_SECRET || 'your-secret-key-here');
+            authenticatedUser = decoded;
+            console.log(`🎫 JWT 인증 성공: ${decoded.email}`);
+        } catch (err) {
+            console.log(`❌ JWT 인증 실패:`, err.message);
+        }
     }
     
-    res.json({ authenticated: isAuth && hasUser, user: userEmail });
+    // 세션 인증 확인
+    if (!authenticatedUser && isAuth && req.user) {
+        authenticatedUser = req.user;
+        console.log(`✅ 세션 인증 성공: ${req.user.email}`);
+    }
+    
+    if (authenticatedUser) {
+        console.log(`✅ 인증 유효 - 사용자: ${authenticatedUser.email}`);
+        res.json({ authenticated: true, user: authenticatedUser.email });
+    } else {
+        console.log(`❌ 인증 무효 - 로그인 필요`);
+        console.log(`  - 실패 이유: isAuth=${isAuth}, hasUser=${!!req.user}, hasJWT=${hasJWT}`);
+        res.json({ authenticated: false, user: null });
+    }
 });
 
 // 사용자 정보 API
@@ -393,7 +467,30 @@ app.get('/auth/google/callback',
             return res.redirect('/login?error=no_user');
         }
         
-        // 명시적으로 세션에 사용자 정보 저장 및 확인
+        // JWT 토큰 생성 (세션 대신 쿠키로 사용자 정보 저장)
+        const jwt = require('jsonwebtoken');
+        const token = jwt.sign(
+            { 
+                id: req.user.id,
+                email: req.user.email,
+                name: req.user.name,
+                picture: req.user.picture
+            },
+            process.env.SESSION_SECRET || 'your-secret-key-here',
+            { expiresIn: '7d' }
+        );
+        
+        console.log(`🎫 JWT 토큰 생성: ${req.user.email}`);
+        
+        // JWT를 httpOnly 쿠키로 설정
+        res.cookie('auth_token', token, {
+            httpOnly: true,
+            secure: process.env.VERCEL ? true : false,
+            sameSite: process.env.VERCEL ? 'none' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+        });
+        
+        // 명시적으로 세션에도 사용자 정보 저장 (이중 보장)
         console.log(`🔧 수동 세션 설정 전:`, req.session.passport);
         req.session.passport = req.session.passport || {};
         req.session.passport.user = req.user;
@@ -404,35 +501,21 @@ app.get('/auth/google/callback',
         req.session.save((err) => {
             if (err) {
                 console.error('❌ 세션 저장 오류:', err);
-                return res.redirect('/login?error=session_save');
+                // JWT가 있으므로 세션 실패해도 계속 진행
             }
             
-            // 세션 저장 후 즉시 확인
             console.log(`✅ 로그인 성공: ${req.user.name} (${req.user.email})`);
-            console.log(`📱 세션 저장 완료`);
-            console.log(`🔧 저장된 세션 확인:`, req.session.passport);
-            console.log(`🔧 isAuthenticated 재확인:`, req.isAuthenticated());
+            console.log(`📱 세션 및 JWT 설정 완료`);
             
-            // 세션 재로드 후 리다이렉트 (안전성 강화)
-            req.session.reload((reloadErr) => {
-                if (reloadErr) {
-                    console.error('❌ 세션 재로드 오류:', reloadErr);
-                    // 재로드 실패해도 리다이렉트는 진행
-                }
-                
-                console.log(`🔄 세션 재로드 후 상태:`, req.isAuthenticated());
-                console.log(`🔄 세션 재로드 후 데이터:`, req.session.passport);
-                
-                try {
-                    // 캐시 방지를 위한 타임스탬프 추가
-                    const timestamp = Date.now();
-                    console.log(`🚀 /planner로 리다이렉트 시작 (t=${timestamp})`);
-                    res.redirect(`/planner?t=${timestamp}`);
-                } catch (redirectError) {
-                    console.error('❌ 리디렉션 오류:', redirectError);
-                    res.redirect('/login?error=redirect_failed');
-                }
-            });
+            try {
+                // 캐시 방지를 위한 타임스탬프 추가
+                const timestamp = Date.now();
+                console.log(`🚀 /planner로 리다이렉트 시작 (t=${timestamp})`);
+                res.redirect(`/planner?t=${timestamp}`);
+            } catch (redirectError) {
+                console.error('❌ 리디렉션 오류:', redirectError);
+                res.redirect('/login?error=redirect_failed');
+            }
         });
     }
 );
@@ -446,8 +529,9 @@ app.get('/logout', (req, res) => {
             if (destroyErr) {
                 console.error('세션 삭제 오류:', destroyErr);
             }
-            // 쿠키도 클리어
+            // 쿠키도 클리어 (세션 + JWT)
             res.clearCookie('vacation_planner_session');
+            res.clearCookie('auth_token');
             res.redirect('/login');
         });
     });
