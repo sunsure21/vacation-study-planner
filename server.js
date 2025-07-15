@@ -53,17 +53,23 @@ passport.use(new GoogleStrategy({
     // 기존 사용자인지 확인 (사용자별 데이터가 하나라도 있으면 기존 사용자)
     try {
         const userEmail = user.email;
-        const existingData = await getUserData(userEmail, 'vacationPeriod') || 
-                           await getUserData(userEmail, 'schedules') ||
-                           await getUserData(userEmail, 'studyRecords') ||
-                           await getUserData(userEmail, 'completedSchedules');
+        const vacationResult = await getUserData(userEmail, 'vacationPeriod');
+        const schedulesResult = await getUserData(userEmail, 'schedules');
+        const studyResult = await getUserData(userEmail, 'studyRecords');
+        const completedResult = await getUserData(userEmail, 'completedSchedules');
+        
+        // 데이터가 실제로 존재하는지 확인 (success이고 data가 null이 아닌 경우)
+        const hasExistingData = (vacationResult.success && vacationResult.data) ||
+                               (schedulesResult.success && schedulesResult.data) ||
+                               (studyResult.success && studyResult.data) ||
+                               (completedResult.success && completedResult.data);
         
         // 신규 사용자일 때만 회원가입 알림 메일 발송
-        if (!existingData) {
+        if (!hasExistingData) {
             await sendWelcomeEmail(user);
             console.log(`신규 사용자 가입: ${user.name} (${user.email})`);
         } else {
-            console.log(`기존 사용자 로그인: ${user.name} (${user.email})`);
+            console.log(`기존 사용자 로그인: ${user.name} (${user.email}) - 기존 데이터 발견`);
         }
     } catch (error) {
         console.error('사용자 확인 또는 메일 발송 오류:', error);
@@ -151,6 +157,29 @@ app.get('/check-session', (req, res) => {
 // 사용자 정보 API
 app.get('/api/user', requireAuth, (req, res) => {
     res.json(req.user);
+});
+
+// 디버깅용: 사용자 데이터 존재 여부 확인 API
+app.get('/api/debug/user-data', requireAuth, async (req, res) => {
+    try {
+        const userEmail = req.user.email;
+        const vacationResult = await getUserData(userEmail, 'vacationPeriod');
+        const schedulesResult = await getUserData(userEmail, 'schedules');
+        const studyResult = await getUserData(userEmail, 'studyRecords');
+        const completedResult = await getUserData(userEmail, 'completedSchedules');
+        
+        res.json({
+            email: userEmail,
+            dataStatus: {
+                vacationPeriod: { success: vacationResult.success, hasData: !!vacationResult.data },
+                schedules: { success: schedulesResult.success, hasData: !!schedulesResult.data },
+                studyRecords: { success: studyResult.success, hasData: !!studyResult.data },
+                completedSchedules: { success: completedResult.success, hasData: !!completedResult.data }
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // 사용자 데이터 저장 API
