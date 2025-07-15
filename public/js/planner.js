@@ -28,23 +28,26 @@ async function checkSession() {
 }
 
 // 현재 사용자 정보 가져오기
-async function getCurrentUser() {
+async function getCurrentUser(skipSessionCheck = false) {
     if (currentUser) return currentUser;
     
     try {
-        // 먼저 세션 상태 확인
-        const sessionResponse = await fetch('/check-session');
-        if (!sessionResponse.ok) {
-            console.log('세션 체크 실패, 로그인 페이지로 이동');
-            window.location.href = '/login';
-            return null;
-        }
-        
-        const sessionData = await sessionResponse.json();
-        if (!sessionData.authenticated) {
-            console.log('인증되지 않은 사용자, 로그인 페이지로 이동');
-            window.location.href = '/login';
-            return null;
+        // skipSessionCheck가 true면 세션 체크를 건너뛰고 바로 사용자 정보 조회
+        if (!skipSessionCheck) {
+            // 먼저 세션 상태 확인
+            const sessionResponse = await fetch('/check-session');
+            if (!sessionResponse.ok) {
+                console.log('세션 체크 실패, 로그인 페이지로 이동');
+                window.location.href = '/login';
+                return null;
+            }
+            
+            const sessionData = await sessionResponse.json();
+            if (!sessionData.authenticated) {
+                console.log('인증되지 않은 사용자, 로그인 페이지로 이동');
+                window.location.href = '/login';
+                return null;
+            }
         }
         
         // 세션이 유효하면 사용자 정보 가져오기
@@ -370,7 +373,7 @@ function updateWeeklySchedule() {
 
 // 데이터 관리 함수
 async function loadDataFromStorage() {
-    await getCurrentUser(); // 사용자 정보 먼저 로드
+    await getCurrentUser(true); // 이미 세션 체크를 했으므로 중복 체크 건너뛰기
     
     if (!currentUser) {
         console.log('사용자 정보를 불러올 수 없습니다. 로컬 스토리지를 사용합니다.');
@@ -1740,22 +1743,31 @@ function markdownToHtml(text) {
 
 // 초기화
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 플래너 페이지 초기화 시작');
+    
     // 세션 확인을 먼저 수행
+    console.log('🔍 세션 확인 중...');
     const isAuthenticated = await checkSession();
     if (!isAuthenticated) {
-        console.log('세션이 유효하지 않습니다. 로그인 페이지로 이동합니다.');
+        console.log('❌ 세션이 유효하지 않습니다. 로그인 페이지로 이동합니다.');
         window.location.href = '/login';
         return;
     }
+    console.log('✅ 세션 확인 완료');
     
+    console.log('📊 데이터 로딩 시작...');
     await loadDataFromStorage();
+    console.log('✅ 데이터 로딩 완료');
     
     // 방학 기간이 설정되어 있으면 플래너 화면으로
     if (vacationStartDate && vacationEndDate) {
+        console.log('📅 방학 기간 설정됨, 플래너 화면 표시');
         showPlannerScreen();
     } else {
+        console.log('⚙️ 방학 기간 미설정, 설정 화면 표시');
         showSetupScreen();
     }
+    console.log('�� 플래너 페이지 초기화 완료');
     
     // 이벤트 리스너 등록
     document.getElementById('vacation-setup-form').addEventListener('submit', handleVacationSetup);
