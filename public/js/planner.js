@@ -12,18 +12,56 @@ function toYYYYMMDD(date) {
     return date.toISOString().split('T')[0];
 }
 
+// 세션 유효성 확인 함수
+async function checkSession() {
+    try {
+        const response = await fetch('/check-session');
+        if (response.ok) {
+            const data = await response.json();
+            return data.authenticated;
+        }
+        return false;
+    } catch (error) {
+        console.error('세션 확인 오류:', error);
+        return false;
+    }
+}
+
 // 현재 사용자 정보 가져오기
 async function getCurrentUser() {
     if (currentUser) return currentUser;
     
     try {
+        // 먼저 세션 상태 확인
+        const sessionResponse = await fetch('/check-session');
+        if (!sessionResponse.ok) {
+            console.log('세션 체크 실패, 로그인 페이지로 이동');
+            window.location.href = '/login';
+            return null;
+        }
+        
+        const sessionData = await sessionResponse.json();
+        if (!sessionData.authenticated) {
+            console.log('인증되지 않은 사용자, 로그인 페이지로 이동');
+            window.location.href = '/login';
+            return null;
+        }
+        
+        // 세션이 유효하면 사용자 정보 가져오기
         const response = await fetch('/api/user');
         if (response.ok) {
             currentUser = await response.json();
             return currentUser;
+        } else if (response.status === 302 || response.status === 401) {
+            console.log('사용자 정보 조회 실패 (인증 오류), 로그인 페이지로 이동');
+            window.location.href = '/login';
+            return null;
         }
     } catch (error) {
         console.error('사용자 정보를 가져오는 중 오류:', error);
+        console.log('오류로 인해 로그인 페이지로 이동');
+        window.location.href = '/login';
+        return null;
     }
     return null;
 }
@@ -1702,6 +1740,14 @@ function markdownToHtml(text) {
 
 // 초기화
 document.addEventListener('DOMContentLoaded', async function() {
+    // 세션 확인을 먼저 수행
+    const isAuthenticated = await checkSession();
+    if (!isAuthenticated) {
+        console.log('세션이 유효하지 않습니다. 로그인 페이지로 이동합니다.');
+        window.location.href = '/login';
+        return;
+    }
+    
     await loadDataFromStorage();
     
     // 방학 기간이 설정되어 있으면 플래너 화면으로
