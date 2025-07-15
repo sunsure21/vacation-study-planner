@@ -16,20 +16,20 @@ if (process.env.VERCEL) {
     app.set('trust proxy', 1);
 }
 
-// 세션 설정
+// 세션 설정 - OAuth 친화적 설정
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key-here',
-    resave: false, // 세션이 수정되지 않았다면 다시 저장하지 않음
-    saveUninitialized: false, // 초기화되지 않은 세션을 저장하지 않음
-    rolling: true, // 요청할 때마다 쿠키 만료시간 갱신
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
     cookie: { 
-        secure: process.env.VERCEL ? true : false,
+        secure: process.env.VERCEL ? true : false, // HTTPS에서 secure 필요
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, // 24시간
-        sameSite: 'lax', // 안전한 설정
-        // domain 설정 제거 - Vercel에서 자동 처리
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7일로 연장
+        sameSite: process.env.VERCEL ? 'none' : 'lax', // OAuth cross-site 요청 허용
+        // domain 설정은 Vercel에서 자동 처리하므로 제거
     },
-    name: 'vacation.planner.sid' // 세션 이름 명시
+    name: 'vacation_planner_session'
 }));
 
 // Passport 설정
@@ -194,21 +194,28 @@ app.get('/check-session', (req, res) => {
     const sessionID = req.sessionID;
     const hasUser = !!req.user;
     const userEmail = req.user ? req.user.email : null;
+    const hasSession = !!req.session;
+    const hasPassportData = !!(req.session && req.session.passport);
     
     console.log(`🔍 세션 체크 요청:`);
     console.log(`  - 세션 ID: ${sessionID}`);
+    console.log(`  - 세션 존재: ${hasSession}`);
+    console.log(`  - Passport 데이터 존재: ${hasPassportData}`);
     console.log(`  - 인증 상태: ${isAuth}`);
     console.log(`  - 사용자 존재: ${hasUser}`);
     console.log(`  - 사용자 이메일: ${userEmail}`);
-    console.log(`  - 세션 데이터:`, req.session.passport);
+    console.log(`  - 쿠키:`, req.headers.cookie);
+    console.log(`  - 세션 전체:`, req.session);
+    console.log(`  - Passport 데이터:`, req.session.passport);
     
-    if (isAuth) {
+    if (isAuth && hasUser) {
         console.log(`✅ 세션 유효 - 사용자: ${userEmail}`);
     } else {
         console.log(`❌ 세션 무효 - 인증되지 않음`);
+        console.log(`  - 실패 이유: isAuth=${isAuth}, hasUser=${hasUser}`);
     }
     
-    res.json({ authenticated: isAuth, user: userEmail });
+    res.json({ authenticated: isAuth && hasUser, user: userEmail });
 });
 
 // 사용자 정보 API
@@ -399,18 +406,33 @@ app.get('/auth/google/callback',
                 console.error('❌ 세션 저장 오류:', err);
                 return res.redirect('/login?error=session_save');
             }
-            console.log(`✅ 로그인 성공: ${req.user.name} (${req.user.email})`);
-            console.log(`📱 세션 저장 완료, /planner로 리다이렉트`);
             
-            // 안전한 리디렉션 with cache-busting
-            try {
-                // 캐시 방지를 위한 타임스탬프 추가
-                const timestamp = Date.now();
-                res.redirect(`/planner?t=${timestamp}`);
-            } catch (redirectError) {
-                console.error('❌ 리디렉션 오류:', redirectError);
-                res.redirect('/login?error=redirect_failed');
-            }
+            // 세션 저장 후 즉시 확인
+            console.log(`✅ 로그인 성공: ${req.user.name} (${req.user.email})`);
+            console.log(`📱 세션 저장 완료`);
+            console.log(`🔧 저장된 세션 확인:`, req.session.passport);
+            console.log(`🔧 isAuthenticated 재확인:`, req.isAuthenticated());
+            
+            // 세션 재로드 후 리다이렉트 (안전성 강화)
+            req.session.reload((reloadErr) => {
+                if (reloadErr) {
+                    console.error('❌ 세션 재로드 오류:', reloadErr);
+                    // 재로드 실패해도 리다이렉트는 진행
+                }
+                
+                console.log(`🔄 세션 재로드 후 상태:`, req.isAuthenticated());
+                console.log(`🔄 세션 재로드 후 데이터:`, req.session.passport);
+                
+                try {
+                    // 캐시 방지를 위한 타임스탬프 추가
+                    const timestamp = Date.now();
+                    console.log(`🚀 /planner로 리다이렉트 시작 (t=${timestamp})`);
+                    res.redirect(`/planner?t=${timestamp}`);
+                } catch (redirectError) {
+                    console.error('❌ 리디렉션 오류:', redirectError);
+                    res.redirect('/login?error=redirect_failed');
+                }
+            });
         });
     }
 );
@@ -425,7 +447,7 @@ app.get('/logout', (req, res) => {
                 console.error('세션 삭제 오류:', destroyErr);
             }
             // 쿠키도 클리어
-            res.clearCookie('vacation.planner.sid');
+            res.clearCookie('vacation_planner_session');
             res.redirect('/login');
         });
     });
