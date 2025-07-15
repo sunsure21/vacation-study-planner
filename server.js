@@ -137,9 +137,21 @@ app.get('/favicon.ico', (req, res) => {
 
 // 인증 미들웨어
 function requireAuth(req, res, next) {
-    if (req.isAuthenticated()) {
+    const isAuth = req.isAuthenticated();
+    const userEmail = req.user ? req.user.email : null;
+    
+    console.log(`🛡️ 인증 미들웨어 체크:`);
+    console.log(`  - 요청 URL: ${req.url}`);
+    console.log(`  - 세션 ID: ${req.sessionID}`);
+    console.log(`  - 인증 상태: ${isAuth}`);
+    console.log(`  - 사용자: ${userEmail}`);
+    
+    if (isAuth) {
+        console.log(`✅ 인증 통과 - ${userEmail}`);
         return next();
     }
+    
+    console.log(`❌ 인증 실패 - /login으로 리다이렉트`);
     res.redirect('/login');
 }
 
@@ -153,14 +165,32 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/planner', requireAuth, (req, res) => {
+    console.log(`📄 /planner 페이지 접근 - 사용자: ${req.user ? req.user.email : '없음'}`);
+    console.log(`🔐 인증 상태: ${req.isAuthenticated()}`);
     res.sendFile(path.join(__dirname, 'planner.html'));
 });
 
 // 세션 체크 API
 app.get('/check-session', (req, res) => {
     const isAuth = req.isAuthenticated();
-    console.log(`세션 체크: ${isAuth ? '인증됨' : '인증 안됨'}`, req.user ? `사용자: ${req.user.email}` : '사용자 없음');
-    res.json({ authenticated: isAuth });
+    const sessionID = req.sessionID;
+    const hasUser = !!req.user;
+    const userEmail = req.user ? req.user.email : null;
+    
+    console.log(`🔍 세션 체크 요청:`);
+    console.log(`  - 세션 ID: ${sessionID}`);
+    console.log(`  - 인증 상태: ${isAuth}`);
+    console.log(`  - 사용자 존재: ${hasUser}`);
+    console.log(`  - 사용자 이메일: ${userEmail}`);
+    console.log(`  - 세션 데이터:`, req.session.passport);
+    
+    if (isAuth) {
+        console.log(`✅ 세션 유효 - 사용자: ${userEmail}`);
+    } else {
+        console.log(`❌ 세션 무효 - 인증되지 않음`);
+    }
+    
+    res.json({ authenticated: isAuth, user: userEmail });
 });
 
 // 사용자 정보 API
@@ -325,13 +355,28 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 app.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
+        console.log(`🔐 OAuth 콜백 처리 시작 - 사용자: ${req.user ? req.user.email : '없음'}`);
+        console.log(`📋 세션 ID: ${req.sessionID}`);
+        console.log(`✅ 인증 상태: ${req.isAuthenticated()}`);
+        
+        // 세션에 사용자 정보가 제대로 저장되었는지 확인
+        if (!req.user) {
+            console.error('❌ 사용자 정보가 없습니다');
+            return res.redirect('/login');
+        }
+        
+        // 명시적으로 세션에 사용자 정보 저장
+        req.session.passport = req.session.passport || {};
+        req.session.passport.user = req.user;
+        
         // 세션 저장을 확실히 한 후 리다이렉트
         req.session.save((err) => {
             if (err) {
-                console.error('세션 저장 오류:', err);
+                console.error('❌ 세션 저장 오류:', err);
                 return res.redirect('/login');
             }
-            console.log(`로그인 성공: ${req.user.name} (${req.user.email})`);
+            console.log(`✅ 로그인 성공: ${req.user.name} (${req.user.email})`);
+            console.log(`📱 세션 저장 완료, /planner로 리다이렉트`);
             res.redirect('/planner');
         });
     }
