@@ -1,3 +1,8 @@
+// 🚨 강제 로그 - JavaScript 파일 로드 확인
+console.log('🔥 planner.js 파일 로드됨!');
+console.log('📅 현재 시간:', new Date());
+console.log('🌐 현재 URL:', window.location.href);
+
 // 전역 변수
 let vacationStartDate = null;
 let vacationEndDate = null;
@@ -1767,7 +1772,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('⚙️ 방학 기간 미설정, 설정 화면 표시');
         showSetupScreen();
     }
-    console.log('�� 플래너 페이지 초기화 완료');
+    console.log(' 플래너 페이지 초기화 완료');
     
     // 이벤트 리스너 등록
     document.getElementById('vacation-setup-form').addEventListener('submit', handleVacationSetup);
