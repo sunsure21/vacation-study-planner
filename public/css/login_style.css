@@ -123,7 +123,7 @@ body {
 .highlight-section {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     border-radius: 15px;
-    padding: 30px;
+    padding: 20px;
     color: white;
     margin-top: 30px;
 }
@@ -131,15 +131,8 @@ body {
 .highlight-text {
     font-size: 18px;
     font-weight: 600;
-    margin-bottom: 15px;
-    line-height: 1.4;
-}
-
-.testimonial {
-    font-size: 16px;
-    font-style: italic;
-    opacity: 0.9;
     margin-bottom: 0;
+    line-height: 1.4;
 }
 
 /* 로그인 영역 */
@@ -222,11 +215,12 @@ body {
     }
     
     .highlight-section {
-        padding: 25px;
+        padding: 18px;
     }
     
     .highlight-text {
         font-size: 16px;
+        margin-bottom: 0;
     }
     
     .login-title {
@@ -301,7 +295,7 @@ body {
     }
     
     .highlight-section {
-        padding: 20px 15px;
+        padding: 15px;
         border-radius: 12px;
         margin-top: 20px;
     }
@@ -309,12 +303,7 @@ body {
     .highlight-text {
         font-size: 15px;
         line-height: 1.4;
-        margin-bottom: 10px;
-    }
-    
-    .testimonial {
-        font-size: 14px;
-        line-height: 1.4;
+        margin-bottom: 0;
     }
     
     .login-section {
