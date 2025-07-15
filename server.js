@@ -36,6 +36,17 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Passport 세션 직렬화/역직렬화 설정
+passport.serializeUser((user, done) => {
+    console.log('🔐 사용자 직렬화:', user.email);
+    done(null, user); // 전체 사용자 객체를 세션에 저장
+});
+
+passport.deserializeUser((user, done) => {
+    console.log('🔐 사용자 역직렬화:', user.email);
+    done(null, user); // 저장된 사용자 객체를 그대로 반환
+});
+
 // Google OAuth 전략 설정
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'your_google_client_id',
@@ -139,19 +150,26 @@ app.get('/favicon.ico', (req, res) => {
 function requireAuth(req, res, next) {
     const isAuth = req.isAuthenticated();
     const userEmail = req.user ? req.user.email : null;
+    const hasSession = !!req.session;
+    const hasPassportData = !!(req.session && req.session.passport);
     
     console.log(`🛡️ 인증 미들웨어 체크:`);
     console.log(`  - 요청 URL: ${req.url}`);
     console.log(`  - 세션 ID: ${req.sessionID}`);
+    console.log(`  - 세션 존재: ${hasSession}`);
+    console.log(`  - Passport 데이터: ${hasPassportData}`);
     console.log(`  - 인증 상태: ${isAuth}`);
     console.log(`  - 사용자: ${userEmail}`);
+    console.log(`  - req.user:`, req.user);
+    console.log(`  - req.session.passport:`, req.session.passport);
     
-    if (isAuth) {
+    if (isAuth && req.user) {
         console.log(`✅ 인증 통과 - ${userEmail}`);
         return next();
     }
     
     console.log(`❌ 인증 실패 - /login으로 리다이렉트`);
+    console.log(`  - 실패 이유: isAuth=${isAuth}, hasUser=${!!req.user}`);
     res.redirect('/login');
 }
 
@@ -368,9 +386,12 @@ app.get('/auth/google/callback',
             return res.redirect('/login?error=no_user');
         }
         
-        // 명시적으로 세션에 사용자 정보 저장
+        // 명시적으로 세션에 사용자 정보 저장 및 확인
+        console.log(`🔧 수동 세션 설정 전:`, req.session.passport);
         req.session.passport = req.session.passport || {};
         req.session.passport.user = req.user;
+        console.log(`🔧 수동 세션 설정 후:`, req.session.passport);
+        console.log(`🔧 isAuthenticated 상태:`, req.isAuthenticated());
         
         // 세션 저장을 확실히 한 후 리다이렉트
         req.session.save((err) => {
