@@ -11,16 +11,24 @@ const { saveUserData, getUserData, getAllUserData, deleteUserData } = require('.
 const app = express();
 const port = 3001;
 
+// Vercel 환경에서 프록시 신뢰 설정
+if (process.env.VERCEL) {
+    app.set('trust proxy', 1);
+}
+
 // 세션 설정
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key-here',
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: process.env.VERCEL ? true : false, // Vercel(HTTPS)에서는 true, 로컬에서는 false
+        secure: process.env.VERCEL ? true : false,
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24시간
-    }
+        maxAge: 24 * 60 * 60 * 1000, // 24시간
+        sameSite: 'lax', // 안전한 설정
+        domain: process.env.VERCEL ? '.vercel.app' : undefined
+    },
+    name: 'vacation.planner.sid' // 세션 이름 명시
 }));
 
 // Passport 설정
