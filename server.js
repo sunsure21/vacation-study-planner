@@ -19,14 +19,14 @@ if (process.env.VERCEL) {
 // 세션 설정
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key-here',
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     cookie: { 
         secure: process.env.VERCEL ? true : false,
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 24시간
         sameSite: 'lax', // 안전한 설정
-        domain: process.env.VERCEL ? '.vercel.app' : undefined
+        // domain 설정 제거 - Vercel에서 자동 처리
     },
     name: 'vacation.planner.sid' // 세션 이름 명시
 }));
