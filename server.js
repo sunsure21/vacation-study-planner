@@ -49,11 +49,23 @@ passport.use(new GoogleStrategy({
         picture: profile.photos[0].value
     };
     
-    // 회원가입 알림 메일 발송
+    // 기존 사용자인지 확인 (사용자별 데이터가 하나라도 있으면 기존 사용자)
     try {
-        await sendWelcomeEmail(user);
+        const userEmail = user.email;
+        const existingData = await getUserData(userEmail, 'vacationPeriod') || 
+                           await getUserData(userEmail, 'schedules') ||
+                           await getUserData(userEmail, 'studyRecords') ||
+                           await getUserData(userEmail, 'completedSchedules');
+        
+        // 신규 사용자일 때만 회원가입 알림 메일 발송
+        if (!existingData) {
+            await sendWelcomeEmail(user);
+            console.log(`신규 사용자 가입: ${user.name} (${user.email})`);
+        } else {
+            console.log(`기존 사용자 로그인: ${user.name} (${user.email})`);
+        }
     } catch (error) {
-        console.error('메일 발송 오류:', error);
+        console.error('사용자 확인 또는 메일 발송 오류:', error);
     }
     
     return done(null, user);
@@ -136,6 +148,11 @@ app.get('/check-session', (req, res) => {
 // 사용자 정보 API
 app.get('/api/user', requireAuth, (req, res) => {
     res.json(req.user);
+});
+
+// 세션 체크 API
+app.get('/check-session', (req, res) => {
+    res.json({ authenticated: req.isAuthenticated() });
 });
 
 // 사용자 데이터 저장 API
@@ -228,7 +245,15 @@ app.get('/auth/google/callback',
 app.get('/logout', (req, res) => {
     req.logout((err) => {
         if (err) { return next(err); }
-        res.redirect('/login');
+        // 세션 완전히 삭제
+        req.session.destroy((destroyErr) => {
+            if (destroyErr) {
+                console.error('세션 삭제 오류:', destroyErr);
+            }
+            // 쿠키도 클리어
+            res.clearCookie('vacation.planner.sid');
+            res.redirect('/login');
+        });
     });
 });
 
