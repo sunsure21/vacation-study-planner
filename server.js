@@ -6,7 +6,7 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const nodemailer = require('nodemailer');
-const { saveUserData, getUserData, getAllUserData, deleteUserData } = require('./lib/firestore');
+const { saveUserData, getUserData, getAllUserData, deleteUserData } = require('./lib/kv');
 
 const app = express();
 const port = 3001;

@@ -15,7 +15,7 @@
 
 - **Frontend**: HTML, CSS, JavaScript
 - **Backend**: Node.js, Express
-- **Database**: Google Cloud Firestore
+- **Database**: Vercel KV (Redis)
 - **Authentication**: Google OAuth 2.0
 - **AI**: Google Gemini API
 - **Deployment**: Vercel
@@ -42,16 +42,9 @@
    GOOGLE_CLIENT_SECRET=your_google_client_secret
    GOOGLE_API_KEY=your_google_api_key
    SESSION_SECRET=your_session_secret
-   FIREBASE_PROJECT_ID=your_firebase_project_id
-   FIREBASE_SERVICE_ACCOUNT_KEY=your_firebase_service_account_key_json
    ```
 
-4. **Firebase 설정**
-   - Google Cloud Console에서 Firebase 프로젝트 생성
-   - Firestore 데이터베이스 활성화
-   - 서비스 계정 키 생성
-
-5. **서버 실행**
+4. **서버 실행**
    ```bash
    npm start
    ```
@@ -63,32 +56,32 @@
    vercel --prod
    ```
 
-2. **환경 변수 설정**
+2. **Vercel KV 설정**
+   - Vercel 대시보드에서 Storage 탭으로 이동
+   - "Create Database" → "KV" 선택
+   - 프로젝트에 연결하면 환경 변수가 자동으로 설정됨
+
+3. **환경 변수 설정**
    Vercel 대시보드에서 환경 변수 설정:
    - `GOOGLE_CLIENT_ID`
-   - `GOOGLE_CLIENT_SECRET`
+   - `GOOGLE_CLIENT_SECRET` 
    - `GOOGLE_API_KEY`
    - `SESSION_SECRET`
-   - `FIREBASE_PROJECT_ID`
-   - `FIREBASE_SERVICE_ACCOUNT_KEY`
 
 ## 🗄️ 데이터 구조
 
-### Firestore 컬렉션 구조
+### Vercel KV 키 구조
 ```
-users/
-  └── {userEmail}/
-      └── data/
-          ├── vacationPeriod
-          ├── schedules
-          ├── studyRecords
-          └── completedSchedules
+user:{userEmail}:vacationPeriod    - 방학 기간 설정
+user:{userEmail}:schedules         - 스케줄 데이터
+user:{userEmail}:studyRecords      - 학습 기록
+user:{userEmail}:completedSchedules - 완료된 스케줄
 ```
 
 ## 🔐 보안 고려사항
 
 - 사용자 데이터는 이메일별로 완전히 분리
-- Firebase 서비스 계정 키는 환경 변수로 관리
+- Vercel KV 연결은 환경 변수로 자동 관리
 - 모든 API 엔드포인트는 인증 필요
 
 ## 📱 사용법
