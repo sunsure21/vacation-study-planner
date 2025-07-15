@@ -45,7 +45,7 @@ passport.use(new GoogleStrategy({
     // 사용자 정보를 세션에 저장
     const user = {
         id: profile.id,
-        email: profile.emails[0].value,
+        email: profile.emails[0].value, // 원본 이메일 주소 유지
         name: profile.displayName,
         picture: profile.photos[0].value
     };
@@ -188,6 +188,55 @@ app.get('/api/debug/user-data', requireAuth, async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// 임시 디버그 엔드포인트 - KV 데이터 정리용
+app.get('/api/debug/cleanup-user/:email', async (req, res) => {
+    try {
+        const userEmail = decodeURIComponent(req.params.email);
+        console.log(`🧹 사용자 데이터 정리 시작: ${userEmail}`);
+        
+        const dataTypes = ['vacationPeriod', 'schedules', 'studyRecords', 'completedSchedules'];
+        const cleanupResults = {};
+        
+        for (const dataType of dataTypes) {
+            try {
+                const key = `user:${userEmail}:${dataType}`;
+                const { Redis } = require('@upstash/redis');
+                const kvStore = Redis.fromEnv();
+                
+                // 원본 데이터 확인
+                const rawData = await kvStore.get(key);
+                console.log(`🔍 ${key} 원본:`, typeof rawData, rawData);
+                
+                if (rawData && typeof rawData === 'string' && rawData.includes('[object Object]')) {
+                    // 잘못된 데이터 삭제
+                    await kvStore.del(key);
+                    console.log(`🗑️ 잘못된 데이터 삭제: ${key}`);
+                    cleanupResults[dataType] = 'deleted_invalid_data';
+                } else if (rawData) {
+                    cleanupResults[dataType] = 'data_ok';
+                } else {
+                    cleanupResults[dataType] = 'no_data';
+                }
+            } catch (error) {
+                console.error(`❌ ${dataType} 정리 오류:`, error);
+                cleanupResults[dataType] = `error: ${error.message}`;
+            }
+        }
+        
+        res.json({
+            success: true,
+            userEmail,
+            cleanupResults
+        });
+    } catch (error) {
+        console.error('데이터 정리 오류:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 });
 
