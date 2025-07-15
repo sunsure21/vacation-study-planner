@@ -5,86 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>방학 순공 플래너</title>
     <link rel="stylesheet" href="/css/planner_style.css">
-    <style>
-        /* 임시 fallback 스타일 */
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            background-color: #f8f9fa; 
-        }
-        .container { 
-            max-width: 1200px; 
-            margin: 0 auto; 
-            background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-        }
-        .btn-register, .btn-mbti { 
-            background: #6B46C1; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            margin: 5px; 
-        }
-        .calendar-grid { 
-            display: grid; 
-            grid-template-columns: repeat(7, 1fr); 
-            gap: 15px; 
-            margin-top: 20px; 
-        }
-        .day-cell { 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            padding: 10px; 
-            min-height: 200px; 
-            background: white; 
-        }
-        .modal { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.5); 
-            z-index: 1000; 
-        }
-        .modal-content { 
-            background: white; 
-            margin: 5% auto; 
-            padding: 20px; 
-            width: 90%; 
-            max-width: 500px; 
-            border-radius: 8px; 
-        }
-        .close-button { 
-            float: right; 
-            font-size: 24px; 
-            cursor: pointer; 
-        }
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .logout-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-        .logout-btn:hover {
-            background: #c82333;
-        }
-    </style>
+    <!-- 인라인 스타일 제거됨 - CSS 파일에서 처리 -->
 </head>
 <body>
     <!-- 1단계: 방학 기간 설정 화면 -->
@@ -512,19 +433,7 @@
     <!-- 토스트 알림 -->
     <div id="toast-container"></div>
     
-    <script>
-        // 세션 체크 (로그인 상태 확인)
-        fetch('/check-session')
-            .then(response => response.json())
-            .then(data => {
-                if (!data.authenticated) {
-                    window.location.href = '/login';
-                }
-            })
-            .catch(() => {
-                window.location.href = '/login';
-            });
-    </script>
+    <!-- 세션 체크는 planner.js에서 처리 -->
     <script src="/js/planner.js"></script>
     <script>
         // 🚨 HTML에서 강제 로그

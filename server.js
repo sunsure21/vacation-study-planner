@@ -381,9 +381,11 @@ app.get('/auth/google/callback',
             console.log(`✅ 로그인 성공: ${req.user.name} (${req.user.email})`);
             console.log(`📱 세션 저장 완료, /planner로 리다이렉트`);
             
-            // 더 명확한 리디렉션
+            // 안전한 리디렉션 with cache-busting
             try {
-                res.redirect('/planner');
+                // 캐시 방지를 위한 타임스탬프 추가
+                const timestamp = Date.now();
+                res.redirect(`/planner?t=${timestamp}`);
             } catch (redirectError) {
                 console.error('❌ 리디렉션 오류:', redirectError);
                 res.redirect('/login?error=redirect_failed');

@@ -1749,6 +1749,18 @@ function markdownToHtml(text) {
 // 초기화
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 플래너 페이지 초기화 시작');
+    console.log('📍 현재 URL:', window.location.href);
+    console.log('🕒 현재 시간:', new Date().toISOString());
+    
+    // URL 파라미터 확인 (OAuth 콜백에서 타임스탬프가 있는지)
+    const urlParams = new URLSearchParams(window.location.search);
+    const timestamp = urlParams.get('t');
+    if (timestamp) {
+        console.log('⏰ OAuth 콜백 타임스탬프 감지:', timestamp);
+        // URL 정리 (뒤로가기 시 깔끔하게)
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
     
     // 세션 확인을 먼저 수행
     console.log('🔍 세션 확인 중...');
