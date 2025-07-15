@@ -234,12 +234,15 @@ app.get('/api/user/data/:dataType', requireAuth, async (req, res) => {
 app.get('/api/user/data', requireAuth, async (req, res) => {
     try {
         const userEmail = req.user.email;
+        console.log(`📊 전체 데이터 조회 요청: ${userEmail}`);
         
         const result = await getAllUserData(userEmail);
+        console.log(`📊 전체 데이터 조회 결과:`, { success: result.success, hasData: !!result.data });
         
         if (result.success) {
             res.json({ success: true, data: result.data });
         } else {
+            console.error('getAllUserData 실패:', result.error);
             res.status(500).json({ success: false, error: result.error });
         }
     } catch (error) {

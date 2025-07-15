@@ -517,9 +517,9 @@ function generateSchedulesByDate() {
     schedules.forEach(schedule => {
         if (!schedule || !schedule.startTime || !schedule.endTime) {
             console.warn('Invalid schedule found:', schedule);
-            return;
-        }
-        
+        return;
+    }
+    
         for (let d = new Date(vacationStartDate); d <= vacationEndDate; d.setDate(d.getDate() + 1)) {
             if (shouldIncludeSchedule(schedule, d)) {
                 const dateKey = toYYYYMMDD(d);
@@ -1053,7 +1053,7 @@ function saveStudyTime(slotId, dateKey) {
         const maxMinutes = studySlot.duration || 0;
         if (minutes > maxMinutes) {
             showToast(`이 시간대의 최대 순공 가능 시간은 ${formatMinutes(maxMinutes)}입니다.`, 'error');
-            return;
+        return;
         }
     }
     
@@ -1508,15 +1508,15 @@ function handleScheduleSubmit(e) {
         
         if (!startValue || !endValue) {
             showToast('기간 스케줄을 선택했을 때는 시작 날짜와 종료 날짜를 모두 선택해야 합니다.', 'error');
-            return;
-        }
-        
+        return;
+    }
+    
         periodStart = startValue;
         periodEnd = endValue;
-        
+
         if (new Date(periodStart) > new Date(periodEnd)) {
             showToast('종료 날짜는 시작 날짜보다 늦어야 합니다.', 'error');
-            return;
+        return;
         }
     }
     
@@ -1841,7 +1841,7 @@ function setupMBTIButtons() {
     document.getElementById('mbti-get-coaching-btn').addEventListener('click', function() {
         if (selectedMbti) {
             getMBTICoaching(selectedMbti);
-        } else {
+    } else {
             showToast('MBTI 타입을 선택해주세요.', 'error');
         }
     });
@@ -1864,8 +1864,8 @@ async function getMBTICoaching(mbtiType) {
     resultContainer.innerHTML = `
         <div class="loading-spinner">
             <p>🧠 AI가 당신의 MBTI 타입을 분석하고 있습니다...</p>
-        </div>
-    `;
+                    </div>
+                `;
     
     try {
         // 현재 학습 데이터 수집
