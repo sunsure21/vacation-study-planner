@@ -58,18 +58,27 @@ passport.use(new GoogleStrategy({
         const studyResult = await getUserData(userEmail, 'studyRecords');
         const completedResult = await getUserData(userEmail, 'completedSchedules');
         
+        // 모든 데이터 조회 결과를 로그로 확인
+        console.log(`🔍 사용자 데이터 확인: ${user.email}`);
+        console.log('vacationResult:', { success: vacationResult.success, hasData: !!vacationResult.data, data: vacationResult.data });
+        console.log('schedulesResult:', { success: schedulesResult.success, hasData: !!schedulesResult.data, dataLength: schedulesResult.data ? (Array.isArray(schedulesResult.data) ? schedulesResult.data.length : 'not array') : 'null' });
+        console.log('studyResult:', { success: studyResult.success, hasData: !!studyResult.data, dataKeys: studyResult.data ? Object.keys(studyResult.data).length : 'null' });
+        console.log('completedResult:', { success: completedResult.success, hasData: !!completedResult.data, dataKeys: completedResult.data ? Object.keys(completedResult.data).length : 'null' });
+        
         // 데이터가 실제로 존재하는지 확인 (success이고 data가 null이 아닌 경우)
         const hasExistingData = (vacationResult.success && vacationResult.data) ||
                                (schedulesResult.success && schedulesResult.data) ||
                                (studyResult.success && studyResult.data) ||
                                (completedResult.success && completedResult.data);
         
+        console.log(`📊 기존 데이터 존재 여부: ${hasExistingData}`);
+        
         // 신규 사용자일 때만 회원가입 알림 메일 발송
         if (!hasExistingData) {
             await sendWelcomeEmail(user);
-            console.log(`신규 사용자 가입: ${user.name} (${user.email})`);
+            console.log(`🆕 신규 사용자 가입: ${user.name} (${user.email}) - 알림 메일 발송`);
         } else {
-            console.log(`기존 사용자 로그인: ${user.name} (${user.email}) - 기존 데이터 발견`);
+            console.log(`👤 기존 사용자 로그인: ${user.name} (${user.email}) - 기존 데이터 발견, 알림 메일 발송 안함`);
         }
     } catch (error) {
         console.error('사용자 확인 또는 메일 발송 오류:', error);
