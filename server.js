@@ -16,7 +16,11 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'your-secret-key-here',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false } // HTTPS에서는 true로 설정
+    cookie: { 
+        secure: process.env.VERCEL ? true : false, // Vercel(HTTPS)에서는 true, 로컬에서는 false
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24시간
+    }
 }));
 
 // Passport 설정
