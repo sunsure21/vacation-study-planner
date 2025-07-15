@@ -1,0 +1,264 @@
+:root {
+    --primary-color: #6B46C1;
+    --secondary-color: #8B5CF6;
+    --accent-color: #A78BFA;
+    --background-color: #ffffff;
+    --secondary-bg-color: #f8f9fa;
+    --text-color: #333333;
+    --border-color: #e5e7eb;
+    --success-color: #10b981;
+    --gray-color: #6b7280;
+    --light-gray: #f3f4f6;
+    --font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.login-card {
+    background: var(--background-color);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    padding: 60px;
+    text-align: center;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 로고 영역 */
+.logo-section {
+    margin-bottom: 50px;
+}
+
+.service-title {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    line-height: 1.2;
+}
+
+.service-subtitle {
+    font-size: 20px;
+    color: var(--gray-color);
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+/* 서비스 소개 영역 */
+.intro-section {
+    margin-bottom: 50px;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: flex-start;
+    text-align: left;
+    padding: 25px;
+    background: var(--light-gray);
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(107, 70, 193, 0.1);
+}
+
+.feature-icon {
+    font-size: 32px;
+    margin-right: 20px;
+    flex-shrink: 0;
+}
+
+.feature-content h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+.feature-content p {
+    font-size: 14px;
+    color: var(--gray-color);
+    line-height: 1.5;
+}
+
+.highlight-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 15px;
+    padding: 30px;
+    color: white;
+    margin-top: 30px;
+}
+
+.highlight-text {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.testimonial {
+    font-size: 16px;
+    font-style: italic;
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+/* 로그인 영역 */
+.login-section {
+    border-top: 1px solid var(--border-color);
+    padding-top: 40px;
+}
+
+.login-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 30px;
+}
+
+.google-login-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 50px;
+    padding: 15px 40px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.google-login-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(107, 70, 193, 0.3);
+}
+
+.google-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+}
+
+.login-note {
+    font-size: 14px;
+    color: var(--gray-color);
+    line-height: 1.6;
+    margin-top: 20px;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .login-card {
+        padding: 40px 30px;
+    }
+    
+    .service-title {
+        font-size: 36px;
+    }
+    
+    .service-subtitle {
+        font-size: 18px;
+    }
+    
+    .feature-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .feature-item {
+        padding: 20px;
+    }
+    
+    .feature-icon {
+        font-size: 28px;
+        margin-right: 15px;
+    }
+    
+    .highlight-section {
+        padding: 25px;
+    }
+    
+    .highlight-text {
+        font-size: 16px;
+    }
+    
+    .login-title {
+        font-size: 20px;
+    }
+    
+    .google-login-btn {
+        padding: 12px 30px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 30px 20px;
+    }
+    
+    .service-title {
+        font-size: 28px;
+    }
+    
+    .service-subtitle {
+        font-size: 16px;
+    }
+    
+    .feature-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .feature-icon {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+} 

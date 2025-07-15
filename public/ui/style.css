@@ -1,0 +1,69 @@
+/* 
+  이 파일은 wonderslab-design-guide/components.md 에 정의된
+  스타일을 기반으로 작성되었습니다.
+*/
+
+/* 카드 컴포넌트 */
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  width: 504px;
+  align-items: flex-start;
+  gap: 32px;
+  padding: 20px 20px 32px 20px;
+  background-color: #ffffff;
+  border-radius: 24px;
+  font-family: sans-serif; /* 기본 폰트 설정 */
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 24px;
+  padding-bottom: 0;
+}
+
+.card-content {
+  padding: 0 24px;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  padding-top: 0;
+}
+
+/* 텍스트 스타일 (typography.md 참조) */
+.text-2xl { font-size: 24px; }
+.text-xl { font-size: 20px; }
+.font-bold { font-weight: 700; }
+.text-gray-500 { color: #6b7280; }
+.text-gray-700 { color: #374151; }
+.mt-2 { margin-top: 8px; }
+
+/* 버튼 컴포넌트 */
+.btn-purple2 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  border-radius: 30px;
+  font-size: 18px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  padding: 0 24px;
+  height: 56px;
+  background-color: #7c5ef5; /* primary-purple-2 */
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-purple2:hover {
+  background-color: #6950D0; /* pressed-purple-2 */
+} 

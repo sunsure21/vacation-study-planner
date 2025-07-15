@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방학 순공 플래너</title>
+    <link rel="stylesheet" href="/css/planner_style.css">
+    <style>
+        /* 임시 fallback 스타일 */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background-color: #f8f9fa; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        .btn-register, .btn-mbti { 
+            background: #6B46C1; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            margin: 5px; 
+        }
+        .calendar-grid { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 15px; 
+            margin-top: 20px; 
+        }
+        .day-cell { 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            padding: 10px; 
+            min-height: 200px; 
+            background: white; 
+        }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 1000; 
+        }
+        .modal-content { 
+            background: white; 
+            margin: 5% auto; 
+            padding: 20px; 
+            width: 90%; 
+            max-width: 500px; 
+            border-radius: 8px; 
+        }
+        .close-button { 
+            float: right; 
+            font-size: 24px; 
+            cursor: pointer; 
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <!-- 1단계: 방학 기간 설정 화면 -->
+    <div id="setup-screen" class="setup-screen">
+        <div class="setup-container">
+            <header class="setup-header">
+                <h1>방학 순공 플래너</h1>
+                <p>효율적인 방학 순공을 위한 스케줄 관리 시스템</p>
+            </header>
+            
+            <div class="setup-form-container">
+                <h2>방학 기간을 설정해주세요</h2>
+                <form id="vacation-setup-form">
+                    <div class="form-group">
+                        <label for="vacation-start">시작일</label>
+                        <input type="date" id="vacation-start" name="vacation-start" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vacation-end">종료일</label>
+                        <input type="date" id="vacation-end" name="vacation-end" required>
+                    </div>
+                    <button type="submit" class="setup-btn">방학 플래너 시작하기</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2단계: 방학 학습 플래너 메인 화면 -->
+    <div id="planner-screen" class="planner-screen" style="display: none;">
+        <div class="container">
+            <!-- 상단 헤더 -->
+            <header class="main-header">
+                <div class="title-section">
+                    <span class="calendar-icon">📅</span>
+                    <h1>방학 플래너</h1>
+                </div>
+                <div class="header-right">
+                    <div class="current-time-display">
+                        <div id="current-date-time">날짜 로딩 중...</div>
+                    </div>
+                    <button id="logout-btn" class="logout-btn">로그아웃</button>
+                </div>
+            </header>
+
+            <!-- 방학 기간 표시 박스 -->
+            <div class="vacation-period-box">
+                <div id="vacation-period-display"></div>
+                <button id="reset-period-btn" class="reset-btn">기간 재설정</button>
+            </div>
+
+            <!-- 이번 주 주요 일정 섹션 -->
+            <div class="weekly-schedule-section">
+                <h2>이번 주 주요 일정</h2>
+                <div class="dashed-box">
+                    <div id="weekly-schedule-content">
+                        <div class="weekly-summary-item">
+                            <strong>📍 이번주 기간: <span id="current-week-range"></span></strong>
+                        </div>
+                        <div class="weekly-details">
+                            <div class="weekly-column">
+                                <h4>이번 주 등록된 일정</h4>
+                                <div id="weekly-registered-schedules">
+                                    <p>등록된 스케줄이 없습니다.</p>
+                                </div>
+                            </div>
+                            <div class="weekly-column">
+                                <h4>이번 주 순공 가능 시간</h4>
+                                <div id="weekly-study-hours">
+                                    <p>순공 가능 시간을 계산 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 나의 방학 계획표 섹션 -->
+            <div class="my-schedule-section">
+                <div class="section-header">
+                    <h2>📚 나의 방학 계획표</h2>
+                    <div class="action-buttons">
+                        <button id="schedule-register-btn" class="btn-register">스케줄 등록하기</button>
+                        <button id="mbti-coaching-btn" class="btn-mbti">🧠 MBTI 학습 코칭</button>
+                    </div>
+                </div>
+                
+                <!-- 캘린더 영역 -->
+                <div id="calendar-container">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+
+            <!-- 주간 스케쥴 평가 섹션 -->
+            <div class="weekly-evaluation-section">
+                <h2>📊 주간 스케쥴 평가</h2>
+                <div class="evaluation-box">
+                    <div class="evaluation-content">
+                        <div class="evaluation-item">
+                            <span class="evaluation-label">이번주 계획 달성률:</span>
+                            <span class="evaluation-value" id="weekly-achievement">계산 중...</span>
+                        </div>
+                        <div class="evaluation-item">
+                            <span class="evaluation-label">평균 순공시간:</span>
+                            <span class="evaluation-value" id="weekly-avg-study">계산 중...</span>
+                        </div>
+                        <div class="evaluation-item">
+                            <span class="evaluation-label">목표 대비 진도:</span>
+                            <span class="evaluation-value" id="weekly-progress">계산 중...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 순공시간 및 기준 관련 부가설명 섹션 -->
+            <div class="study-time-info-section">
+                <h2>📖 순공시간 및 기준 관련 설명</h2>
+                <div class="info-box">
+                    <div class="info-content">
+                        <div class="info-item">
+                            <h4>💡 순공시간이란?</h4>
+                            <p>실제로 집중해서 공부할 수 있는 시간대를 의미합니다. 시스템에서 자동으로 계산되어 표시됩니다.</p>
+                        </div>
+                        <div class="info-item">
+                            <h4>📏 시스템 기준</h4>
+                            <ul>
+                                <li><strong>기본 순공 가능 시간:</strong> 매일 09:00 ~ 22:00 (13시간)</li>
+                                <li><strong>학원 시간 제외:</strong> 학원 시간 앞뒤 1시간씩 자동 차감</li>
+                                <li><strong>취침 시간 제외:</strong> 취침 시간 앞뒤 1시간씩 자동 차감</li>
+                                <li><strong>최소 블록 시간:</strong> 1시간 이상 연속 가능한 시간대만 표시</li>
+                            </ul>
+                        </div>
+                        <div class="info-item">
+                            <h4>🎯 사용 방법</h4>
+                            <ul>
+                                <li>초록색 "순공가능" 시간대를 클릭하여 실제 공부한 시간을 기록</li>
+                                <li>과목별로 구분하여 기록 가능</li>
+                                <li>일일 순공시간 총량이 캘린더 하단에 자동 표시</li>
+                                <li>주간 평가에서 계획 대비 실제 달성률 확인</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 스케줄 추가 모달 -->
+    <div id="schedule-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 새 스케줄 추가</h2>
+                <span class="close-button" id="schedule-modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="schedule-form">
+                    <div class="schedule-type-section">
+                        <label>스케줄 종류</label>
+                        <div class="type-buttons">
+                            <button type="button" class="type-btn active" data-type="repeat">반복</button>
+                            <button type="button" class="type-btn" data-type="specific">지정</button>
+                            <button type="button" class="type-btn" data-type="period">기간</button>
+                        </div>
+                    </div>
+
+                    <!-- 반복 옵션 -->
+                    <div class="repeat-type-section" id="repeat-type-section">
+                        <label>반복 종류</label>
+                        <div class="repeat-buttons">
+                            <button type="button" class="repeat-btn active" data-repeat="custom">요일별</button>
+                            <button type="button" class="repeat-btn" data-repeat="daily">매일</button>
+                            <button type="button" class="repeat-btn" data-repeat="weekdays">평일</button>
+                            <button type="button" class="repeat-btn" data-repeat="weekends">주말</button>
+                        </div>
+                    </div>
+
+                    <div class="custom-days-section" id="custom-days-section">
+                        <label>반복할 요일을 선택하세요</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="custom-days" value="0">
+                                <span>일</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="custom-days" value="1">
+                                <span>월</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="custom-days" value="2">
+                                <span>화</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="custom-days" value="3">
+                                <span>수</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="custom-days" value="4">
+                                <span>목</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="custom-days" value="5">
+                                <span>금</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="custom-days" value="6">
+                                <span>토</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 지정 옵션 -->
+                    <div class="specific-date-section" id="specific-date-section" style="display: none;">
+                        <div class="form-group">
+                            <label for="specific-date">날짜 선택</label>
+                            <input type="date" id="specific-date" name="specific-date">
+                        </div>
+                        <div class="form-group">
+                            <label>또는 요일 선택</label>
+                            <div class="weekday-buttons">
+                                <button type="button" class="weekday-btn" data-day="0">일</button>
+                                <button type="button" class="weekday-btn" data-day="1">월</button>
+                                <button type="button" class="weekday-btn" data-day="2">화</button>
+                                <button type="button" class="weekday-btn" data-day="3">수</button>
+                                <button type="button" class="weekday-btn" data-day="4">목</button>
+                                <button type="button" class="weekday-btn" data-day="5">금</button>
+                                <button type="button" class="weekday-btn" data-day="6">토</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 기간 옵션 -->
+                    <div class="period-section" id="period-section" style="display: none;">
+                        <div class="form-group">
+                            <label for="period-start">시작 날짜</label>
+                            <input type="date" id="period-start" name="period-start">
+                        </div>
+                        <div class="form-group">
+                            <label for="period-end">종료 날짜</label>
+                            <input type="date" id="period-end" name="period-end">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="schedule-subject">과목/활동</label>
+                        <input type="text" id="schedule-subject" name="schedule-subject" placeholder="예: 아침식사, 수학, 영어" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="schedule-category">카테고리</label>
+                        <select id="schedule-category" name="schedule-category" required>
+                            <option value="식사">식사</option>
+                            <option value="취침">취침</option>
+                            <option value="학원">학원 (앞뒤 1시간씩 순공시간에서 제외)</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+
+                    <div class="time-section">
+                        <div class="time-group">
+                            <label for="start-time">시작 시간</label>
+                            <div class="time-inputs">
+                                <select id="start-hour" name="start-hour"></select>
+                                <select id="start-minute" name="start-minute"></select>
+                            </div>
+                        </div>
+                        <div class="time-group">
+                            <label for="end-time">종료 시간</label>
+                            <div class="time-inputs">
+                                <select id="end-hour" name="end-hour"></select>
+                                <select id="end-minute" name="end-minute"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-buttons">
+                        <button type="button" class="btn-cancel" id="schedule-cancel-btn">취소</button>
+                        <button type="submit" class="btn-submit">+ 이 스케줄 추가!</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 날짜별 상세 모달 -->
+    <div id="day-summary-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="day-summary-title"></h2>
+                <span class="close-button" id="day-modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="day-summary-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 학습 시간 기록 모달 -->
+    <div id="study-time-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📚 학습 시간 기록</h2>
+                <span class="close-button" id="study-modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="study-time-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MBTI 학습 코칭 모달 -->
+    <div id="mbti-coaching-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🧠 MBTI 기반 학습 코칭</h2>
+                <span class="close-button" id="mbti-modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="mbti-selection">
+                    <p class="mbti-description">당신의 MBTI 타입을 선택하면 맞춤형 학습 코칭을 받을 수 있습니다!</p>
+                    
+                    <div class="mbti-grid">
+                        <div class="mbti-category">
+                            <h4>분석가 (NT)</h4>
+                            <div class="mbti-buttons">
+                                <button type="button" class="mbti-btn" data-mbti="INTJ">
+                                    <span class="mbti-type">INTJ</span>
+                                    <span class="mbti-name">건축가</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="INTP">
+                                    <span class="mbti-type">INTP</span>
+                                    <span class="mbti-name">논리술사</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="ENTJ">
+                                    <span class="mbti-type">ENTJ</span>
+                                    <span class="mbti-name">통솔자</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="ENTP">
+                                    <span class="mbti-type">ENTP</span>
+                                    <span class="mbti-name">변론가</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mbti-category">
+                            <h4>외교관 (NF)</h4>
+                            <div class="mbti-buttons">
+                                <button type="button" class="mbti-btn" data-mbti="INFJ">
+                                    <span class="mbti-type">INFJ</span>
+                                    <span class="mbti-name">옹호자</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="INFP">
+                                    <span class="mbti-type">INFP</span>
+                                    <span class="mbti-name">중재자</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="ENFJ">
+                                    <span class="mbti-type">ENFJ</span>
+                                    <span class="mbti-name">선도자</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="ENFP">
+                                    <span class="mbti-type">ENFP</span>
+                                    <span class="mbti-name">활동가</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mbti-category">
+                            <h4>관리자 (SJ)</h4>
+                            <div class="mbti-buttons">
+                                <button type="button" class="mbti-btn" data-mbti="ISTJ">
+                                    <span class="mbti-type">ISTJ</span>
+                                    <span class="mbti-name">물류관리자</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="ISFJ">
+                                    <span class="mbti-type">ISFJ</span>
+                                    <span class="mbti-name">수호자</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="ESTJ">
+                                    <span class="mbti-type">ESTJ</span>
+                                    <span class="mbti-name">경영자</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="ESFJ">
+                                    <span class="mbti-type">ESFJ</span>
+                                    <span class="mbti-name">집정관</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mbti-category">
+                            <h4>탐험가 (SP)</h4>
+                            <div class="mbti-buttons">
+                                <button type="button" class="mbti-btn" data-mbti="ISTP">
+                                    <span class="mbti-type">ISTP</span>
+                                    <span class="mbti-name">만능재주꾼</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="ISFP">
+                                    <span class="mbti-type">ISFP</span>
+                                    <span class="mbti-name">모험가</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="ESTP">
+                                    <span class="mbti-type">ESTP</span>
+                                    <span class="mbti-name">사업가</span>
+                                </button>
+                                <button type="button" class="mbti-btn" data-mbti="ESFP">
+                                    <span class="mbti-type">ESFP</span>
+                                    <span class="mbti-name">연예인</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="selected-mbti" id="selected-mbti" style="display: none;">
+                        <p>선택된 MBTI: <span id="selected-mbti-text"></span></p>
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" id="mbti-cancel-btn">취소</button>
+                    <button type="button" class="btn-submit" id="mbti-get-coaching-btn">코칭 받기</button>
+                </div>
+                
+                <div id="mbti-coaching-result" class="mbti-result-container" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 알림 -->
+    <div id="toast-container"></div>
+    
+    <script>
+        // 세션 체크 (로그인 상태 확인)
+        fetch('/check-session')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                }
+            })
+            .catch(() => {
+                window.location.href = '/login';
+            });
+    </script>
+    <script src="/js/planner.js"></script>
+</body>
+</html>

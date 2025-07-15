@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>방학 순공 플래너</title>
+</head>
+<body>
+    <script>
+        // 세션 체크 후 적절한 페이지로 리다이렉트
+        fetch('/check-session')
+            .then(response => response.json())
+            .then(data => {
+                if (data.authenticated) {
+                    window.location.href = '/planner';
+                } else {
+                    window.location.href = '/login';
+                }
+            })
+            .catch(() => {
+                window.location.href = '/login';
+            });
+    </script>
+</body>
+</html>
