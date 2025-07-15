@@ -347,19 +347,30 @@ async function loadDataFromStorage() {
             if (result.success && result.data) {
                 const data = result.data;
                 
-                // 방학 기간 설정
-                if (data.vacationPeriod) {
-                    vacationStartDate = new Date(data.vacationPeriod.start + 'T00:00:00');
-                    vacationEndDate = new Date(data.vacationPeriod.end + 'T00:00:00');
+                // KV에 데이터가 있는지 확인
+                const hasKVData = data.vacationPeriod || data.schedules?.length > 0 || 
+                                 Object.keys(data.studyRecords || {}).length > 0 || 
+                                 Object.keys(data.completedSchedules || {}).length > 0;
+                
+                if (hasKVData) {
+                    // KV에서 데이터 로드
+                    if (data.vacationPeriod) {
+                        vacationStartDate = new Date(data.vacationPeriod.start + 'T00:00:00');
+                        vacationEndDate = new Date(data.vacationPeriod.end + 'T00:00:00');
+                    }
+                    
+                    schedules = data.schedules || [];
+                    studyRecords = data.studyRecords || {};
+                    completedSchedules = data.completedSchedules || {};
+                    
+                    console.log('KV 데이터베이스에서 데이터를 성공적으로 로드했습니다.');
+                    return;
+                } else {
+                    // KV에 데이터가 없으면 로컬 스토리지에서 마이그레이션 시도
+                    console.log('KV에 저장된 데이터가 없습니다. 로컬 스토리지에서 마이그레이션을 시도합니다.');
+                    await migrateFromLocalStorage();
+                    return;
                 }
-                
-                // 스케줄 데이터 설정
-                schedules = data.schedules || [];
-                studyRecords = data.studyRecords || {};
-                completedSchedules = data.completedSchedules || {};
-                
-                console.log('KV 데이터베이스에서 데이터를 성공적으로 로드했습니다.');
-                return;
             }
         }
     } catch (error) {
@@ -369,6 +380,23 @@ async function loadDataFromStorage() {
     // KV 로드 실패 시 로컬 스토리지 사용
     console.log('KV 로드 실패. 로컬 스토리지를 사용합니다.');
     loadFromLocalStorage();
+}
+
+// 로컬 스토리지에서 KV로 데이터 마이그레이션
+async function migrateFromLocalStorage() {
+    console.log('🔄 로컬 스토리지에서 KV로 데이터 마이그레이션 시작...');
+    
+    // 로컬 스토리지에서 데이터 로드
+    loadFromLocalStorage();
+    
+    // 로컬 스토리지에 데이터가 있으면 KV로 저장
+    if (vacationStartDate && vacationEndDate) {
+        console.log('📅 방학 기간 데이터를 KV로 마이그레이션 중...');
+        await saveDataToStorage();
+        console.log('✅ 로컬 스토리지에서 KV로 마이그레이션 완료!');
+    } else {
+        console.log('📝 로컬 스토리지에도 저장된 데이터가 없습니다.');
+    }
 }
 
 // 로컬 스토리지에서 데이터 로드 (fallback)

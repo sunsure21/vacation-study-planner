@@ -73,12 +73,12 @@ passport.use(new GoogleStrategy({
         
         console.log(`📊 기존 데이터 존재 여부: ${hasExistingData}`);
         
-        // KV가 작동하지 않는 경우 임시로 알림 메일 발송 비활성화
-        if (!hasExistingData && process.env.ENABLE_SIGNUP_EMAIL === 'true') {
+        // 신규 사용자일 때만 회원가입 알림 메일 발송
+        if (!hasExistingData) {
             await sendWelcomeEmail(user);
             console.log(`🆕 신규 사용자 가입: ${user.name} (${user.email}) - 알림 메일 발송`);
         } else {
-            console.log(`👤 사용자 로그인: ${user.name} (${user.email}) - 알림 메일 발송 건너뜀 (KV 문제로 임시 비활성화)`);
+            console.log(`👤 기존 사용자 로그인: ${user.name} (${user.email}) - 기존 데이터 발견, 알림 메일 발송 안함`);
         }
     } catch (error) {
         console.error('사용자 확인 또는 메일 발송 오류:', error);
