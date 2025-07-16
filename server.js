@@ -200,43 +200,58 @@ function authenticateJWT(req, res, next) {
 
 // 인증 미들웨어 (JWT + 세션 이중 체크)
 function requireAuth(req, res, next) {
-    const isAuth = req.isAuthenticated();
-    const userEmail = req.user ? req.user.email : null;
-    const hasSession = !!req.session;
-    const hasPassportData = !!(req.session && req.session.passport);
-    const hasJWT = !!req.cookies.auth_token;
-    
-    console.log(`🛡️ 인증 미들웨어 체크:`);
-    console.log(`  - 요청 URL: ${req.url}`);
-    console.log(`  - 세션 ID: ${req.sessionID}`);
-    console.log(`  - 세션 존재: ${hasSession}`);
-    console.log(`  - Passport 데이터: ${hasPassportData}`);
-    console.log(`  - JWT 토큰: ${hasJWT}`);
-    console.log(`  - 인증 상태: ${isAuth}`);
-    console.log(`  - 사용자: ${userEmail}`);
-    
-    // JWT 인증 시도
-    if (hasJWT) {
-        const jwt = require('jsonwebtoken');
-        try {
-            const decoded = jwt.verify(req.cookies.auth_token, process.env.SESSION_SECRET || 'your-secret-key-here');
-            req.user = decoded;
-            console.log(`✅ JWT 인증 통과 - ${decoded.email}`);
-            return next();
-        } catch (err) {
-            console.log(`❌ JWT 인증 실패:`, err.message);
+    try {
+        const isAuth = req.isAuthenticated();
+        const userEmail = req.user ? req.user.email : null;
+        const hasSession = !!req.session;
+        const hasPassportData = !!(req.session && req.session.passport);
+        const hasJWT = !!req.cookies.auth_token;
+        
+        console.log(`🛡️ 인증 미들웨어 체크:`);
+        console.log(`  - 요청 URL: ${req.url}`);
+        console.log(`  - 세션 ID: ${req.sessionID}`);
+        console.log(`  - 세션 존재: ${hasSession}`);
+        console.log(`  - Passport 데이터: ${hasPassportData}`);
+        console.log(`  - JWT 토큰: ${hasJWT}`);
+        console.log(`  - 인증 상태: ${isAuth}`);
+        console.log(`  - 사용자: ${userEmail}`);
+        
+        // JWT 인증 시도
+        if (hasJWT) {
+            const jwt = require('jsonwebtoken');
+            try {
+                const decoded = jwt.verify(req.cookies.auth_token, process.env.SESSION_SECRET || 'your-secret-key-here');
+                req.user = decoded;
+                console.log(`✅ JWT 인증 통과 - ${decoded.email}`);
+                return next();
+            } catch (err) {
+                console.log(`❌ JWT 인증 실패:`, err.message);
+            }
         }
+        
+        // 세션 인증 시도
+        if (isAuth && req.user) {
+            console.log(`✅ 세션 인증 통과 - ${userEmail}`);
+            return next();
+        }
+        
+        console.log(`❌ 인증 실패 - /login으로 리다이렉트`);
+        console.log(`  - 실패 이유: isAuth=${isAuth}, hasUser=${!!req.user}, hasJWT=${hasJWT}`);
+        res.redirect('/login');
+        
+    } catch (error) {
+        console.error(`❌ requireAuth 미들웨어 에러:`, error);
+        res.status(500).send(`
+            <html>
+                <head><title>인증 오류</title></head>
+                <body>
+                    <h1>인증 처리 중 오류가 발생했습니다</h1>
+                    <p>오류 메시지: ${error.message}</p>
+                    <a href="/login">로그인 페이지로 이동</a>
+                </body>
+            </html>
+        `);
     }
-    
-    // 세션 인증 시도
-    if (isAuth && req.user) {
-        console.log(`✅ 세션 인증 통과 - ${userEmail}`);
-        return next();
-    }
-    
-    console.log(`❌ 인증 실패 - /login으로 리다이렉트`);
-    console.log(`  - 실패 이유: isAuth=${isAuth}, hasUser=${!!req.user}, hasJWT=${hasJWT}`);
-    res.redirect('/login');
 }
 
 // 라우팅
@@ -249,9 +264,36 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/planner', requireAuth, (req, res) => {
-    console.log(`📄 /planner 페이지 접근 - 사용자: ${req.user ? req.user.email : '없음'}`);
-    console.log(`🔐 인증 상태: ${req.isAuthenticated()}`);
-    res.sendFile(path.join(__dirname, 'planner.html'));
+    try {
+        console.log(`📄 /planner 페이지 접근 - 사용자: ${req.user ? req.user.email : '없음'}`);
+        console.log(`🔐 인증 상태: ${req.isAuthenticated()}`);
+        console.log(`📁 파일 경로: ${path.join(__dirname, 'planner.html')}`);
+        
+        const fs = require('fs');
+        const filePath = path.join(__dirname, 'planner.html');
+        
+        // 파일 존재 여부 확인
+        if (!fs.existsSync(filePath)) {
+            console.error(`❌ planner.html 파일을 찾을 수 없음: ${filePath}`);
+            return res.status(404).send('플래너 페이지를 찾을 수 없습니다.');
+        }
+        
+        console.log(`✅ planner.html 파일 발견, 전송 시작`);
+        res.sendFile(filePath);
+        
+    } catch (error) {
+        console.error(`❌ /planner 라우트 에러:`, error);
+        res.status(500).send(`
+            <html>
+                <head><title>서버 오류</title></head>
+                <body>
+                    <h1>서버 오류가 발생했습니다</h1>
+                    <p>오류 메시지: ${error.message}</p>
+                    <pre>${error.stack}</pre>
+                </body>
+            </html>
+        `);
+    }
 });
 
 // 세션 체크 API (JWT + 세션 이중 지원)
