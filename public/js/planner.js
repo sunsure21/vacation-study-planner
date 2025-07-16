@@ -289,35 +289,21 @@ function updateWeeklySchedule() {
         const dateKey = toYYYYMMDD(d);
         const daySchedules = schedulesByDate[dateKey] || [];
         
-        // 하루 총 시간 (24시간 = 1440분)
-        const totalDayMinutes = 24 * 60;
+        // 해당 날짜의 실제 순공 시간 슬롯들을 계산해서 사용
+        const studySlots = daySchedules.filter(s => s.isStudySlot);
+        let totalStudySlotMinutes = 0;
         
-        // 등록된 스케줄들의 총 시간 계산 (순공 시간 제외)
-        let occupiedMinutes = 0;
-        daySchedules.forEach(schedule => {
-            if (!schedule.isStudySlot && schedule.startTime && schedule.endTime) {
-                const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
-                const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
-                
-                // 취침시간의 경우 다음날까지 이어지는 시간 계산
-                if (schedule.category === '취침') {
-                    // 취침시간이 다음날로 넘어가는 경우 (예: 23:00 - 07:00)
-                    if (endMinutes > startMinutes) {
-                        // 정상적인 시간 계산 (같은 날 내에서)
-                        occupiedMinutes += (endMinutes - startMinutes);
-                    } else {
-                        // 다음날로 넘어가는 경우 (예: 23:00 - 07:00)
-                        // 23:00부터 24:00까지 + 00:00부터 07:00까지
-                        occupiedMinutes += (24 * 60 - startMinutes) + endMinutes;
-                    }
-                } else {
-                    occupiedMinutes += (endMinutes - startMinutes);
-                }
-            }
-        });
+        if (studySlots.length > 0) {
+            // 순공 슬롯이 있으면 그 시간들의 합
+            studySlots.forEach(slot => {
+                totalStudySlotMinutes += slot.duration || 0;
+            });
+        } else {
+            // 순공 슬롯이 없으면 기본 15시간 (09:00~24:00)
+            totalStudySlotMinutes = 15 * 60; // 900분
+        }
         
-        // 순공 가능 시간 = 24시간 - 점유된 시간
-        const availableStudyMinutes = totalDayMinutes - occupiedMinutes;
+        const availableStudyMinutes = totalStudySlotMinutes;
         const availableStudyHours = Math.max(0, Math.floor(availableStudyMinutes / 60));
         const availableStudyMinutesRemainder = Math.max(0, availableStudyMinutes % 60);
         
@@ -759,7 +745,7 @@ function minutesToTime(minutes) {
 
 function calculateStudyPeriods(busyTimes) {
     const dayStart = 9 * 60; // 9:00
-    const dayEnd = 22 * 60; // 22:00
+    const dayEnd = 24 * 60; // 24:00
     
     // 바쁜 시간들을 정렬
     busyTimes.sort((a, b) => a.start - b.start);
