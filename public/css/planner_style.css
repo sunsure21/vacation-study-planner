@@ -25,6 +25,7 @@ body {
     margin: 0;
     padding: 0;
     line-height: 1.6;
+    font-size: 16px; /* PC 기본 폰트 크기 */
 }
 
 /* 모달이 열렸을 때 배경 스크롤 방지 */
@@ -2343,5 +2344,93 @@ body.modal-open {
         margin: 0 -3px;
         padding: 8px;
         width: calc(100% + 6px);
+    }
+}
+
+/* PC 버전 폰트 크기 최적화 (1200px 이상) */
+@media (min-width: 1200px) {
+    body {
+        font-size: 18px; /* PC에서 기본 폰트 크기 증가 */
+    }
+    
+    /* 메인 헤더 */
+    .main-header h1 {
+        font-size: 32px; /* 28px → 32px */
+    }
+    
+    .current-time-display {
+        font-size: 16px; /* 14px → 16px */
+    }
+    
+    /* 섹션 헤더 */
+    .section-header h2 {
+        font-size: 24px; /* 20px → 24px */
+    }
+    
+    /* 일반 텍스트 */
+    p, li, span {
+        font-size: 18px; /* 기본 크기에서 증가 */
+    }
+    
+    /* 방학 기간 표시 */
+    #vacation-period-display {
+        font-size: 20px; /* 18px → 20px */
+    }
+    
+    /* 이번주 주요 일정 */
+    .weekly-schedule-section h2 {
+        font-size: 24px; /* 20px → 24px */
+    }
+    
+    .weekly-column h4 {
+        font-size: 18px; /* 16px → 18px */
+    }
+    
+    .weekly-column p {
+        font-size: 16px; /* 14px → 16px */
+    }
+    
+    /* 캘린더 */
+    .day-header {
+        font-size: 16px; /* 14px → 16px */
+    }
+    
+    .day-number {
+        font-size: 16px; /* 14px → 16px */
+    }
+    
+    .schedule-item {
+        font-size: 12px; /* 10px → 12px */
+    }
+    
+    /* 모달 텍스트 */
+    .modal-header h2 {
+        font-size: 24px; /* 20px → 24px */
+    }
+    
+    .form-group label {
+        font-size: 18px; /* 16px → 18px */
+    }
+    
+    .form-group input,
+    .form-group select {
+        font-size: 16px; /* 14px → 16px */
+    }
+    
+    /* 버튼 */
+    .btn-register,
+    .btn-mbti,
+    .setup-btn {
+        font-size: 18px; /* 기본보다 크게 */
+    }
+    
+    /* 정보 박스 */
+    .info-item h4 {
+        font-size: 20px; /* 18px → 20px */
+    }
+    
+    .info-item p,
+    .info-item li {
+        font-size: 16px; /* 14px → 16px */
     }
 }
