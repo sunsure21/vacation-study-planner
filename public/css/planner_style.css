@@ -125,7 +125,7 @@ body.modal-open {
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background-color: var(--secondary-bg-color);
     padding: 20px;
     /* 추가: 모바일에서 오버플로우 방지 */
     overflow-x: hidden;
@@ -156,9 +156,11 @@ body.modal-open {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    padding: 20px 0;
-    border-bottom: 2px solid var(--border-color);
+    margin: -40px -40px 30px -40px;
+    padding: 30px 40px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
 }
 
 .title-section {
@@ -170,10 +172,33 @@ body.modal-open {
 
 .calendar-icon {
     font-size: 24px;
+    color: white;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logout-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
 }
 
 .main-header h1 {
-    color: var(--text-color);
+    color: white;
     font-size: 28px;
     font-weight: 700;
     margin: 0;
@@ -183,16 +208,16 @@ body.modal-open {
     text-align: right;
     font-size: 14px;
     color: var(--text-color);
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    background: rgba(255, 255, 255, 0.2);
     padding: 8px 16px;
     border-radius: 20px;
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 #current-date-time {
     font-weight: 600;
-    color: var(--primary-color);
+    color: white;
 }
 
 /* 방학 기간 표시 박스 */
