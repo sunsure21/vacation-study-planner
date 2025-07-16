@@ -378,18 +378,25 @@ function updateWeeklySchedule() {
 
 // 데이터 관리 함수
 async function loadDataFromStorage() {
+    console.log('📊 데이터 로딩 시작...');
+    
     await getCurrentUser(true); // 이미 세션 체크를 했으므로 중복 체크 건너뛰기
     
     if (!currentUser) {
-        console.log('사용자 정보를 불러올 수 없습니다. 로컬 스토리지를 사용합니다.');
+        console.log('⚠️ 사용자 정보를 불러올 수 없습니다. 로컬 스토리지를 사용합니다.');
         return loadFromLocalStorage();
     }
     
     try {
+        console.log('🌐 KV 데이터베이스에서 데이터 로드 시도...');
         // KV 데이터베이스에서 전체 데이터 로드
         const response = await fetch('/api/user/data');
+        console.log(`📡 API 응답 상태: ${response.status}`);
+        
         if (response.ok) {
             const result = await response.json();
+            console.log('📄 API 응답 데이터:', result);
+            
             if (result.success && result.data) {
                 const data = result.data;
                 
@@ -398,34 +405,41 @@ async function loadDataFromStorage() {
                                  Object.keys(data.studyRecords || {}).length > 0 || 
                                  Object.keys(data.completedSchedules || {}).length > 0;
                 
+                console.log(`📊 KV 데이터 존재 여부: ${hasKVData}`);
+                
                 if (hasKVData) {
                     // KV에서 데이터 로드
                     if (data.vacationPeriod) {
                         vacationStartDate = new Date(data.vacationPeriod.start + 'T00:00:00');
                         vacationEndDate = new Date(data.vacationPeriod.end + 'T00:00:00');
+                        console.log(`📅 방학 기간 로드: ${vacationStartDate} ~ ${vacationEndDate}`);
                     }
                     
                     schedules = data.schedules || [];
                     studyRecords = data.studyRecords || {};
                     completedSchedules = data.completedSchedules || {};
                     
-                    console.log('KV 데이터베이스에서 데이터를 성공적으로 로드했습니다.');
+                    console.log('✅ KV 데이터베이스에서 데이터를 성공적으로 로드했습니다.');
                     return;
                 } else {
                     // KV에 데이터가 없으면 로컬 스토리지에서 마이그레이션 시도
-                    console.log('KV에 저장된 데이터가 없습니다. 로컬 스토리지에서 마이그레이션을 시도합니다.');
+                    console.log('📦 KV에 저장된 데이터가 없습니다. 로컬 스토리지에서 마이그레이션을 시도합니다.');
                     await migrateFromLocalStorage();
                     return;
                 }
+            } else {
+                console.log('⚠️ API 응답이 유효하지 않습니다. 로컬 스토리지를 사용합니다.');
+                return loadFromLocalStorage();
             }
+        } else {
+            console.log(`❌ API 호출 실패 (${response.status}). 로컬 스토리지를 사용합니다.`);
+            return loadFromLocalStorage();
         }
     } catch (error) {
-        console.error('KV 데이터 로드 오류:', error);
+        console.error('❌ KV 데이터 로드 중 오류:', error);
+        console.log('🔄 로컬 스토리지로 폴백합니다.');
+        return loadFromLocalStorage();
     }
-    
-    // KV 로드 실패 시 로컬 스토리지 사용
-    console.log('KV 로드 실패. 로컬 스토리지를 사용합니다.');
-    loadFromLocalStorage();
 }
 
 // 로컬 스토리지에서 KV로 데이터 마이그레이션
