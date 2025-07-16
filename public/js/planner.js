@@ -636,6 +636,14 @@ function shouldIncludeSchedule(schedule, date) {
         return false;
     } else {
         // 반복 타입 (기본값)
+        
+        // 반복 일정의 기간 제한 확인
+        if (schedule.periodStart && schedule.periodEnd) {
+            if (dateString < schedule.periodStart || dateString > schedule.periodEnd) {
+                return false;
+            }
+        }
+        
         switch (schedule.repeatType) {
             case 'daily':
                 return true;
@@ -1249,6 +1257,14 @@ function editSchedule(scheduleId) {
                 checkbox.checked = schedule.selectedDays && schedule.selectedDays.includes(parseInt(checkbox.value));
             });
         }
+        
+        // 반복 기간 설정 불러오기
+        if (schedule.periodStart) {
+            document.getElementById('repeat-period-start').value = schedule.periodStart;
+        }
+        if (schedule.periodEnd) {
+            document.getElementById('repeat-period-end').value = schedule.periodEnd;
+        }
     } else if (scheduleType === 'specific') {
         document.getElementById('specific-date-section').style.display = 'block';
         
@@ -1401,6 +1417,10 @@ function resetScheduleForm() {
     // 기간 옵션 초기화
     document.getElementById('period-start').value = '';
     document.getElementById('period-end').value = '';
+    
+    // 반복 기간 옵션 초기화
+    document.getElementById('repeat-period-start').value = '';
+    document.getElementById('repeat-period-end').value = '';
     
     // 시간 선택 초기화
     populateTimeSelects();
@@ -1561,6 +1581,19 @@ function handleScheduleSubmit(e) {
                 showToast('요일별 반복을 선택했을 때는 최소 하나의 요일을 선택해야 합니다.', 'error');
                 return;
             }
+        }
+        
+        // 반복 일정의 기간 설정 처리
+        const repeatStartValue = document.getElementById('repeat-period-start').value;
+        const repeatEndValue = document.getElementById('repeat-period-end').value;
+        
+        if (repeatStartValue && repeatEndValue) {
+            if (new Date(repeatStartValue) > new Date(repeatEndValue)) {
+                showToast('종료 날짜는 시작 날짜보다 늦어야 합니다.', 'error');
+                return;
+            }
+            periodStart = repeatStartValue;
+            periodEnd = repeatEndValue;
         }
     } else if (scheduleType === 'specific') {
         // 지정 타입 처리

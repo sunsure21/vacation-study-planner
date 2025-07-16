@@ -416,6 +416,84 @@ html {
     box-shadow: 0 2px 8px rgba(124, 94, 245, 0.4);
 }
 
+/* 반복 기간 설정 스타일 */
+.repeat-period-section {
+    margin-top: 20px;
+    padding: 16px;
+    background-color: var(--common-200);
+    border-radius: 12px;
+    border: 1px solid var(--common-300);
+}
+
+.repeat-period-section label {
+    font-weight: 600;
+    color: var(--common-800);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.period-description {
+    font-size: 14px;
+    color: var(--common-600);
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+.period-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.period-inputs .form-group {
+    margin-bottom: 0;
+}
+
+.period-inputs .form-group label {
+    font-size: 14px;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.period-inputs .form-group input[type="date"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--common-300);
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: var(--common-100);
+    transition: border-color 0.2s;
+}
+
+.period-inputs .form-group input[type="date"]:focus {
+    outline: none;
+    border-color: var(--primary-purple-2);
+    box-shadow: 0 0 0 3px rgba(124, 94, 245, 0.1);
+}
+
+/* 모바일 환경에서 반복 기간 설정 최적화 */
+@media (max-width: 768px) {
+    .period-inputs {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .repeat-period-section {
+        padding: 12px;
+        margin-top: 16px;
+    }
+    
+    .period-description {
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+    
+    .period-inputs .form-group input[type="date"] {
+        padding: 12px 10px;
+        font-size: 16px; /* iOS 줌 방지 */
+    }
+}
+
 .form-actions {
     display: flex !important;
     justify-content: flex-end;
