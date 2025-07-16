@@ -216,10 +216,16 @@ function requireAuth(req, res, next) {
     console.log(`  - 사용자: ${userEmail}`);
     
     // JWT 인증 시도
-    const jwtResult = authenticateJWT(req, res, () => true);
-    if (jwtResult !== null) {
-        console.log(`✅ JWT 인증 통과 - ${req.user.email}`);
-        return next();
+    if (hasJWT) {
+        const jwt = require('jsonwebtoken');
+        try {
+            const decoded = jwt.verify(req.cookies.auth_token, process.env.SESSION_SECRET || 'your-secret-key-here');
+            req.user = decoded;
+            console.log(`✅ JWT 인증 통과 - ${decoded.email}`);
+            return next();
+        } catch (err) {
+            console.log(`❌ JWT 인증 실패:`, err.message);
+        }
     }
     
     // 세션 인증 시도
