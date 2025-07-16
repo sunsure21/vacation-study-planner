@@ -108,3 +108,4 @@ This project is licensed under the MIT License.
 
 프로젝트 관련 문의: wyou@wonderslab.kr # 재배포 트리거 Wed Jul 16 14:01:48 KST 2025
 # API 디렉토리 제거 완료 Wed Jul 16 14:09:40 KST 2025
+# 캐시 무효화 Wed Jul 16 14:14:31 KST 2025
