@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const session = require('express-session');
 const passport = require('passport');
@@ -15,6 +16,9 @@ const port = 3001;
 if (process.env.VERCEL) {
     app.set('trust proxy', 1);
 }
+
+// 미들웨어 설정
+app.use(cookieParser()); // 쿠키 파서 추가
 
 // Redis 세션 저장소 설정 (Vercel 서버리스에서 세션 유지)
 let sessionStore;
@@ -205,7 +209,7 @@ function requireAuth(req, res, next) {
         const userEmail = req.user ? req.user.email : null;
         const hasSession = !!req.session;
         const hasPassportData = !!(req.session && req.session.passport);
-        const hasJWT = !!req.cookies.auth_token;
+        const hasJWT = !!(req.cookies && req.cookies.auth_token);
         
         console.log(`🛡️ 인증 미들웨어 체크:`);
         console.log(`  - 요청 URL: ${req.url}`);
@@ -215,6 +219,7 @@ function requireAuth(req, res, next) {
         console.log(`  - JWT 토큰: ${hasJWT}`);
         console.log(`  - 인증 상태: ${isAuth}`);
         console.log(`  - 사용자: ${userEmail}`);
+        console.log(`  - Cookies 객체 존재: ${!!req.cookies}`);
         
         // JWT 인증 시도
         if (hasJWT) {

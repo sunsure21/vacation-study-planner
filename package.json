@@ -18,6 +18,7 @@
     "@google/generative-ai": "^0.24.1",
     "@upstash/redis": "^1.35.1",
     "connect-redis": "^9.0.0",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "express-session": "^1.18.1",
