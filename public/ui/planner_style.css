@@ -418,8 +418,8 @@ html {
 
 /* 반복 기간 설정 스타일 */
 .repeat-period-section {
-    margin-top: 20px;
-    padding: 16px;
+    margin-top: 24px;
+    padding: 20px;
     background-color: var(--common-200);
     border-radius: 12px;
     border: 1px solid var(--common-300);
@@ -428,21 +428,25 @@ html {
 .repeat-period-section label {
     font-weight: 600;
     color: var(--common-800);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     display: block;
 }
 
 .period-description {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--common-600);
-    margin-bottom: 16px;
-    line-height: 1.4;
+    margin-bottom: 18px;
+    line-height: 1.5;
+    padding: 8px 12px;
+    background-color: var(--common-100);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-purple-2);
 }
 
 .period-inputs {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 20px;
 }
 
 .period-inputs .form-group {
@@ -474,23 +478,37 @@ html {
 /* 모바일 환경에서 반복 기간 설정 최적화 */
 @media (max-width: 768px) {
     .period-inputs {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr; /* 모바일에서도 가로 정렬 유지 */
         gap: 12px;
     }
     
     .repeat-period-section {
-        padding: 12px;
-        margin-top: 16px;
+        padding: 16px;
+        margin-top: 20px;
     }
     
     .period-description {
-        font-size: 13px;
-        margin-bottom: 12px;
+        font-size: 12px;
+        margin-bottom: 14px;
+        padding: 6px 10px;
     }
     
     .period-inputs .form-group input[type="date"] {
-        padding: 12px 10px;
+        padding: 10px 8px;
         font-size: 16px; /* iOS 줌 방지 */
+    }
+    
+    .period-inputs .form-group label {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+}
+
+/* 더 작은 모바일 화면 (360px 이하)에서만 세로 정렬 */
+@media (max-width: 360px) {
+    .period-inputs {
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
 }
 
