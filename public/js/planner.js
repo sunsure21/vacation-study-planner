@@ -637,9 +637,13 @@ function shouldIncludeSchedule(schedule, date) {
     } else {
         // 반복 타입 (기본값)
         
-        // 반복 일정의 기간 제한 확인
+        // 반복 일정의 기간 제한 확인 (Date 객체로 정확한 비교)
         if (schedule.periodStart && schedule.periodEnd) {
-            if (dateString < schedule.periodStart || dateString > schedule.periodEnd) {
+            const scheduleDate = new Date(dateString + 'T00:00:00');
+            const startDate = new Date(schedule.periodStart + 'T00:00:00');
+            const endDate = new Date(schedule.periodEnd + 'T00:00:00');
+            
+            if (scheduleDate < startDate || scheduleDate > endDate) {
                 return false;
             }
         }
