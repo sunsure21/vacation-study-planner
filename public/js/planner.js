@@ -947,7 +947,9 @@ function showDayModal(dateKey, daySchedules) {
     const title = document.getElementById('day-summary-title');
     const content = document.getElementById('day-summary-content');
     
-    const date = new Date(dateKey + 'T00:00:00');
+    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
+    const [year, month, day] = dateKey.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     title.textContent = `${formatDate(date)} 요약`;
     
     // 통계 계산
@@ -978,8 +980,9 @@ function showDayModal(dateKey, daySchedules) {
         }
     });
     
-    // 순공 가능 시간 = 24시간 - 점유된 시간
-    const totalPossibleTime = totalDayMinutes - occupiedMinutes;
+    // 순공 가능 시간 = 실제 생성된 순공 슬롯들의 합계
+    const availableStudySlots = daySchedules.filter(s => s.isStudySlot);
+    const totalPossibleTime = availableStudySlots.reduce((sum, slot) => sum + (slot.duration || 0), 0);
     
     const actualStudyTime = studyRecords[dateKey] ? 
         Object.values(studyRecords[dateKey]).reduce((sum, record) => sum + (record.minutes || 0), 0) : 0;
@@ -1654,7 +1657,13 @@ function handleScheduleSubmit(e) {
     for (let date = new Date(vacationStartDate); date <= vacationEndDate; date.setDate(date.getDate() + 1)) {
         if (shouldIncludeSchedule(newSchedule, date)) {
             const dateKey = toYYYYMMDD(date);
-            const existingSchedules = schedulesByDate[dateKey] || [];
+            let existingSchedules = schedulesByDate[dateKey] || [];
+            
+            // 수정 모드일 때는 현재 수정 중인 스케줄을 제외하고 충돌 검증
+            if (isEditMode && editId) {
+                existingSchedules = existingSchedules.filter(schedule => schedule.id !== editId);
+            }
+            
             const conflict = checkTimeConflict(startTime, endTime, existingSchedules, category);
             
             if (conflict.conflict) {
