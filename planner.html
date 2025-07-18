@@ -132,8 +132,10 @@
                             <h4>📏 시스템 기준</h4>
                             <ul>
                                 <li><strong>기본 순공 가능 시간:</strong> 매일 09:00 ~ 24:00 (15시간)</li>
-                                <li><strong>학원 시간 제외:</strong> 학원 시간 앞뒤 1시간씩 자동 차감</li>
+                                <li><strong>학원/과외:</strong> 자택 외의 외부 수업. 이동시간 고려하여 앞뒤 1시간씩 자동 차감</li>
+                                <li><strong>자택과외:</strong> 이동 없이 자택에서 이뤄지는 수업 (시간 차감 없음)</li>
                                 <li><strong>취침 시간 제외:</strong> 취침 시간 앞뒤 1시간씩 자동 차감</li>
+                                <li><strong>기타 카테고리:</strong> 공부 외에 개인 일정 (병원, 약속, 외출 등)</li>
                                 <li><strong>최소 블록 시간:</strong> 1시간 이상 연속 가능한 시간대만 표시</li>
                             </ul>
                         </div>
@@ -273,7 +275,8 @@
                         <select id="schedule-category" name="schedule-category" required>
                             <option value="식사">식사</option>
                             <option value="취침">취침</option>
-                            <option value="학원">학원 (앞뒤 1시간씩 순공시간에서 제외)</option>
+                            <option value="학원/과외">학원/과외 (앞뒤 1시간씩 순공시간에서 제외)</option>
+                            <option value="자택과외">자택과외</option>
                             <option value="기타">기타</option>
                         </select>
                     </div>

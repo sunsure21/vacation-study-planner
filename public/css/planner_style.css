@@ -482,7 +482,8 @@ body.modal-open {
 
 .schedule-item.식사 { background: #f59e0b; color: white; }
 .schedule-item.취침 { background: #6366f1; color: white; }
-.schedule-item.학원 { background: #10b981; color: white; }
+.schedule-item.학원\/과외 { background: #10b981; color: white; }
+.schedule-item.자택과외 { background: #16a34a; color: white; }
 .schedule-item.기타 { background: #8b5cf6; color: white; }
 
 /* 순공시간 스타일 */
