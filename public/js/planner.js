@@ -680,8 +680,9 @@ function addStudyTimeSlots(dateKey) {
         const start = timeToMinutes(schedule.startTime, false, schedule.category);
         const end = timeToMinutes(schedule.endTime, true, schedule.category);
         
-        if (schedule.category === '학원/과외') {
+        if (schedule.category === '학원/과외' || schedule.category === '학원') {
             // 학원/과외: 앞뒤 1시간씩 추가로 제외 (이동시간 고려)
+            // 기존 '학원' 카테고리도 호환 처리
             busyTimes.push({
                 start: Math.max(0, start - 60), // 1시간 전 (0시 이전은 불가)
                 end: Math.min(24 * 60, end + 60) // 1시간 후 (24시 이후는 불가)
@@ -1517,7 +1518,7 @@ function handleScheduleSubmit(e) {
             let blockedEnd = existingEnd;
             
             // 학원/과외와 취침의 경우 앞뒤 시간도 차단
-            if (schedule.category === '학원/과외') {
+            if (schedule.category === '학원/과외' || schedule.category === '학원') {
                 blockedStart = Math.max(0, existingStart - 60);
                 blockedEnd = Math.min(24 * 60, existingEnd + 60);
             } else if (schedule.category === '취침') {
@@ -1552,7 +1553,7 @@ function handleScheduleSubmit(e) {
             if (newStartMinutes < blockedEnd && newEndMinutes > blockedStart) {
                 return {
                     conflict: true,
-                    message: schedule.category === '학원/과외' ? 
+                    message: (schedule.category === '학원/과외' || schedule.category === '학원') ? 
                         `학원/과외 시간(${schedule.startTime}-${schedule.endTime})의 앞뒤 1시간은 등록할 수 없습니다.` :
                         schedule.category === '취침' ?
                         `취침 시간(${schedule.startTime}-${schedule.endTime})의 앞뒤 1시간은 등록할 수 없습니다.` :
