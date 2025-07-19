@@ -408,8 +408,11 @@ async function loadDataFromStorage() {
                 if (hasKVData) {
                     // KV에서 데이터 로드
                     if (data.vacationPeriod) {
-                        vacationStartDate = new Date(data.vacationPeriod.start + 'T00:00:00');
-                        vacationEndDate = new Date(data.vacationPeriod.end + 'T00:00:00');
+                        // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
+                        const [startYear, startMonth, startDay] = data.vacationPeriod.start.split('-').map(Number);
+                        const [endYear, endMonth, endDay] = data.vacationPeriod.end.split('-').map(Number);
+                        vacationStartDate = new Date(startYear, startMonth - 1, startDay);
+                        vacationEndDate = new Date(endYear, endMonth - 1, endDay);
                         console.log(`📅 방학 기간 로드: ${vacationStartDate} ~ ${vacationEndDate}`);
                     }
                     
@@ -462,8 +465,11 @@ function loadFromLocalStorage() {
     try {
         const savedVacation = JSON.parse(localStorage.getItem(getUserStorageKey('vacationPeriod')));
         if (savedVacation && savedVacation.start && savedVacation.end) {
-            vacationStartDate = new Date(savedVacation.start + 'T00:00:00');
-            vacationEndDate = new Date(savedVacation.end + 'T00:00:00');
+            // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
+            const [startYear, startMonth, startDay] = savedVacation.start.split('-').map(Number);
+            const [endYear, endMonth, endDay] = savedVacation.end.split('-').map(Number);
+            vacationStartDate = new Date(startYear, startMonth - 1, startDay);
+            vacationEndDate = new Date(endYear, endMonth - 1, endDay);
         }
     } catch (e) {
         console.error("Error loading vacation period:", e);
@@ -651,9 +657,13 @@ function shouldIncludeSchedule(schedule, date) {
         
         // 반복 일정의 기간 제한 확인 (Date 객체로 정확한 비교)
         if (schedule.periodStart && schedule.periodEnd) {
-            const scheduleDate = new Date(dateString + 'T00:00:00');
-            const startDate = new Date(schedule.periodStart + 'T00:00:00');
-            const endDate = new Date(schedule.periodEnd + 'T00:00:00');
+            // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
+            const [dateYear, dateMonth, dateDay] = dateString.split('-').map(Number);
+            const [startYear, startMonth, startDay] = schedule.periodStart.split('-').map(Number);
+            const [endYear, endMonth, endDay] = schedule.periodEnd.split('-').map(Number);
+            const scheduleDate = new Date(dateYear, dateMonth - 1, dateDay);
+            const startDate = new Date(startYear, startMonth - 1, startDay);
+            const endDate = new Date(endYear, endMonth - 1, endDay);
             
             if (scheduleDate < startDate || scheduleDate > endDate) {
                 return false;
@@ -1588,8 +1598,11 @@ function handleVacationSetup(e) {
         return;
     }
     
-    const start = new Date(startDate + 'T00:00:00');
-    const end = new Date(endDate + 'T00:00:00');
+    // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
+    const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
+    const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
+    const start = new Date(startYear, startMonth - 1, startDay);
+    const end = new Date(endYear, endMonth - 1, endDay);
     
     if (start >= end) {
         showToast('종료일은 시작일보다 늦어야 합니다.', 'error');
@@ -2462,7 +2475,9 @@ function updateWeeklyEvaluation() {
         
         // 방학 기간 내 날짜만 계산
         if (vacationStartDate && vacationEndDate) {
-            const currentDate = new Date(dateKey + 'T00:00:00');
+            // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
+            const [year, month, day] = dateKey.split('-').map(Number);
+            const currentDate = new Date(year, month - 1, day);
             if (currentDate < vacationStartDate || currentDate > vacationEndDate) {
                 continue; // 방학 기간 외 날짜는 제외
             }

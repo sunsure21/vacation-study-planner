@@ -44,21 +44,29 @@ function timeToMinutes(timeStr, isEndTime = false, category = '') {
 function shouldIncludeSchedule(schedule, date) {
     if (schedule.scheduleType === 'specific') {
         if (schedule.specificDate) {
-            const scheduleDate = new Date(schedule.specificDate + 'T00:00:00');
+            // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
+            const [year, month, day] = schedule.specificDate.split('-').map(Number);
+            const scheduleDate = new Date(year, month - 1, day);
             return toYYYYMMDD(date) === toYYYYMMDD(scheduleDate);
         } else if (schedule.specificWeekday !== null) {
             return date.getDay() === schedule.specificWeekday;
         }
     } else if (schedule.scheduleType === 'period') {
         if (schedule.periodStart && schedule.periodEnd) {
-            const startDate = new Date(schedule.periodStart + 'T00:00:00');
-            const endDate = new Date(schedule.periodEnd + 'T00:00:00');
+            // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
+            const [startYear, startMonth, startDay] = schedule.periodStart.split('-').map(Number);
+            const [endYear, endMonth, endDay] = schedule.periodEnd.split('-').map(Number);
+            const startDate = new Date(startYear, startMonth - 1, startDay);
+            const endDate = new Date(endYear, endMonth - 1, endDay);
             return date >= startDate && date <= endDate;
         }
     } else if (schedule.scheduleType === 'repeat') {
         if (schedule.periodStart && schedule.periodEnd) {
-            const startDate = new Date(schedule.periodStart + 'T00:00:00');
-            const endDate = new Date(schedule.periodEnd + 'T00:00:00');
+            // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
+            const [startYear, startMonth, startDay] = schedule.periodStart.split('-').map(Number);
+            const [endYear, endMonth, endDay] = schedule.periodEnd.split('-').map(Number);
+            const startDate = new Date(startYear, startMonth - 1, startDay);
+            const endDate = new Date(endYear, endMonth - 1, endDay);
             if (date < startDate || date > endDate) {
                 return false;
             }
@@ -89,8 +97,11 @@ async function loadSharedData() {
         completedSchedules = data.completedSchedules || {};
         
         if (data.vacationPeriod) {
-            vacationStartDate = new Date(data.vacationPeriod.start + 'T00:00:00');
-            vacationEndDate = new Date(data.vacationPeriod.end + 'T00:00:00');
+            // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
+            const [startYear, startMonth, startDay] = data.vacationPeriod.start.split('-').map(Number);
+            const [endYear, endMonth, endDay] = data.vacationPeriod.end.split('-').map(Number);
+            vacationStartDate = new Date(startYear, startMonth - 1, startDay);
+            vacationEndDate = new Date(endYear, endMonth - 1, endDay);
         }
         
         generateSchedulesByDate();
@@ -155,6 +166,31 @@ function generateStudySlots(dateKey) {
         }
     }
     
+    // 방학 첫날이 아닌 경우 전일 취침시간 고려
+    if (!isFirstVacationDay) {
+        const [year, month, day] = dateKey.split('-').map(Number);
+        const currentDate = new Date(year, month - 1, day);
+        const previousDate = new Date(currentDate);
+        previousDate.setDate(previousDate.getDate() - 1);
+        const previousDateKey = toYYYYMMDD(previousDate);
+        const previousSchedules = schedulesByDate[previousDateKey] || [];
+        
+        previousSchedules.forEach(schedule => {
+            if (schedule.category === '취침') {
+                const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
+                const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
+                
+                if (endMinutes < startMinutes) {
+                    // 전일 취침이 당일 새벽까지 이어지는 경우
+                    const endSlot = Math.floor(endMinutes / 30);
+                    for (let i = 0; i < endSlot && i < timeSlots.length; i++) {
+                        timeSlots[i] = true;
+                    }
+                }
+            }
+        });
+    }
+
     daySchedules.forEach(schedule => {
         const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
         const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
