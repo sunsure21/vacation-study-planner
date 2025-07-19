@@ -162,10 +162,8 @@ function generateStudySlots(dateKey) {
         let blockedStart = startMinutes;
         let blockedEnd = endMinutes;
         
-        if (schedule.category === '학원/과외' || schedule.category === '학원') {
-            blockedStart = Math.max(0, startMinutes - 60);
-            blockedEnd = Math.min(24 * 60, endMinutes + 60);
-        } else if (schedule.category === '취침') {
+        // 학원/과외도 실제 시간만 차단 (이동시간 제거)
+        if (schedule.category === '취침') {
             if (endMinutes > 24 * 60) {
                 for (let i = Math.floor(startMinutes / 30); i < 48; i++) {
                     timeSlots[i] = true;

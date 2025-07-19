@@ -767,13 +767,8 @@ function addStudyTimeSlots(dateKey) {
         const start = timeToMinutes(schedule.startTime, false, schedule.category);
         let end = timeToMinutes(schedule.endTime, true, schedule.category);
         
-        // 학원/과외의 경우 이동시간 포함
-        if (schedule.category === '학원/과외' || schedule.category === '학원') {
-            busyTimes.push({
-                start: Math.max(0, start - 60), // 1시간 전
-                end: Math.min(24 * 60, end + 60) // 1시간 후
-            });
-        } else if (schedule.category === '취침') {
+        // 모든 스케줄 실제 시간만 차단 (학원/과외 이동시간 차단 제거)
+        if (schedule.category === '취침') {
             // 취침의 경우 버퍼 없음
             if (end < start) {
                 // 다음날로 넘어가는 취침
@@ -1664,11 +1659,8 @@ function handleScheduleSubmit(e) {
             let blockedStart = existingStart;
             let blockedEnd = existingEnd;
             
-            // 학원/과외의 경우만 앞뒤 시간 차단
-            if (schedule.category === '학원/과외' || schedule.category === '학원') {
-                blockedStart = Math.max(0, existingStart - 60);
-                blockedEnd = Math.min(24 * 60, existingEnd + 60);
-            } else if (schedule.category === '취침') {
+            // 모든 스케줄 실제 시간만 차단 (이동시간 버퍼 제거)
+            if (schedule.category === '취침') {
                 // 취침 시간은 버퍼 없이 정확한 시간만 차단
                 if (existingEnd > 24 * 60) {
                     // 첫 번째 블록: 취침 시작부터 자정까지
@@ -1700,9 +1692,7 @@ function handleScheduleSubmit(e) {
             if (newStartMinutes < blockedEnd && newEndMinutes > blockedStart) {
                 return {
                     conflict: true,
-                    message: (schedule.category === '학원/과외' || schedule.category === '학원') ? 
-                        `학원/과외 시간(${schedule.startTime}-${schedule.endTime})의 이동시간(앞뒤 1시간)과 겹칩니다.` :
-                        `기존 스케줄(${schedule.startTime}-${schedule.endTime})과 시간이 겹칩니다.`
+                    message: `기존 스케줄(${schedule.startTime}-${schedule.endTime})과 시간이 겹칩니다.`
                 };
             }
         }
