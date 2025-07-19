@@ -2495,6 +2495,8 @@ function showShareModal() {
     // 링크 입력 필드 초기화
     document.getElementById('view-only-link').value = '';
     document.getElementById('record-link').value = '';
+    document.getElementById('view-only-link').placeholder = '링크를 생성해주세요';
+    document.getElementById('record-link').placeholder = '링크를 생성해주세요';
     
     // 버튼 상태 초기화
     document.getElementById('generate-share-links').style.display = 'block';
@@ -2513,11 +2515,16 @@ function closeShareModal() {
 // 기존 공유 링크 확인
 async function checkExistingShareLinks() {
     try {
+        // 로딩 상태 표시
+        document.getElementById('view-only-link').placeholder = '확인 중...';
+        document.getElementById('record-link').placeholder = '확인 중...';
+        
         const response = await fetch('/api/share/status', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-            }
+            },
+            credentials: 'include' // 세션 쿠키 포함
         });
         
         if (response.ok) {
@@ -2528,13 +2535,31 @@ async function checkExistingShareLinks() {
                 document.getElementById('view-only-link').value = `${baseUrl}/shared/view/${data.viewToken}`;
                 document.getElementById('record-link').value = `${baseUrl}/shared/record/${data.recordToken}`;
                 
+                // placeholder 제거
+                document.getElementById('view-only-link').placeholder = '';
+                document.getElementById('record-link').placeholder = '';
+                
                 // 버튼 상태 변경
                 document.getElementById('generate-share-links').style.display = 'none';
                 document.getElementById('revoke-share-links').style.display = 'block';
+            } else {
+                // 기존 링크 없음
+                document.getElementById('view-only-link').placeholder = '링크를 생성해주세요';
+                document.getElementById('record-link').placeholder = '링크를 생성해주세요';
             }
+        } else if (response.status === 302) {
+            // 로그인 필요
+            document.getElementById('view-only-link').placeholder = '로그인이 필요합니다';
+            document.getElementById('record-link').placeholder = '로그인이 필요합니다';
+            showToast('로그인이 필요합니다.', 'warning');
+        } else {
+            throw new Error('상태 확인 실패');
         }
     } catch (error) {
         console.error('공유 링크 상태 확인 오류:', error);
+        document.getElementById('view-only-link').placeholder = '확인 실패';
+        document.getElementById('record-link').placeholder = '확인 실패';
+        showToast('링크 상태 확인에 실패했습니다.', 'error');
     }
 }
 
@@ -2546,15 +2571,23 @@ async function generateShareLinks() {
     generateBtn.textContent = '생성 중...';
     generateBtn.disabled = true;
     
+    // 입력 필드도 로딩 상태로 변경
+    document.getElementById('view-only-link').placeholder = '생성 중...';
+    document.getElementById('record-link').placeholder = '생성 중...';
+    
     try {
         const response = await fetch('/api/share/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-            }
+            },
+            credentials: 'include' // 세션 쿠키 포함
         });
         
         if (!response.ok) {
+            if (response.status === 302) {
+                throw new Error('로그인이 필요합니다');
+            }
             throw new Error('링크 생성 실패');
         }
         
@@ -2565,6 +2598,10 @@ async function generateShareLinks() {
         document.getElementById('view-only-link').value = `${baseUrl}/shared/view/${data.viewToken}`;
         document.getElementById('record-link').value = `${baseUrl}/shared/record/${data.recordToken}`;
         
+        // placeholder 제거
+        document.getElementById('view-only-link').placeholder = '';
+        document.getElementById('record-link').placeholder = '';
+        
         // 버튼 상태 변경
         generateBtn.style.display = 'none';
         document.getElementById('revoke-share-links').style.display = 'block';
@@ -2573,7 +2610,16 @@ async function generateShareLinks() {
         
     } catch (error) {
         console.error('공유 링크 생성 오류:', error);
-        showToast('링크 생성에 실패했습니다.', 'error');
+        
+        // 에러 상태 표시
+        document.getElementById('view-only-link').placeholder = '생성 실패';
+        document.getElementById('record-link').placeholder = '생성 실패';
+        
+        if (error.message.includes('로그인')) {
+            showToast('로그인이 필요합니다. 페이지를 새로고침해주세요.', 'error');
+        } else {
+            showToast('링크 생성에 실패했습니다.', 'error');
+        }
     } finally {
         generateBtn.textContent = originalText;
         generateBtn.disabled = false;
@@ -2597,7 +2643,8 @@ async function revokeShareLinks() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-            }
+            },
+            credentials: 'include' // 세션 쿠키 포함
         });
         
         if (!response.ok) {
@@ -2607,6 +2654,8 @@ async function revokeShareLinks() {
         // 링크 필드 초기화
         document.getElementById('view-only-link').value = '';
         document.getElementById('record-link').value = '';
+        document.getElementById('view-only-link').placeholder = '링크를 생성해주세요';
+        document.getElementById('record-link').placeholder = '링크를 생성해주세요';
         
         // 버튼 상태 변경
         revokeBtn.style.display = 'none';
