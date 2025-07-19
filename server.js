@@ -228,6 +228,7 @@ function requireAuth(req, res, next) {
                 const decoded = jwt.verify(req.cookies.auth_token, process.env.SESSION_SECRET || 'your-secret-key-here');
                 req.user = decoded;
                 console.log(`✅ JWT 인증 통과 - ${decoded.email}`);
+                console.log(`🔍 req.user 설정됨:`, { email: decoded.email, id: decoded.id });
                 return next();
             } catch (err) {
                 console.log(`❌ JWT 인증 실패:`, err.message);
@@ -709,8 +710,14 @@ app.post('/mbti-coaching', async (req, res) => {
 // 공유 링크 상태 확인
 app.get('/api/share/status', requireAuth, async (req, res) => {
     try {
+        console.log('🔍 공유 상태 확인 API 시작');
+        console.log('🔍 req.user:', req.user);
+        console.log('🔍 req.session?.user:', req.session?.user);
+        
         // JWT 인증과 세션 인증 모두 지원
         const userEmail = req.user?.email || req.session?.user?.email;
+        
+        console.log('🔍 추출된 userEmail:', userEmail);
         
         if (!userEmail) {
             console.log('❌ 사용자 이메일을 찾을 수 없음');
@@ -739,7 +746,62 @@ app.get('/api/share/status', requireAuth, async (req, res) => {
     }
 });
 
-// 공유 링크 생성
+// 클라이언트 데이터 기반 공유 링크 생성 (인증 불필요)
+app.post('/api/share/create', async (req, res) => {
+    try {
+        console.log('📤 클라이언트 기반 공유 링크 생성 시작');
+        
+        const { vacationPeriod, schedules, studyRecords, completedSchedules, createdAt } = req.body;
+        
+        // 데이터 검증
+        if (!vacationPeriod || !vacationPeriod.start || !vacationPeriod.end) {
+            return res.status(400).json({ 
+                success: false, 
+                error: '방학 기간 정보가 필요합니다' 
+            });
+        }
+        
+        // 고유 토큰 생성
+        const viewToken = generateToken();
+        const recordToken = generateToken();
+        
+        const shareData = {
+            vacationPeriod,
+            schedules: schedules || [],
+            studyRecords: studyRecords || {},
+            completedSchedules: completedSchedules || {},
+            createdAt: createdAt || new Date().toISOString(),
+            viewToken,
+            recordToken
+        };
+        
+        // KV에 저장
+        await kv.set(`share:view:${viewToken}`, JSON.stringify(shareData));
+        await kv.set(`share:record:${recordToken}`, JSON.stringify(shareData));
+        
+        console.log('✅ 공유 데이터 저장 완료:', {
+            viewToken: viewToken.substring(0, 8) + '...',
+            recordToken: recordToken.substring(0, 8) + '...',
+            dataSize: JSON.stringify(shareData).length
+        });
+        
+        res.json({
+            success: true,
+            viewToken,
+            recordToken,
+            message: '공유 링크가 생성되었습니다'
+        });
+        
+    } catch (error) {
+        console.error('공유 링크 생성 오류:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: '서버 오류가 발생했습니다' 
+        });
+    }
+});
+
+// 공유 링크 생성 (기존 - 인증 필요)
 app.post('/api/share/generate', requireAuth, async (req, res) => {
     try {
         // JWT 인증과 세션 인증 모두 지원

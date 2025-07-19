@@ -2545,45 +2545,85 @@ function closeShareModal() {
     closeModal('share-modal');
 }
 
-// 공유 링크 자동 처리 (기존 링크 확인 → 없으면 생성)
+// 공유 링크 자동 처리 (클라이언트 기반)
 async function handleShareLinks() {
     try {
-        // 1️⃣ 먼저 기존 링크 확인
-        console.log('🔍 기존 공유 링크 확인 중...');
-        const statusResponse = await fetch('/api/share/status', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include'
-        });
+        console.log('🔍 클라이언트 기반 공유 링크 생성 시작...');
         
-        if (statusResponse.ok) {
-            const statusData = await statusResponse.json();
-            
-            if (statusData.hasActiveLinks) {
-                // ✅ 기존 링크 있음 - 표시
-                console.log('✅ 기존 공유 링크 발견');
-                displayExistingLinks(statusData.viewToken, statusData.recordToken);
-                return;
-            } else {
-                // 🔄 기존 링크 없음 - 새로 생성
-                console.log('🔄 새 공유 링크 생성 중...');
-                await generateNewLinks();
-                return;
-            }
-        } else if (statusResponse.status === 302) {
-            // 🚨 로그인 필요
-            handleLoginRequired();
+        // 🎯 로컬 데이터 수집
+        const shareData = collectCurrentPlannerData();
+        
+        if (!shareData || !shareData.vacationPeriod) {
+            showErrorMessage('공유할 데이터가 없습니다. 먼저 방학 기간을 설정해주세요.');
             return;
-        } else {
-            throw new Error('상태 확인 실패');
         }
+        
+        // 🔄 서버에 데이터 저장하고 토큰 생성
+        console.log('📤 서버에 공유 데이터 저장 중...');
+        await generateShareLinksFromData(shareData);
         
     } catch (error) {
         console.error('공유 링크 처리 오류:', error);
-        handleLinkError('링크 상태 확인에 실패했습니다.');
+        showManualLinkGeneration();
     }
+}
+
+// 현재 플래너의 모든 데이터 수집
+function collectCurrentPlannerData() {
+    try {
+        // 로컬스토리지에서 데이터 수집
+        const vacationPeriod = JSON.parse(localStorage.getItem('vacationPeriod'));
+        const schedules = JSON.parse(localStorage.getItem('schedules')) || [];
+        const studyRecords = JSON.parse(localStorage.getItem('studyRecords')) || {};
+        const completedSchedules = JSON.parse(localStorage.getItem('completedSchedules')) || {};
+        
+        console.log('📊 수집된 데이터:', {
+            vacationPeriod: !!vacationPeriod,
+            schedulesCount: schedules.length,
+            studyRecordsCount: Object.keys(studyRecords).length,
+            completedCount: Object.keys(completedSchedules).length
+        });
+        
+        return {
+            vacationPeriod,
+            schedules,
+            studyRecords,
+            completedSchedules,
+            createdAt: new Date().toISOString()
+        };
+    } catch (error) {
+        console.error('데이터 수집 오류:', error);
+        return null;
+    }
+}
+
+// 수동 링크 생성 옵션 표시
+function showManualLinkGeneration() {
+    const content = document.getElementById('share-modal-content');
+    
+    content.innerHTML = `
+        <div class="share-content">
+            <p>🔗 자동 링크 확인이 실패했습니다.</p>
+            <p>수동으로 링크를 생성하시겠습니까?</p>
+            
+            <div class="manual-generation">
+                <button class="generate-btn" onclick="generateNewLinks()">
+                    🔄 새 링크 생성
+                </button>
+                <button class="retry-btn" onclick="handleShareLinks()">
+                    🔄 다시 시도
+                </button>
+            </div>
+            
+            <div class="share-info">
+                <h4>📋 공유 방법:</h4>
+                <ul>
+                    <li><strong>조회 전용:</strong> 다른 사람이 내 플래너를 볼 수만 있습니다</li>
+                    <li><strong>실적 입력:</strong> 다른 사람이 내 순공 시간을 입력할 수 있습니다</li>
+                </ul>
+            </div>
+        </div>
+    `;
 }
 
 // 기존 링크 표시
@@ -2602,11 +2642,126 @@ function displayExistingLinks(viewToken, recordToken) {
     showToast('기존 공유 링크를 불러왔습니다.', 'success');
 }
 
+// 새로 생성된 링크 표시
+function displayNewLinks(viewToken, recordToken) {
+    const content = document.getElementById('share-modal-content');
+    const baseUrl = window.location.origin;
+    const viewUrl = `${baseUrl}/view/${viewToken}`;
+    const recordUrl = `${baseUrl}/record/${recordToken}`;
+    
+    content.innerHTML = `
+        <div class="share-content">
+            <h3>📝 새 공유 링크가 생성되었습니다!</h3>
+            
+            <div class="share-links">
+                <div class="link-section">
+                    <h4>👀 조회 전용 링크</h4>
+                    <p class="link-description">다른 사람이 내 플래너를 볼 수만 있습니다</p>
+                    <div class="link-container">
+                        <input type="text" value="${viewUrl}" readonly class="share-link-input" id="view-link">
+                        <button class="copy-btn" onclick="copyToClipboard('view-link', '조회 전용 링크가 복사되었습니다!')">📋 복사</button>
+                    </div>
+                </div>
+                
+                <div class="link-section">
+                    <h4>✏️ 실적 입력 링크</h4>
+                    <p class="link-description">다른 사람이 내 실적을 입력할 수 있습니다</p>
+                    <div class="link-container">
+                        <input type="text" value="${recordUrl}" readonly class="share-link-input" id="record-link">
+                        <button class="copy-btn" onclick="copyToClipboard('record-link', '실적 입력 링크가 복사되었습니다!')">📋 복사</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="share-actions">
+                <button class="revoke-btn" onclick="revokeShareLinks()">🗑️ 링크 삭제</button>
+                <button class="new-link-btn" onclick="generateShareLinksFromData(collectCurrentPlannerData())">🔄 새 링크 생성</button>
+            </div>
+            
+            <div class="share-info">
+                <p><strong>💡 사용 방법:</strong></p>
+                <ul>
+                    <li><strong>조회 전용:</strong> 친구들이 내 계획을 볼 수 있습니다</li>
+                    <li><strong>실적 입력:</strong> 스터디 메이트가 내 실적을 기록할 수 있습니다</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    
+    showToast('새 공유 링크가 생성되었습니다!', 'success');
+}
+
+// 에러 메시지 표시
+function showErrorMessage(message) {
+    const content = document.getElementById('share-modal-content');
+    content.innerHTML = `
+        <div class="share-content">
+            <h3>⚠️ 오류 발생</h3>
+            <p>${message}</p>
+            <div class="error-actions">
+                <button class="retry-btn" onclick="handleShareLinks()">
+                    🔄 다시 시도
+                </button>
+                <button class="close-btn" onclick="closeShareModal()">
+                    ❌ 닫기
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// 데이터 기반 공유 링크 생성
+async function generateShareLinksFromData(shareData) {
+    try {
+        // 로딩 상태 표시
+        const content = document.getElementById('share-modal-content');
+        content.innerHTML = `
+            <div class="share-content">
+                <p>🔄 공유 링크를 생성하고 있습니다...</p>
+                <div class="loading-spinner"></div>
+            </div>
+        `;
+        
+        const response = await fetch('/api/share/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(shareData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('✅ 공유 링크 생성 성공');
+            displayNewLinks(data.viewToken, data.recordToken);
+        } else {
+            throw new Error(data.error || '링크 생성 실패');
+        }
+        
+    } catch (error) {
+        console.error('링크 생성 오류:', error);
+        showErrorMessage(`링크 생성에 실패했습니다: ${error.message}`);
+    }
+}
+
 // 새 링크 생성
 async function generateNewLinks() {
     try {
-        document.getElementById('view-only-link').placeholder = '새 링크 생성 중...';
-        document.getElementById('record-link').placeholder = '새 링크 생성 중...';
+        console.log('🔄 새 공유 링크 생성 중...');
+        
+        // 로딩 상태 표시
+        const content = document.getElementById('share-modal-content');
+        content.innerHTML = `
+            <div class="share-content">
+                <p>🔄 새 공유 링크를 생성하고 있습니다...</p>
+                <div class="loading-spinner"></div>
+            </div>
+        `;
         
         const response = await fetch('/api/share/generate', {
             method: 'POST',
@@ -2621,27 +2776,60 @@ async function generateNewLinks() {
                 handleLoginRequired();
                 return;
             }
-            throw new Error('링크 생성 실패');
+            if (response.status === 500) {
+                console.error('서버 오류 발생 - JWT 인증 문제일 수 있음');
+                // 페이지 새로고침 제안
+                content.innerHTML = `
+                    <div class="share-content">
+                        <p>⚠️ 서버 연결에 문제가 있습니다.</p>
+                        <p>페이지를 새로고침하고 다시 시도해주세요.</p>
+                        <button class="retry-btn" onclick="window.location.reload()">
+                            🔄 페이지 새로고침
+                        </button>
+                        <button class="retry-btn" onclick="generateNewLinks()">
+                            🔄 다시 시도
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            throw new Error(`링크 생성 실패: ${response.status}`);
         }
         
         const data = await response.json();
         const baseUrl = window.location.origin;
         
-        // 새 링크 표시
-        document.getElementById('view-only-link').value = `${baseUrl}/shared/view/${data.viewToken}`;
-        document.getElementById('record-link').value = `${baseUrl}/shared/record/${data.recordToken}`;
-        document.getElementById('view-only-link').placeholder = '';
-        document.getElementById('record-link').placeholder = '';
-        
-        // 취소 버튼 안전 처리
-        const revokeBtn = document.getElementById('revoke-share-links');
-        if (revokeBtn) revokeBtn.style.display = 'block';
+        // 성공 시 기존 링크 표시 함수 호출
+        displayExistingLinks(data.viewToken, data.recordToken);
         
         showToast('새 공유 링크가 생성되었습니다!', 'success');
         
     } catch (error) {
         console.error('새 링크 생성 오류:', error);
-        handleLinkError('새 링크 생성에 실패했습니다.');
+        
+        // 에러 시 수동 옵션 다시 표시
+        const content = document.getElementById('share-modal-content');
+        content.innerHTML = `
+            <div class="share-content">
+                <p>❌ 링크 생성에 실패했습니다.</p>
+                <p>오류: ${error.message}</p>
+                
+                <div class="manual-generation">
+                    <button class="retry-btn" onclick="generateNewLinks()">
+                        🔄 다시 시도
+                    </button>
+                    <button class="retry-btn" onclick="window.location.reload()">
+                        🔄 페이지 새로고침
+                    </button>
+                </div>
+                
+                <div class="share-info">
+                    <p><small>문제가 계속되면 페이지를 새로고침해주세요.</small></p>
+                </div>
+            </div>
+        `;
+        
+        showToast('링크 생성에 실패했습니다. 다시 시도해주세요.', 'error');
     }
 }
 
