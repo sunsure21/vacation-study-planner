@@ -180,9 +180,11 @@ function generateStudySlots(dateKey) {
                 const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
                 const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
                 
-                if (endMinutes < startMinutes) {
+                // 자정을 넘는 취침시간 확인: endMinutes > 24*60이면 다음날로 넘어감
+                if (endMinutes > 24 * 60) {
                     // 전일 취침이 당일 새벽까지 이어지는 경우
-                    const endSlot = Math.floor(endMinutes / 30);
+                    const morningEndMinutes = endMinutes - 24 * 60; // 기상시간
+                    const endSlot = Math.floor(morningEndMinutes / 30);
                     for (let i = 0; i < endSlot && i < timeSlots.length; i++) {
                         timeSlots[i] = true;
                     }
@@ -201,12 +203,11 @@ function generateStudySlots(dateKey) {
         // 학원/과외도 실제 시간만 차단 (이동시간 제거)
         if (schedule.category === '취침') {
             if (endMinutes > 24 * 60) {
+                // 자정을 넘는 취침시간: 당일 밤 부분만 차단
                 for (let i = Math.floor(startMinutes / 30); i < 48; i++) {
                     timeSlots[i] = true;
                 }
-                for (let i = 0; i < Math.floor((endMinutes - 24 * 60) / 30); i++) {
-                    timeSlots[i] = true;
-                }
+                // 다음날 새벽 부분은 다음날에서 처리됨
                 return;
             } else {
                 blockedStart = startMinutes;

@@ -721,11 +721,14 @@ function addStudyTimeSlots(dateKey) {
                 const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
                 const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
                 
-                if (endMinutes < startMinutes) {
-                    // 자정을 넘는 취침시간 → 당일 새벽 부분 차감 (버퍼 없음)
-                    const morningMinutes = endMinutes;
-                    totalStudyMinutes -= morningMinutes;
-                    console.log(`😴 전일 취침(새벽): -${formatHoursMinutes(morningMinutes)} (00:00-${schedule.endTime})`);
+                // 자정을 넘는 취침시간 확인: endMinutes > 24*60이면 다음날로 넘어감
+                if (endMinutes > 24 * 60) {
+                    // 당일 새벽 부분 차단 (00:00부터 기상시간까지)
+                    const morningEndMinutes = endMinutes - 24 * 60; // 기상시간
+                    busyTimes.push({
+                        start: 0,
+                        end: morningEndMinutes
+                    });
                 }
             }
         });
@@ -811,10 +814,13 @@ function addStudyTimeSlots(dateKey) {
                 const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
                 const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
                 
-                if (endMinutes < startMinutes) {
+                // 자정을 넘는 취침시간 확인: endMinutes > 24*60이면 다음날로 넘어감
+                if (endMinutes > 24 * 60) {
+                    // 당일 새벽 부분 차단 (00:00부터 기상시간까지)
+                    const morningEndMinutes = endMinutes - 24 * 60; // 기상시간
                     busyTimes.push({
                         start: 0,
-                        end: endMinutes // 버퍼 없음
+                        end: morningEndMinutes
                     });
                 }
             }
