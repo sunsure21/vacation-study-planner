@@ -179,7 +179,55 @@ body.modal-open {
 .header-right {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
+}
+
+/* 컴팩트한 아이콘 버튼들 */
+.action-button {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 10px;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    font-size: 18px;
+}
+
+.action-button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 툴팁 */
+.action-button::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.action-button:hover::after {
+    opacity: 1;
+    visibility: visible;
 }
 
 .logout-btn {
@@ -232,12 +280,16 @@ body.modal-open {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 #vacation-period-display {
     font-size: 18px;
     font-weight: 600;
     color: var(--text-color);
+    flex: 1;
+    min-width: 200px;
 }
 
 .reset-btn {
@@ -2665,6 +2717,74 @@ body.modal-open {
 
 /* 모바일 대응 */
 @media (max-width: 768px) {
+    /* 헤더 모바일 대응 */
+    .main-header {
+        flex-direction: column;
+        gap: 15px;
+        margin: -20px -20px 20px -20px;
+        padding: 20px;
+    }
+    
+    .title-section {
+        order: 1;
+    }
+    
+    .header-right {
+        order: 2;
+        gap: 10px;
+    }
+    
+    .action-button {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .main-header h1 {
+        font-size: 24px;
+    }
+    
+    .current-time-display {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+    
+    /* 방학 기간 박스 모바일 대응 */
+    .vacation-period-box {
+        flex-direction: column;
+        padding: 15px;
+        text-align: center;
+    }
+    
+    #vacation-period-display {
+        font-size: 16px;
+        min-width: auto;
+        margin-bottom: 10px;
+    }
+    
+    /* 섹션 헤더 모바일 대응 */
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .section-header h2 {
+        font-size: 20px;
+        margin-bottom: 0;
+    }
+    
+    .action-buttons {
+        align-self: center;
+        gap: 15px;
+    }
+    
+    /* 컨테이너 패딩 조정 */
+    .container {
+        padding: 15px;
+    }
+    
+    /* 공유 모달 모바일 대응 */
     .link-container {
         flex-direction: column;
         gap: 8px;
@@ -2759,3 +2879,4 @@ body.modal-open {
     border: 1px solid rgba(16, 185, 129, 0.3);
     text-align: center;
 }
+

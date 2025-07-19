@@ -299,8 +299,8 @@ function updateWeeklySchedule() {
                 totalStudySlotMinutes += slot.duration || 0;
             });
         } else {
-            // 순공 슬롯이 없으면 기본 15시간 (09:00~24:00)
-            totalStudySlotMinutes = 15 * 60; // 900분
+            // 순공 슬롯이 없으면 기본 24시간 (00:00~24:00)
+            totalStudySlotMinutes = 24 * 60; // 1440분
         }
         
         const availableStudyMinutes = totalStudySlotMinutes;
@@ -687,54 +687,38 @@ function addStudyTimeSlots(dateKey) {
     // 전일 스케줄 중 자정을 넘는 취침시간 찾기
     const previousSchedules = schedulesByDate[previousDateKey] || [];
     previousSchedules.forEach(schedule => {
-        if (schedule.category === '취침' && !schedule.isStudySlot) {
-            const start = timeToMinutes(schedule.startTime, false, schedule.category);
-            const end = timeToMinutes(schedule.endTime, true, schedule.category);
+        if (schedule.category === '취침') {
+            const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
+            const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
             
-            if (end > 24 * 60) {
-                // 자정을 넘는 취침: 다음날(당일) 새벽 부분 + 기상 후 1시간 차감
-                const nextDayMinutes = end - 24 * 60; // 실제 취침 시간
-                const totalDeductionMinutes = nextDayMinutes + 60; // 기상 후 1시간 추가
-                const finalDeduction = Math.min(totalDeductionMinutes, 24 * 60); // 최대 24시간
-                
-                totalStudyMinutes -= finalDeduction;
-                
-                const endHour = schedule.endTime.split(':')[0].padStart(2,'0');
-                const endMinute = schedule.endTime.split(':')[1];
-                const bufferEndHour = Math.min(parseInt(endHour) + 1, 24);
-                console.log(`😴 전일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(finalDeduction)} (00:00-${endHour}:${endMinute} + 기상후 1시간)`);
+            if (endMinutes < startMinutes) {
+                // 자정을 넘는 취침시간 → 당일 새벽 부분 차감
+                const morningMinutes = endMinutes + 60; // 기상 후 1시간 포함
+                totalStudyMinutes -= morningMinutes;
+                console.log(`😴 전일 취침(새벽): -${formatHoursMinutes(morningMinutes)} (00:00-${schedule.endTime} + 기상후 1시간)`);
             }
         }
     });
     
-    // 2️⃣ 당일 등록된 스케줄들 처리
+    // 2️⃣ 당일 스케줄들 차감
+    let scheduleMinutes = 0;
     existingSchedules.forEach(schedule => {
-        if (!schedule.startTime || !schedule.endTime) {
-            console.warn('Invalid schedule found:', schedule);
-            return;
-        }
-        
         const start = timeToMinutes(schedule.startTime, false, schedule.category);
         const end = timeToMinutes(schedule.endTime, true, schedule.category);
         
-        let scheduleMinutes = 0;
-        
         if (schedule.category === '취침') {
-            // 당일 취침시간 처리 (취침 전 1시간 포함)
-            if (end > 24 * 60) {
-                // 자정을 넘는 취침: 당일은 (취침전 1시간 + 시작시간~24:00) 차감
-                const sleepMinutes = 24 * 60 - start; // 실제 취침 시간
-                const bufferMinutes = 60; // 취침 전 1시간
-                scheduleMinutes = sleepMinutes + bufferMinutes;
-                
-                const bufferStartHour = Math.max(Math.floor(start / 60) - 1, 0);
-                console.log(`😴 당일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(scheduleMinutes)} (취침전 1시간 + ${schedule.startTime}-24:00)`);
+            // 취침: 취침 전 1시간 + 취침시간 + 기상 후 1시간
+            if (end < start) {
+                // 다음날로 넘어가는 취침 → 당일 밤 부분만
+                const nightMinutes = (24 * 60 - start) + 60; // 취침 전 1시간 포함
+                scheduleMinutes = nightMinutes;
+                console.log(`😴 ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-24:00 + 취침전 1시간)`);
             } else {
-                // 같은 날 취침: 취침 전후 1시간씩 포함
+                // 같은 날 취침 (드문 경우)
                 const sleepMinutes = end - start;
-                const bufferMinutes = 120; // 취침 전 1시간 + 기상 후 1시간
+                const bufferMinutes = 120; // 앞뒤 1시간씩
                 scheduleMinutes = sleepMinutes + bufferMinutes;
-                console.log(`😴 당일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(scheduleMinutes)} (취침전 1시간 + ${schedule.startTime}-${schedule.endTime} + 기상후 1시간)`);
+                console.log(`😴 ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-${schedule.endTime} + 앞뒤 각 1시간)`);
             }
         } else if (schedule.category === '학원/과외' || schedule.category === '학원') {
             // 학원/과외: 이동시간 앞뒤 1시간씩 포함
@@ -758,17 +742,74 @@ function addStudyTimeSlots(dateKey) {
     
     console.log(`✨ 결과: ${formatHoursMinutes(totalStudyMinutes)} ⭐`);
     
-    // 순공 가능 시간이 있으면 하나의 큰 슬롯으로 생성
-    if (totalStudyMinutes > 0) {
+    // 실제 빈 시간대별로 순공 슬롯 생성
+    const busyTimes = [];
+    existingSchedules.forEach(schedule => {
+        const start = timeToMinutes(schedule.startTime, false, schedule.category);
+        let end = timeToMinutes(schedule.endTime, true, schedule.category);
+        
+        // 학원/과외의 경우 이동시간 포함
+        if (schedule.category === '학원/과외' || schedule.category === '학원') {
+            busyTimes.push({
+                start: Math.max(0, start - 60), // 1시간 전
+                end: Math.min(24 * 60, end + 60) // 1시간 후
+            });
+        } else if (schedule.category === '취침') {
+            // 취침의 경우 전후 1시간 포함
+            if (end < start) {
+                // 다음날로 넘어가는 취침
+                busyTimes.push({
+                    start: Math.max(0, start - 60),
+                    end: 24 * 60
+                });
+            } else {
+                busyTimes.push({
+                    start: Math.max(0, start - 60),
+                    end: Math.min(24 * 60, end + 60)
+                });
+            }
+        } else {
+            busyTimes.push({ start, end });
+        }
+    });
+    
+    // 전일 취침 고려
+    previousSchedules.forEach(schedule => {
+        if (schedule.category === '취침') {
+            const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
+            const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
+            
+            if (endMinutes < startMinutes) {
+                busyTimes.push({
+                    start: 0,
+                    end: Math.min(24 * 60, endMinutes + 60) // 기상 후 1시간 포함
+                });
+            }
+        }
+    });
+    
+    // 빈 시간대 계산하여 순공 슬롯 생성
+    const studyPeriods = calculateStudyPeriods(busyTimes);
+    
+    studyPeriods.forEach((period, index) => {
+        const startHour = Math.floor(period.start / 60);
+        const startMinute = period.start % 60;
+        const endHour = Math.floor(period.end / 60);
+        const endMinute = period.end % 60;
+        
+        const startTime = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+        const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+        const duration = period.end - period.start;
+        
         schedulesByDate[dateKey].push({
             isStudySlot: true,
-            startTime: '00:00',
-            endTime: '24:00',
-            duration: totalStudyMinutes,
+            startTime: startTime,
+            endTime: endTime,
+            duration: duration,
             category: '순공',
-            title: `순공가능 ${formatMinutes(totalStudyMinutes)}`
+            title: `순공가능 ${formatMinutes(duration)}`
         });
-    }
+    });
 }
 
 // 시간/분 형식으로 포맷팅
@@ -821,7 +862,7 @@ function minutesToTime(minutes) {
 }
 
 function calculateStudyPeriods(busyTimes) {
-    const dayStart = 9 * 60; // 9:00
+    const dayStart = 0 * 60; // 00:00 (24시간 기준)
     const dayEnd = 24 * 60; // 24:00
     
     // 🐛 디버그: 바쁜 시간들 확인
@@ -994,17 +1035,7 @@ function renderVacationCalendar(container) {
         
         dayCell.appendChild(schedulesContainer);
         
-        // 순공 가능 시간 표시 (박스 하단)
-        const studySlots = daySchedules.filter(s => s.isStudySlot);
-        if (studySlots.length > 0) {
-            const totalStudyTime = studySlots.reduce((sum, slot) => sum + (slot.duration || 0), 0);
-            const studyTimeDisplay = document.createElement('div');
-            studyTimeDisplay.className = 'daily-study-available';
-            studyTimeDisplay.textContent = `순공가능: ${formatMinutes(totalStudyTime)}`;
-            dayCell.appendChild(studyTimeDisplay);
-        }
-        
-        // 실제 순공시간 총량 표시
+        // 실제 순공시간만 표시 (순공가능시간 표시 제거)
         const dayStudyRecord = studyRecords[dateKey] || {};
         const totalStudyMinutes = Object.values(dayStudyRecord).reduce((sum, record) => {
             return sum + (record.minutes || 0);
@@ -1013,9 +1044,7 @@ function renderVacationCalendar(container) {
         if (totalStudyMinutes > 0) {
             const studyTimeDisplay = document.createElement('div');
             studyTimeDisplay.className = 'daily-study-time';
-            const hours = Math.floor(totalStudyMinutes / 60);
-            const minutes = totalStudyMinutes % 60;
-            studyTimeDisplay.textContent = hours > 0 ? `실제: ${hours}시간 ${minutes}분` : `실제: ${minutes}분`;
+            studyTimeDisplay.textContent = `실제순공: ${formatMinutes(totalStudyMinutes)}`;
             dayCell.appendChild(studyTimeDisplay);
         }
         
@@ -2389,7 +2418,7 @@ function getRecentStudyActivity() {
 // 주간 평가 데이터 업데이트 함수
 function updateWeeklyEvaluation() {
     const now = getCurrentKoreanDate(); // 한국 시간 기준으로 변경
-    const weekRange = getWeekRange(now);
+    const weekRange = getWeekRange(now); // 현재 주 범위 사용
     
     let totalPlannedHours = 0;
     let totalCompletedHours = 0;
@@ -2397,21 +2426,22 @@ function updateWeeklyEvaluation() {
     let studyDaysWithRecords = 0;
     let elapsedDays = 0;
     
-    // 방학 기간 내에서만 경과일 계산
-    if (vacationStartDate && vacationEndDate) {
-        const currentDate = getCurrentKoreanDateString();
-        const startDate = toYYYYMMDD(vacationStartDate);
-        const endDate = toYYYYMMDD(vacationEndDate);
+    // 현재 주 범위에서만 계산 (방학 기간과 교집합)
+    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
+        const dateKey = toYYYYMMDD(d);
         
-        // 방학 시작일부터 현재 날짜까지 또는 방학 종료일까지 중 빠른 날짜까지
-        const endCalculationDate = currentDate <= endDate ? currentDate : endDate;
+        // 방학 기간 내 날짜만 계산
+        if (vacationStartDate && vacationEndDate) {
+            const currentDate = new Date(dateKey + 'T00:00:00');
+            if (currentDate < vacationStartDate || currentDate > vacationEndDate) {
+                continue; // 방학 기간 외 날짜는 제외
+            }
+        }
         
-        for (let d = new Date(vacationStartDate); toYYYYMMDD(d) <= endCalculationDate; d.setDate(d.getDate() + 1)) {
-            const dateKey = toYYYYMMDD(d);
-            const daySchedules = schedulesByDate[dateKey] || [];
-            const dayStudyRecord = studyRecords[dateKey] || {};
-            
-            elapsedDays++;
+        const daySchedules = schedulesByDate[dateKey] || [];
+        const dayStudyRecord = studyRecords[dateKey] || {};
+        
+        elapsedDays++;
         
         // 계획된 학습 시간 계산
         let dayPlannedHours = 0;
@@ -2435,10 +2465,9 @@ function updateWeeklyEvaluation() {
                 totalCompletedHours += completedHours;
             }
         }
-        }
     }
     
-    // 달성률 계산 (경과일 기준)
+    // 달성률 계산 (이번주 기준)
     const achievementRate = totalPlannedHours > 0 ? 
         Math.round((totalCompletedHours / totalPlannedHours) * 100) : 0;
     
@@ -2495,98 +2524,101 @@ function showShareModal() {
     // 링크 입력 필드 초기화
     document.getElementById('view-only-link').value = '';
     document.getElementById('record-link').value = '';
-    document.getElementById('view-only-link').placeholder = '링크를 생성해주세요';
-    document.getElementById('record-link').placeholder = '링크를 생성해주세요';
+    document.getElementById('view-only-link').placeholder = '링크 확인 중...';
+    document.getElementById('record-link').placeholder = '링크 확인 중...';
     
-    // 버튼 상태 초기화
-    document.getElementById('generate-share-links').style.display = 'block';
-    document.getElementById('revoke-share-links').style.display = 'none';
+    // 버튼 요소가 있으면 숨기기 (제거된 요소 안전 처리)
+    const generateBtn = document.getElementById('generate-share-links');
+    const revokeBtn = document.getElementById('revoke-share-links');
     
-    // 기존 공유 링크가 있는지 확인
-    checkExistingShareLinks();
+    if (generateBtn) generateBtn.style.display = 'none';
+    if (revokeBtn) revokeBtn.style.display = 'none';
     
     openModal('share-modal');
+    
+    // 모달 열기와 동시에 자동으로 링크 처리
+    handleShareLinks();
 }
 
 function closeShareModal() {
     closeModal('share-modal');
 }
 
-// 기존 공유 링크 확인
-async function checkExistingShareLinks() {
+// 공유 링크 자동 처리 (기존 링크 확인 → 없으면 생성)
+async function handleShareLinks() {
     try {
-        // 로딩 상태 표시
-        document.getElementById('view-only-link').placeholder = '확인 중...';
-        document.getElementById('record-link').placeholder = '확인 중...';
-        
-        const response = await fetch('/api/share/status', {
+        // 1️⃣ 먼저 기존 링크 확인
+        console.log('🔍 기존 공유 링크 확인 중...');
+        const statusResponse = await fetch('/api/share/status', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include' // 세션 쿠키 포함
+            credentials: 'include'
         });
         
-        if (response.ok) {
-            const data = await response.json();
-            if (data.hasActiveLinks) {
-                // 기존 링크 표시
-                const baseUrl = window.location.origin;
-                document.getElementById('view-only-link').value = `${baseUrl}/shared/view/${data.viewToken}`;
-                document.getElementById('record-link').value = `${baseUrl}/shared/record/${data.recordToken}`;
-                
-                // placeholder 제거
-                document.getElementById('view-only-link').placeholder = '';
-                document.getElementById('record-link').placeholder = '';
-                
-                // 버튼 상태 변경
-                document.getElementById('generate-share-links').style.display = 'none';
-                document.getElementById('revoke-share-links').style.display = 'block';
+        if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            
+            if (statusData.hasActiveLinks) {
+                // ✅ 기존 링크 있음 - 표시
+                console.log('✅ 기존 공유 링크 발견');
+                displayExistingLinks(statusData.viewToken, statusData.recordToken);
+                return;
             } else {
-                // 기존 링크 없음
-                document.getElementById('view-only-link').placeholder = '링크를 생성해주세요';
-                document.getElementById('record-link').placeholder = '링크를 생성해주세요';
+                // 🔄 기존 링크 없음 - 새로 생성
+                console.log('🔄 새 공유 링크 생성 중...');
+                await generateNewLinks();
+                return;
             }
-        } else if (response.status === 302) {
-            // 로그인 필요
-            document.getElementById('view-only-link').placeholder = '로그인이 필요합니다';
-            document.getElementById('record-link').placeholder = '로그인이 필요합니다';
-            showToast('로그인이 필요합니다.', 'warning');
+        } else if (statusResponse.status === 302) {
+            // 🚨 로그인 필요
+            handleLoginRequired();
+            return;
         } else {
             throw new Error('상태 확인 실패');
         }
+        
     } catch (error) {
-        console.error('공유 링크 상태 확인 오류:', error);
-        document.getElementById('view-only-link').placeholder = '확인 실패';
-        document.getElementById('record-link').placeholder = '확인 실패';
-        showToast('링크 상태 확인에 실패했습니다.', 'error');
+        console.error('공유 링크 처리 오류:', error);
+        handleLinkError('링크 상태 확인에 실패했습니다.');
     }
 }
 
-// 공유 링크 생성
-async function generateShareLinks() {
-    const generateBtn = document.getElementById('generate-share-links');
-    const originalText = generateBtn.textContent;
+// 기존 링크 표시
+function displayExistingLinks(viewToken, recordToken) {
+    const baseUrl = window.location.origin;
     
-    generateBtn.textContent = '생성 중...';
-    generateBtn.disabled = true;
+    document.getElementById('view-only-link').value = `${baseUrl}/shared/view/${viewToken}`;
+    document.getElementById('record-link').value = `${baseUrl}/shared/record/${recordToken}`;
+    document.getElementById('view-only-link').placeholder = '';
+    document.getElementById('record-link').placeholder = '';
     
-    // 입력 필드도 로딩 상태로 변경
-    document.getElementById('view-only-link').placeholder = '생성 중...';
-    document.getElementById('record-link').placeholder = '생성 중...';
+    // 취소 버튼 안전 처리
+    const revokeBtn = document.getElementById('revoke-share-links');
+    if (revokeBtn) revokeBtn.style.display = 'block';
     
+    showToast('기존 공유 링크를 불러왔습니다.', 'success');
+}
+
+// 새 링크 생성
+async function generateNewLinks() {
     try {
+        document.getElementById('view-only-link').placeholder = '새 링크 생성 중...';
+        document.getElementById('record-link').placeholder = '새 링크 생성 중...';
+        
         const response = await fetch('/api/share/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include' // 세션 쿠키 포함
+            credentials: 'include'
         });
         
         if (!response.ok) {
             if (response.status === 302) {
-                throw new Error('로그인이 필요합니다');
+                handleLoginRequired();
+                return;
             }
             throw new Error('링크 생성 실패');
         }
@@ -2594,36 +2626,42 @@ async function generateShareLinks() {
         const data = await response.json();
         const baseUrl = window.location.origin;
         
-        // 링크 표시
+        // 새 링크 표시
         document.getElementById('view-only-link').value = `${baseUrl}/shared/view/${data.viewToken}`;
         document.getElementById('record-link').value = `${baseUrl}/shared/record/${data.recordToken}`;
-        
-        // placeholder 제거
         document.getElementById('view-only-link').placeholder = '';
         document.getElementById('record-link').placeholder = '';
         
-        // 버튼 상태 변경
-        generateBtn.style.display = 'none';
-        document.getElementById('revoke-share-links').style.display = 'block';
+        // 취소 버튼 안전 처리
+        const revokeBtn = document.getElementById('revoke-share-links');
+        if (revokeBtn) revokeBtn.style.display = 'block';
         
-        showToast('공유 링크가 생성되었습니다!', 'success');
+        showToast('새 공유 링크가 생성되었습니다!', 'success');
         
     } catch (error) {
-        console.error('공유 링크 생성 오류:', error);
-        
-        // 에러 상태 표시
-        document.getElementById('view-only-link').placeholder = '생성 실패';
-        document.getElementById('record-link').placeholder = '생성 실패';
-        
-        if (error.message.includes('로그인')) {
-            showToast('로그인이 필요합니다. 페이지를 새로고침해주세요.', 'error');
-        } else {
-            showToast('링크 생성에 실패했습니다.', 'error');
-        }
-    } finally {
-        generateBtn.textContent = originalText;
-        generateBtn.disabled = false;
+        console.error('새 링크 생성 오류:', error);
+        handleLinkError('새 링크 생성에 실패했습니다.');
     }
+}
+
+// 로그인 필요 처리
+function handleLoginRequired() {
+    document.getElementById('view-only-link').placeholder = '로그인이 필요합니다';
+    document.getElementById('record-link').placeholder = '로그인이 필요합니다';
+    document.getElementById('view-only-link').value = '';
+    document.getElementById('record-link').value = '';
+    
+    showToast('로그인이 필요합니다. 페이지를 새로고침하여 로그인해주세요.', 'warning');
+}
+
+// 링크 에러 처리
+function handleLinkError(message) {
+    document.getElementById('view-only-link').placeholder = '오류 발생';
+    document.getElementById('record-link').placeholder = '오류 발생';
+    document.getElementById('view-only-link').value = '';
+    document.getElementById('record-link').value = '';
+    
+    showToast(message, 'error');
 }
 
 // 공유 링크 취소
@@ -2633,6 +2671,11 @@ async function revokeShareLinks() {
     }
     
     const revokeBtn = document.getElementById('revoke-share-links');
+    if (!revokeBtn) {
+        showToast('공유 취소 버튼을 찾을 수 없습니다.', 'error');
+        return;
+    }
+    
     const originalText = revokeBtn.textContent;
     
     revokeBtn.textContent = '중단 중...';
@@ -2644,7 +2687,7 @@ async function revokeShareLinks() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include' // 세션 쿠키 포함
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -2657,9 +2700,8 @@ async function revokeShareLinks() {
         document.getElementById('view-only-link').placeholder = '링크를 생성해주세요';
         document.getElementById('record-link').placeholder = '링크를 생성해주세요';
         
-        // 버튼 상태 변경
+        // 버튼 숨기기
         revokeBtn.style.display = 'none';
-        document.getElementById('generate-share-links').style.display = 'block';
         
         showToast('공유가 중단되었습니다.', 'success');
         

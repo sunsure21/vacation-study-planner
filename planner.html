@@ -87,9 +87,9 @@
                 <div class="section-header">
                     <h2>📚 나의 방학 계획표</h2>
                     <div class="action-buttons">
-                        <button id="schedule-register-btn" class="btn-register">스케줄 등록하기</button>
-                        <button id="mbti-coaching-btn" class="btn-mbti">🧠 MBTI 학습 코칭</button>
-                        <button id="share-calendar-btn" class="btn-share">🔗 공유하기</button>
+                        <button id="schedule-register-btn" class="action-button" data-tooltip="스케줄 등록">📝</button>
+                        <button id="mbti-coaching-btn" class="action-button" data-tooltip="MBTI 학습 코칭">🧠</button>
+                        <button id="share-calendar-btn" class="action-button" data-tooltip="공유하기">🔗</button>
                     </div>
                 </div>
                 
@@ -480,7 +480,6 @@
                 </div>
                 
                 <div class="modal-actions">
-                    <button id="generate-share-links" class="btn-primary" onclick="generateShareLinks()">링크 생성</button>
                     <button id="revoke-share-links" class="btn-secondary" style="display: none;" onclick="revokeShareLinks()">공유 중단</button>
                 </div>
             </div>
