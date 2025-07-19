@@ -709,7 +709,13 @@ app.post('/mbti-coaching', async (req, res) => {
 // 공유 링크 상태 확인
 app.get('/api/share/status', requireAuth, async (req, res) => {
     try {
-        const userEmail = req.session.user.email;
+        // JWT 인증과 세션 인증 모두 지원
+        const userEmail = req.user?.email || req.session?.user?.email;
+        
+        if (!userEmail) {
+            console.log('❌ 사용자 이메일을 찾을 수 없음');
+            return res.status(401).json({ error: '인증되지 않은 사용자' });
+        }
         
         // 기존 공유 토큰 확인
         const viewToken = await kv.get(`share:view:${userEmail}`);
@@ -736,7 +742,13 @@ app.get('/api/share/status', requireAuth, async (req, res) => {
 // 공유 링크 생성
 app.post('/api/share/generate', requireAuth, async (req, res) => {
     try {
-        const userEmail = req.session.user.email;
+        // JWT 인증과 세션 인증 모두 지원
+        const userEmail = req.user?.email || req.session?.user?.email;
+        
+        if (!userEmail) {
+            console.log('❌ 사용자 이메일을 찾을 수 없음');
+            return res.status(401).json({ error: '인증되지 않은 사용자' });
+        }
         
         // 랜덤 토큰 생성
         const viewToken = generateShareToken();
@@ -770,7 +782,13 @@ app.post('/api/share/generate', requireAuth, async (req, res) => {
 // 공유 링크 취소
 app.post('/api/share/revoke', requireAuth, async (req, res) => {
     try {
-        const userEmail = req.session.user.email;
+        // JWT 인증과 세션 인증 모두 지원
+        const userEmail = req.user?.email || req.session?.user?.email;
+        
+        if (!userEmail) {
+            console.log('❌ 사용자 이메일을 찾을 수 없음');
+            return res.status(401).json({ error: '인증되지 않은 사용자' });
+        }
         
         // 기존 토큰 조회
         const viewToken = await kv.get(`share:view:${userEmail}`);
