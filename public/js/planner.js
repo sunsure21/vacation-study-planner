@@ -1181,6 +1181,9 @@ function renderVacationCalendar(container) {
         const currentDate = new Date(startYear, startMonth, startDay + dayIndex);
         const dateKey = toYYYYMMDD(currentDate);
         
+        // 🚨 디버깅: 날짜 계산 과정 확인
+        console.log(`🔥 캘린더 셀 생성: dayIndex=${dayIndex}, startDay=${startDay}, 계산된 날짜=${currentDate.getDate()}, dateKey=${dateKey}`);
+        
         dayCell.className = 'day-cell';
         
         const dayNumber = document.createElement('div');
