@@ -156,16 +156,16 @@ function generateStudySlots(dateKey) {
             blockedEnd = Math.min(24 * 60, endMinutes + 60);
         } else if (schedule.category === '취침') {
             if (endMinutes > 24 * 60) {
-                for (let i = Math.floor(Math.max(0, startMinutes - 60) / 30); i < 48; i++) {
+                for (let i = Math.floor(startMinutes / 30); i < 48; i++) {
                     timeSlots[i] = true;
                 }
-                for (let i = 0; i < Math.floor(Math.min(24 * 60, (endMinutes - 24 * 60) + 60) / 30); i++) {
+                for (let i = 0; i < Math.floor((endMinutes - 24 * 60) / 30); i++) {
                     timeSlots[i] = true;
                 }
                 return;
             } else {
-                blockedStart = Math.max(0, startMinutes - 60);
-                blockedEnd = Math.min(24 * 60, endMinutes + 60);
+                blockedStart = startMinutes;
+                blockedEnd = endMinutes;
             }
         }
         

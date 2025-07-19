@@ -704,10 +704,10 @@ function addStudyTimeSlots(dateKey) {
             const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
             
             if (endMinutes < startMinutes) {
-                // 자정을 넘는 취침시간 → 당일 새벽 부분 차감
-                const morningMinutes = endMinutes + 60; // 기상 후 1시간 포함
+                // 자정을 넘는 취침시간 → 당일 새벽 부분 차감 (버퍼 없음)
+                const morningMinutes = endMinutes;
                 totalStudyMinutes -= morningMinutes;
-                console.log(`😴 전일 취침(새벽): -${formatHoursMinutes(morningMinutes)} (00:00-${schedule.endTime} + 기상후 1시간)`);
+                console.log(`😴 전일 취침(새벽): -${formatHoursMinutes(morningMinutes)} (00:00-${schedule.endTime})`);
             }
         }
     });
@@ -719,18 +719,16 @@ function addStudyTimeSlots(dateKey) {
         const end = timeToMinutes(schedule.endTime, true, schedule.category);
         
         if (schedule.category === '취침') {
-            // 취침: 취침 전 1시간 + 취침시간 + 기상 후 1시간
+            // 취침: 취침시간만 차감 (버퍼 없음)
             if (end < start) {
                 // 다음날로 넘어가는 취침 → 당일 밤 부분만
-                const nightMinutes = (24 * 60 - start) + 60; // 취침 전 1시간 포함
+                const nightMinutes = (24 * 60 - start);
                 scheduleMinutes = nightMinutes;
-                console.log(`😴 ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-24:00 + 취침전 1시간)`);
+                console.log(`😴 ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-24:00)`);
             } else {
                 // 같은 날 취침 (드문 경우)
-                const sleepMinutes = end - start;
-                const bufferMinutes = 120; // 앞뒤 1시간씩
-                scheduleMinutes = sleepMinutes + bufferMinutes;
-                console.log(`😴 ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-${schedule.endTime} + 앞뒤 각 1시간)`);
+                scheduleMinutes = end - start;
+                console.log(`😴 ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-${schedule.endTime})`);
             }
         } else if (schedule.category === '학원/과외' || schedule.category === '학원') {
             // 학원/과외: 이동시간 앞뒤 1시간씩 포함
@@ -767,17 +765,17 @@ function addStudyTimeSlots(dateKey) {
                 end: Math.min(24 * 60, end + 60) // 1시간 후
             });
         } else if (schedule.category === '취침') {
-            // 취침의 경우 전후 1시간 포함
+            // 취침의 경우 버퍼 없음
             if (end < start) {
                 // 다음날로 넘어가는 취침
                 busyTimes.push({
-                    start: Math.max(0, start - 60),
+                    start: start,
                     end: 24 * 60
                 });
             } else {
                 busyTimes.push({
-                    start: Math.max(0, start - 60),
-                    end: Math.min(24 * 60, end + 60)
+                    start: start,
+                    end: end
                 });
             }
         } else {
@@ -794,7 +792,7 @@ function addStudyTimeSlots(dateKey) {
             if (endMinutes < startMinutes) {
                 busyTimes.push({
                     start: 0,
-                    end: Math.min(24 * 60, endMinutes + 60) // 기상 후 1시간 포함
+                    end: endMinutes // 버퍼 없음
                 });
             }
         }
@@ -1645,20 +1643,20 @@ function handleScheduleSubmit(e) {
             let blockedStart = existingStart;
             let blockedEnd = existingEnd;
             
-            // 학원/과외와 취침의 경우 앞뒤 시간도 차단
+            // 학원/과외의 경우만 앞뒤 시간 차단
             if (schedule.category === '학원/과외' || schedule.category === '학원') {
                 blockedStart = Math.max(0, existingStart - 60);
                 blockedEnd = Math.min(24 * 60, existingEnd + 60);
             } else if (schedule.category === '취침') {
-                // 취침 시간이 자정을 넘나드는 경우 특별 처리
+                // 취침 시간은 버퍼 없이 정확한 시간만 차단
                 if (existingEnd > 24 * 60) {
-                    // 첫 번째 블록: 취침 전부터 자정까지
-                    const firstBlockStart = Math.max(0, existingStart - 60);
+                    // 첫 번째 블록: 취침 시작부터 자정까지
+                    const firstBlockStart = existingStart;
                     const firstBlockEnd = 24 * 60;
                     
-                    // 두 번째 블록: 자정부터 기상 후까지
+                    // 두 번째 블록: 자정부터 기상까지
                     const secondBlockStart = 0;
-                    const secondBlockEnd = Math.min(24 * 60, (existingEnd - 24 * 60) + 60);
+                    const secondBlockEnd = existingEnd - 24 * 60;
                     
                     // 새 스케줄이 두 블록 중 하나라도 겹치는지 확인
                     const conflictFirst = (newStartMinutes < firstBlockEnd && newEndMinutes > firstBlockStart);
@@ -1667,7 +1665,7 @@ function handleScheduleSubmit(e) {
                     if (conflictFirst || conflictSecond) {
                         return {
                             conflict: true,
-                            message: `취침 시간(${schedule.startTime}-${schedule.endTime})의 앞뒤 1시간은 등록할 수 없습니다.`
+                            message: `취침 시간(${schedule.startTime}-${schedule.endTime})과 겹칩니다.`
                         };
                     }
                     continue; // 이 스케줄은 이미 처리했으므로 다음으로
@@ -1682,9 +1680,7 @@ function handleScheduleSubmit(e) {
                 return {
                     conflict: true,
                     message: (schedule.category === '학원/과외' || schedule.category === '학원') ? 
-                        `학원/과외 시간(${schedule.startTime}-${schedule.endTime})의 앞뒤 1시간은 등록할 수 없습니다.` :
-                        schedule.category === '취침' ?
-                        `취침 시간(${schedule.startTime}-${schedule.endTime})의 앞뒤 1시간은 등록할 수 없습니다.` :
+                        `학원/과외 시간(${schedule.startTime}-${schedule.endTime})의 이동시간(앞뒤 1시간)과 겹칩니다.` :
                         `기존 스케줄(${schedule.startTime}-${schedule.endTime})과 시간이 겹칩니다.`
                 };
             }
