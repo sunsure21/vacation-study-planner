@@ -38,14 +38,14 @@
     --primary-orange-1: #ffc190;
     --primary-orange-2: #ff9d50;
 
-    /* Category Colors - 디자인 가이드 기반 */
-    --category-academy: #7c5ef5;      /* 학원 - 보라색 */
-    --category-study: #95f69e;        /* 순공/자습 - 초록색 */
-    --category-meal: #ffd65d;         /* 식사 - 노란색 */
-    --category-sleep: #f2295b;        /* 취침 - 분홍색 */
-    --category-travel: #ff9d50;       /* 이동 - 주황색 */
-    --category-play: #cdcbff;         /* 놀이 - 연보라색 */
-    --category-etc: #646a7f;          /* 기타 - 회색 */
+    /* Category Colors - 파스텔 단색으로 업데이트 */
+    --category-academy: #fed7aa;      /* 학원/과외 - 피치색 */
+    --category-study: #a7f3d0;        /* 순공/자습 - 민트그린 */
+    --category-meal: #fef3c7;         /* 식사 - 레몬색 */
+    --category-sleep: #bae6fd;        /* 취침 - 스카이블루 */
+    --category-travel: #ff9d50;       /* 이동 - 기존 색상 유지 */
+    --category-play: #ddd6fe;         /* 놀이 - 라벤더 */
+    --category-etc: #e5e7eb;          /* 기타 - 라이트그레이 */
 }
 
 /* 2. Font & Basic Styles (from typography.md) */
@@ -586,45 +586,45 @@ html {
 }
 
 .schedule-item.study {
-    background-color: rgba(149, 246, 158, 0.1);
-    color: var(--category-study);
-    border: 1px solid var(--category-study);
+    background-color: rgba(167, 243, 208, 0.3);
+    color: #059669;
+    border: 1px solid #059669;
 }
 
 .schedule-item.play {
-    background-color: rgba(205, 203, 255, 0.1);
-    color: var(--category-play);
-    border: 1px solid var(--category-play);
+    background-color: rgba(221, 214, 254, 0.3);
+    color: #7c3aed;
+    border: 1px solid #7c3aed;
 }
 
 .schedule-item.academy {
-    background-color: rgba(124, 94, 245, 0.1);
-    color: var(--category-academy);
-    border: 1px solid var(--category-academy);
+    background-color: rgba(254, 215, 170, 0.3);
+    color: #ea580c;
+    border: 1px solid #ea580c;
 }
 
 .schedule-item.meal {
-    background-color: rgba(255, 214, 93, 0.1);
-    color: var(--category-meal);
-    border: 1px solid var(--category-meal);
+    background-color: rgba(254, 243, 199, 0.3);
+    color: #d97706;
+    border: 1px solid #d97706;
 }
 
 .schedule-item.sleep {
-    background-color: rgba(242, 41, 91, 0.1);
-    color: var(--category-sleep);
-    border: 1px solid var(--category-sleep);
+    background-color: rgba(186, 230, 253, 0.3);
+    color: #0284c7;
+    border: 1px solid #0284c7;
 }
 
 .schedule-item.travel {
-    background-color: rgba(255, 157, 80, 0.1);
-    color: var(--category-travel);
-    border: 1px solid var(--category-travel);
+    background-color: rgba(255, 157, 80, 0.3);
+    color: #ea580c;
+    border: 1px solid #ea580c;
 }
 
 .schedule-item.etc {
-    background-color: rgba(100, 106, 127, 0.1);
-    color: var(--category-etc);
-    border: 1px solid var(--category-etc);
+    background-color: rgba(229, 231, 235, 0.3);
+    color: #6b7280;
+    border: 1px solid #6b7280;
 }
 
 .schedule-item.study-slot {
@@ -768,13 +768,13 @@ html {
     flex-shrink: 0;
 }
 
-.highlight-item-category-color-dot.study { background-color: var(--category-study); }
-.highlight-item-category-color-dot.play { background-color: var(--category-play); }
-.highlight-item-category-color-dot.academy { background-color: var(--category-academy); }
-.highlight-item-category-color-dot.meal { background-color: var(--category-meal); }
-.highlight-item-category-color-dot.sleep { background-color: var(--category-sleep); }
-.highlight-item-category-color-dot.travel { background-color: var(--category-travel); }
-.highlight-item-category-color-dot.etc { background-color: var(--category-etc); }
+.highlight-item-category-color-dot.study { background-color: #a7f3d0; }
+.highlight-item-category-color-dot.play { background-color: #ddd6fe; }
+.highlight-item-category-color-dot.academy { background-color: #fed7aa; }
+.highlight-item-category-color-dot.meal { background-color: #fef3c7; }
+.highlight-item-category-color-dot.sleep { background-color: #bae6fd; }
+.highlight-item-category-color-dot.travel { background-color: #ff9d50; }
+.highlight-item-category-color-dot.etc { background-color: #e5e7eb; }
 
 .highlight-item-content {
     display: flex;
