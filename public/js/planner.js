@@ -1262,13 +1262,22 @@ function showDayModal(dateKey, daySchedules) {
     const title = document.getElementById('day-summary-title');
     const content = document.getElementById('day-summary-content');
     
-    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
-    const [year, month, day] = dateKey.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
+    // 🚨 디버깅: 입력값 확인
+    console.log('🔥 showDayModal 호출됨:', { dateKey, schedulesCount: daySchedules.length });
     
-    // 날짜 표시 개선 - dateKey 기반으로 직접 포맷
+    // dateKey에서 직접 날짜 추출 (Date 객체 생성 없이)
+    const [year, month, day] = dateKey.split('-').map(Number);
+    
+    // 🚨 디버깅: 파싱된 값들 확인
+    console.log('🔥 파싱된 날짜:', { year, month, day, dateKey });
+    
+    // 날짜 표시 개선 - dateKey 기반으로 직접 포맷 (Date 객체 사용 안함)
     const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
     const formattedDate = `${monthNames[month - 1]} ${day}일`;
+    
+    // 🚨 디버깅: 최종 포맷 확인
+    console.log('🔥 최종 날짜 포맷:', { formattedDate, finalTitle: `${formattedDate} 요약` });
+    
     title.textContent = `${formattedDate} 요약`;
     
     // 통계 계산
