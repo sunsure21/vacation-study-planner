@@ -2069,8 +2069,6 @@ function markdownToHtml(text) {
 
 // 초기화
 document.addEventListener('DOMContentLoaded', async function() {
-    alert('🚀 플래너 초기화 시작!');
-    
     console.log('🚀 플래너 페이지 초기화 시작');
     console.log('📍 현재 URL:', window.location.href);
     console.log('🕒 현재 시간:', new Date().toISOString());
@@ -2085,81 +2083,37 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     
     try {
-        alert('📅 한국 시간 함수 테스트 시작');
         const koreanDate = getCurrentKoreanDate();
         const koreanDateString = getCurrentKoreanDateString();
-        alert(`✅ 한국 시간 성공: ${koreanDateString}`);
         console.log('🇰🇷 한국 시간:', koreanDate);
         console.log('📅 한국 날짜 문자열:', koreanDateString);
-    } catch (error) {
-        alert(`❌ 한국 시간 함수 오류: ${error.message}`);
-        console.error('❌ 한국 시간 함수 호출 오류:', error);
-        console.error('스택 트레이스:', error.stack);
-        return; // 여기서 중단
-    }
-    
-    // URL 파라미터 확인 (OAuth 콜백에서 타임스탬프가 있는지)
-    const urlParams = new URLSearchParams(window.location.search);
-    const timestamp = urlParams.get('t');
-    if (timestamp) {
-        console.log('⏰ OAuth 콜백 타임스탬프 감지:', timestamp);
-        // URL 정리 (뒤로가기 시 깔끔하게)
-        const cleanUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
-    }
-    
-    try {
-        alert('🔍 세션 확인 시작');
-        // 세션 확인을 먼저 수행
-        console.log('🔍 세션 확인 중...');
-        const isAuthenticated = await checkSession();
-        if (!isAuthenticated) {
-            alert('❌ 세션 유효하지 않음 - 로그인 페이지로 이동');
-            console.log('❌ 세션이 유효하지 않습니다. 로그인 페이지로 이동합니다.');
-            window.location.href = '/login';
-            return;
-        }
-        alert('✅ 세션 확인 완료');
-        console.log('✅ 세션 확인 완료');
         
-        alert('📊 데이터 로딩 시작');
-        console.log('📊 데이터 로딩 시작...');
-        await loadDataFromStorage();
-        alert('✅ 데이터 로딩 완료');
-        console.log('✅ 데이터 로딩 완료');
+        // 세션 확인
+        const userInfo = await checkSession();
+        console.log('🔍 세션 확인 완료:', userInfo);
         
-        // 방학 기간이 설정되어 있으면 플래너 화면으로
-        if (vacationStartDate && vacationEndDate) {
-            alert('📅 플래너 화면 표시');
-            console.log('📅 방학 기간 설정됨, 플래너 화면 표시');
+        if (userInfo.isAuthenticated) {
+            // 데이터 로딩
+            await loadDataFromStorage();
+            console.log('📊 데이터 로딩 완료');
+            
+            // 플래너 화면 표시
             showPlannerScreen();
+            console.log('📅 플래너 화면 표시');
         } else {
-            alert('⚙️ 설정 화면 표시');
-            console.log('⚙️ 방학 기간 미설정, 설정 화면 표시');
+            // 설정 화면 표시
             showSetupScreen();
+            console.log('⚙️ 설정 화면 표시');
         }
-        alert('✅ 플래너 초기화 완료!');
-        console.log('✅ 플래너 페이지 초기화 완료');
+        
+        console.log('✅ 플래너 초기화 완료!');
         
     } catch (error) {
-        alert(`❌ 초기화 오류: ${error.message}\n위치: ${error.stack ? error.stack.split('\n')[1] : '알 수 없음'}`);
         console.error('❌ 초기화 중 오류 발생:', error);
         console.error('스택 트레이스:', error.stack);
         
-        // 오류 발생 시 사용자에게 구체적인 알림
-        const errorMessage = `페이지 로딩 중 오류가 발생했습니다.
-
-오류 정보:
-- 메시지: ${error.message}
-- 타입: ${error.name}
-- 위치: ${error.stack ? error.stack.split('\n')[1] : '알 수 없음'}
-
-해결 방법:
-1. 페이지를 새로고침해주세요
-2. 브라우저 캐시를 지워주세요
-3. 다른 브라우저를 사용해보세요
-
-문제가 지속되면 개발자 콘솔(F12)의 오류 메시지를 확인해주세요.`;
+        // 오류 발생 시 사용자에게 간단한 알림
+        const errorMessage = `페이지 로딩 중 오류가 발생했습니다.\n\n해결 방법:\n1. 페이지를 새로고침해주세요\n2. Safari 설정에서 JavaScript가 활성화되어 있는지 확인해주세요\n3. 사이트 간 추적 방지를 임시로 비활성화해보세요`;
         
         alert(errorMessage);
     }
