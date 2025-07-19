@@ -751,6 +751,11 @@ app.get('/api/share/status', requireAuth, async (req, res) => {
     }
 });
 
+// 토큰 생성 함수
+function generateToken() {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
 // 클라이언트 데이터 기반 공유 링크 생성 (인증 불필요)
 app.post('/api/share/create', async (req, res) => {
     try {
