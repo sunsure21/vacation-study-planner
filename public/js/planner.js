@@ -2599,7 +2599,8 @@ function collectCurrentPlannerData() {
 
 // 수동 링크 생성 옵션 표시
 function showManualLinkGeneration() {
-    const content = document.getElementById('share-modal-content');
+    const modal = document.getElementById('share-modal');
+    const content = modal.querySelector('.modal-body');
     
     content.innerHTML = `
         <div class="share-content">
@@ -2644,7 +2645,8 @@ function displayExistingLinks(viewToken, recordToken) {
 
 // 새로 생성된 링크 표시
 function displayNewLinks(viewToken, recordToken) {
-    const content = document.getElementById('share-modal-content');
+    const modal = document.getElementById('share-modal');
+    const content = modal.querySelector('.modal-body');
     const baseUrl = window.location.origin;
     const viewUrl = `${baseUrl}/view/${viewToken}`;
     const recordUrl = `${baseUrl}/record/${recordToken}`;
@@ -2693,7 +2695,8 @@ function displayNewLinks(viewToken, recordToken) {
 
 // 에러 메시지 표시
 function showErrorMessage(message) {
-    const content = document.getElementById('share-modal-content');
+    const modal = document.getElementById('share-modal');
+    const content = modal.querySelector('.modal-body');
     content.innerHTML = `
         <div class="share-content">
             <h3>⚠️ 오류 발생</h3>
@@ -2714,7 +2717,8 @@ function showErrorMessage(message) {
 async function generateShareLinksFromData(shareData) {
     try {
         // 로딩 상태 표시
-        const content = document.getElementById('share-modal-content');
+        const modal = document.getElementById('share-modal');
+        const content = modal.querySelector('.modal-body');
         content.innerHTML = `
             <div class="share-content">
                 <p>🔄 공유 링크를 생성하고 있습니다...</p>
@@ -2755,7 +2759,8 @@ async function generateNewLinks() {
         console.log('🔄 새 공유 링크 생성 중...');
         
         // 로딩 상태 표시
-        const content = document.getElementById('share-modal-content');
+        const modal = document.getElementById('share-modal');
+        const content = modal.querySelector('.modal-body');
         content.innerHTML = `
             <div class="share-content">
                 <p>🔄 새 공유 링크를 생성하고 있습니다...</p>
@@ -2808,7 +2813,8 @@ async function generateNewLinks() {
         console.error('새 링크 생성 오류:', error);
         
         // 에러 시 수동 옵션 다시 표시
-        const content = document.getElementById('share-modal-content');
+        const modal = document.getElementById('share-modal');
+        const content = modal.querySelector('.modal-body');
         content.innerHTML = `
             <div class="share-content">
                 <p>❌ 링크 생성에 실패했습니다.</p>
