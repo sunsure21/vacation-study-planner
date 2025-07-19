@@ -83,28 +83,62 @@ function getUserStorageKey(key) {
 // 대한민국 서울 기준 현재 날짜 가져오기
 function getCurrentKoreanDate() {
     const now = new Date();
-    // 한국 시간대로 변환
-    const koreaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
-    return koreaTime;
+    
+    // 모바일 Safari 호환성을 위해 Intl.DateTimeFormat 사용
+    try {
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        
+        const parts = formatter.formatToParts(now);
+        const year = parseInt(parts.find(p => p.type === 'year').value);
+        const month = parseInt(parts.find(p => p.type === 'month').value) - 1; // 0-based month
+        const day = parseInt(parts.find(p => p.type === 'day').value);
+        
+        return new Date(year, month, day);
+    } catch (error) {
+        console.warn('Intl.DateTimeFormat 실패, UTC 기준으로 fallback:', error);
+        // fallback: UTC 기준으로 대략적인 한국 시간 계산
+        const koreaOffsetMs = 9 * 60 * 60 * 1000;
+        return new Date(now.getTime() + koreaOffsetMs);
+    }
 }
 
 // 대한민국 서울 기준 현재 날짜 문자열 (YYYY-MM-DD)
 function getCurrentKoreanDateString() {
     const now = new Date();
-    const koreanDateString = now.toLocaleDateString("ko-KR", {
-        timeZone: "Asia/Seoul",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-    });
     
-    // "2025. 07. 14." 형식을 "2025-07-14" 형식으로 변환
-    const parts = koreanDateString.split('. ');
-    const year = parts[0];
-    const month = parts[1];
-    const day = parts[2].replace('.', '');
-    
-    return `${year}-${month}-${day}`;
+    // 모바일 Safari 호환성을 위해 Intl.DateTimeFormat 사용
+    try {
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        
+        return formatter.format(now); // YYYY-MM-DD 형식으로 반환
+    } catch (error) {
+        console.warn('getCurrentKoreanDateString fallback 사용:', error);
+        // fallback: 기존 방식
+        const koreanDateString = now.toLocaleDateString("ko-KR", {
+            timeZone: "Asia/Seoul",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+        });
+        
+        // "2025. 07. 14." 형식을 "2025-07-14" 형식으로 변환
+        const parts = koreanDateString.split('. ');
+        const year = parts[0];
+        const month = parts[1];
+        const day = parts[2].replace('.', '');
+        
+        return `${year}-${month}-${day}`;
+    }
 }
 
 function formatDate(date) {
@@ -1962,6 +1996,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('🚀 플래너 페이지 초기화 시작');
     console.log('📍 현재 URL:', window.location.href);
     console.log('🕒 현재 시간:', new Date().toISOString());
+    console.log('🌍 User Agent:', navigator.userAgent);
+    console.log('🇰🇷 한국 시간:', getCurrentKoreanDate());
+    console.log('📅 한국 날짜 문자열:', getCurrentKoreanDateString());
     
     // URL 파라미터 확인 (OAuth 콜백에서 타임스탬프가 있는지)
     const urlParams = new URLSearchParams(window.location.search);
