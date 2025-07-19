@@ -231,6 +231,8 @@ function updateCurrentDateTime() {
 }
 
 function updateWeeklySchedule() {
+    console.log('📅 updateWeeklySchedule() 시작...');
+    
     const now = getCurrentKoreanDate();
     const weekRange = getWeekRange(now);
     
@@ -240,11 +242,16 @@ function updateWeeklySchedule() {
     const weeklySchedulesContainer = document.getElementById('weekly-registered-schedules');
     const weeklyStudyContainer = document.getElementById('weekly-study-hours');
     
+    if (!weeklySchedulesContainer || !weeklyStudyContainer) {
+        console.error('❌ 주요일정 컨테이너를 찾을 수 없습니다!');
+        return;
+    }
+    
     let weeklySchedulesHtml = '';
     let totalStudyHours = 0;
     
-    console.log('현재 schedulesByDate:', schedulesByDate);
-    console.log('이번주 범위:', weekRange);
+    console.log('📊 현재 schedulesByDate:', Object.keys(schedulesByDate).length, '일 데이터');
+    console.log('📅 이번주 범위:', weekRange);
     
     for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
@@ -359,7 +366,12 @@ function updateWeeklySchedule() {
         studyHoursHtml += `<p><strong style="color: #8b5cf6;">이번주 시간 점유율: ${weeklyEfficiency}%</strong></p>`;
     }
     
+    weeklySchedulesContainer.innerHTML = weeklySchedulesHtml;
     weeklyStudyContainer.innerHTML = studyHoursHtml;
+    
+    console.log('📝 주요일정 HTML 업데이트:', weeklySchedulesHtml.length, '글자');
+    console.log('⏰ 순공시간 HTML 업데이트:', studyHoursHtml.length, '글자');
+    console.log('✅ updateWeeklySchedule() 완료!');
 }
 
 // 데이터 관리 함수
@@ -1811,10 +1823,20 @@ function handleScheduleSubmit(e) {
     
     saveDataToStorage();
     
+    // 스케줄 저장 후 전체 UI 새로고침
+    console.log('🔄 스케줄 저장 후 UI 업데이트 시작...');
+    
     generateSchedulesByDate();
+    console.log('✅ schedulesByDate 재생성 완료:', Object.keys(schedulesByDate).length, '일');
+    
     renderCalendar();
+    console.log('✅ 캘린더 렌더링 완료');
+    
     updateWeeklySchedule();
+    console.log('✅ 이번주 주요일정 업데이트 완료');
+    
     updateWeeklyEvaluation();
+    console.log('✅ 주간 평가 업데이트 완료');
     
     closeScheduleModal();
     resetScheduleForm();
