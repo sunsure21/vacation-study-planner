@@ -85,7 +85,23 @@ function getCurrentKoreanDate() {
     try {
         const now = new Date();
         
-        // 방법 1: 가장 안전한 방식 - Intl.DateTimeFormat
+        // 방법 1: 아이패드 호환 방식 - 간단한 오프셋 계산
+        try {
+            const koreaOffsetMs = 9 * 60 * 60 * 1000; // 9시간
+            const koreaTime = new Date(now.getTime() + koreaOffsetMs);
+            
+            const year = koreaTime.getUTCFullYear();
+            const month = koreaTime.getUTCMonth();
+            const day = koreaTime.getUTCDate();
+            
+            console.log('📅 한국 시간 계산 결과:', { year, month, day });
+            return new Date(year, month, day);
+            
+        } catch (offsetError) {
+            console.warn('오프셋 계산 실패:', offsetError);
+        }
+        
+        // 방법 2: Intl.DateTimeFormat (아이패드에서 문제될 수 있음)
         try {
             const formatter = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'Asia/Seoul'
@@ -96,7 +112,7 @@ function getCurrentKoreanDate() {
             
             if (koreDateString && koreDateString.includes('-')) {
                 const [year, month, day] = koreDateString.split('-').map(Number);
-                if (year && month && day) {
+                if (year && month && day && !isNaN(year) && !isNaN(month) && !isNaN(day)) {
                     return new Date(year, month - 1, day);
                 }
             }
@@ -104,21 +120,15 @@ function getCurrentKoreanDate() {
             console.warn('Intl.DateTimeFormat 실패:', intlError);
         }
         
-        // 방법 2: 수동 계산 (가장 안전한 fallback)
-        console.log('⏰ 수동 계산 방식 사용');
-        const koreaOffsetMs = 9 * 60 * 60 * 1000; // 9시간
-        const koreaTime = new Date(now.getTime() + koreaOffsetMs);
-        
-        const year = koreaTime.getUTCFullYear();
-        const month = koreaTime.getUTCMonth();
-        const day = koreaTime.getUTCDate();
-        
-        console.log('📅 수동 계산 결과:', { year, month, day });
-        return new Date(year, month, day);
+        // 최후의 fallback - 현재 로컬 날짜
+        console.log('⚠️ 로컬 날짜 사용');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return today;
         
     } catch (error) {
         console.error('getCurrentKoreanDate 전체 실패:', error);
-        // 최후의 fallback - 현재 로컬 날짜
+        // 최종 fallback
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         return today;
@@ -130,7 +140,24 @@ function getCurrentKoreanDateString() {
     try {
         const now = new Date();
         
-        // 방법 1: Intl.DateTimeFormat 사용
+        // 방법 1: 아이패드 호환 방식 - 간단한 오프셋 계산
+        try {
+            const koreaOffsetMs = 9 * 60 * 60 * 1000;
+            const koreaTime = new Date(now.getTime() + koreaOffsetMs);
+            
+            const year = koreaTime.getUTCFullYear();
+            const month = String(koreaTime.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(koreaTime.getUTCDate()).padStart(2, '0');
+            
+            const koreanDateString = `${year}-${month}-${day}`;
+            console.log('📅 한국 시간 문자열 계산:', koreanDateString);
+            return koreanDateString;
+            
+        } catch (offsetError) {
+            console.warn('오프셋 문자열 계산 실패:', offsetError);
+        }
+        
+        // 방법 2: Intl.DateTimeFormat (아이패드에서 문제될 수 있음)
         try {
             const formatter = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'Asia/Seoul'
@@ -146,22 +173,17 @@ function getCurrentKoreanDateString() {
             console.warn('getCurrentKoreanDateString Intl 실패:', intlError);
         }
         
-        // 방법 2: 수동 계산
-        console.log('⏰ 문자열 수동 계산 방식 사용');
-        const koreaOffsetMs = 9 * 60 * 60 * 1000;
-        const koreaTime = new Date(now.getTime() + koreaOffsetMs);
-        
-        const year = koreaTime.getUTCFullYear();
-        const month = String(koreaTime.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(koreaTime.getUTCDate()).padStart(2, '0');
-        
-        const fallbackDateString = `${year}-${month}-${day}`;
-        console.log('📅 수동 계산 날짜 문자열:', fallbackDateString);
-        return fallbackDateString;
+        // 최후의 fallback - 현재 로컬 날짜
+        console.log('⚠️ 로컬 날짜 문자열 사용');
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
         
     } catch (error) {
         console.error('getCurrentKoreanDateString 전체 실패:', error);
-        // 최후의 fallback
+        // 최종 fallback
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -2102,7 +2124,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch (error) {
         console.error('❌ 한국 시간 함수 호출 오류:', error);
         console.error('스택 트레이스:', error.stack);
-        return; // 여기서 중단
+        console.log('⚠️ 한국 시간 함수 오류 무시하고 계속 진행');
+        // return; // 오류 무시하고 계속 진행
     }
     
     // URL 파라미터 확인 (OAuth 콜백에서 타임스탬프가 있는지)
