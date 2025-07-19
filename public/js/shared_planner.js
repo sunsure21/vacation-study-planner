@@ -417,7 +417,11 @@ function showDayModal(dateKey, daySchedules) {
     
     const [year, month, day] = dateKey.split('-').map(Number);
     const date = new Date(year, month - 1, day);
-    title.textContent = `${formatDate(date)} 요약`;
+    
+    // 날짜 표시 개선 - dateKey 기반으로 직접 포맷
+    const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+    const formattedDate = `${monthNames[month - 1]} ${day}일`;
+    title.textContent = `${formattedDate} 요약`;
     
     // 통계 계산
     const availableStudySlots = daySchedules.filter(s => s.isStudySlot);
