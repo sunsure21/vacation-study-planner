@@ -2573,13 +2573,25 @@ async function handleShareLinks() {
 // 현재 플래너의 모든 데이터 수집
 function collectCurrentPlannerData() {
     try {
-        // 로컬스토리지에서 데이터 수집
+        // 로컬스토리지에서 데이터 수집 - 상세 로그 추가
+        console.log('🔍 로컬스토리지 원본 데이터:');
+        console.log('- vacationPeriod 원본:', localStorage.getItem('vacationPeriod'));
+        console.log('- schedules 원본:', localStorage.getItem('schedules'));
+        console.log('- studyRecords 원본:', localStorage.getItem('studyRecords'));
+        console.log('- completedSchedules 원본:', localStorage.getItem('completedSchedules'));
+        
         const vacationPeriod = JSON.parse(localStorage.getItem('vacationPeriod'));
         const schedules = JSON.parse(localStorage.getItem('schedules')) || [];
         const studyRecords = JSON.parse(localStorage.getItem('studyRecords')) || {};
         const completedSchedules = JSON.parse(localStorage.getItem('completedSchedules')) || {};
         
-        console.log('📊 수집된 데이터:', {
+        console.log('📊 파싱된 데이터:');
+        console.log('- vacationPeriod:', vacationPeriod);
+        console.log('- schedules:', schedules);
+        console.log('- studyRecords:', studyRecords);
+        console.log('- completedSchedules:', completedSchedules);
+        
+        console.log('📊 수집된 데이터 요약:', {
             vacationPeriod: !!vacationPeriod,
             schedulesCount: schedules.length,
             studyRecordsCount: Object.keys(studyRecords).length,
