@@ -1174,9 +1174,11 @@ function renderVacationCalendar(container) {
             continue;
         }
         
-        // 방학 기간 내 날짜
-        const currentDate = new Date(vacationStartDate);
-        currentDate.setDate(vacationStartDate.getDate() + dayIndex);
+        // 방학 기간 내 날짜 - 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
+        const startYear = vacationStartDate.getFullYear();
+        const startMonth = vacationStartDate.getMonth();
+        const startDay = vacationStartDate.getDate();
+        const currentDate = new Date(startYear, startMonth, startDay + dayIndex);
         const dateKey = toYYYYMMDD(currentDate);
         
         dayCell.className = 'day-cell';
