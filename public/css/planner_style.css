@@ -541,15 +541,15 @@ body.modal-open {
 
 /* 순공시간 스타일 */
 .schedule-item.순공 { 
-    background: linear-gradient(135deg, #ff6b6b, #feca57);
-    color: white; 
-    border: 2px solid #ff6b6b;
+    background: #c8e6c9;
+    color: #2e7d32; 
+    border: 2px solid #4caf50;
     font-weight: bold;
 }
 
 .schedule-item.순공:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 /* 완수된 스케줄 스타일 */
@@ -2821,18 +2821,17 @@ body.modal-open {
 
 /* 순공시간 슬롯 스타일 */
 .schedule-item.study-slot {
-    background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
-    color: white;
-    border: none;
+    background: #c8e6c9;
+    color: #2e7d32;
+    border: 1px dashed #4caf50;
     font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
 }
 
 .schedule-item.study-slot:hover {
-    background: linear-gradient(135deg, #d97706, #b45309, #92400e);
+    background: #a5d6a7;
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4);
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
 }
 
 /* 모바일 대응 */
