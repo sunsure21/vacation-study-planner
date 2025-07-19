@@ -1121,6 +1121,30 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             border-radius: 8px;
             margin-bottom: 20px;
         }
+        
+        /* 카테고리별 배경 색상 - 원본 planner와 동일 */
+        .schedule-item[data-category="순공가능시간"] {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .schedule-item[data-category="수학학원"],
+        .schedule-item[data-category="학원"],
+        .schedule-item[data-category="과외"] {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .schedule-item[data-category="기타"] {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+        .schedule-item[data-category="없음"] {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+        .completed-schedule {
+            opacity: 0.7;
+            text-decoration: line-through;
+        }
     </style>
 </head>
 <body>

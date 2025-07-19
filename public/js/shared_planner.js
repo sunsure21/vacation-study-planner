@@ -121,6 +121,19 @@ function generateSchedulesByDate() {
         
         // 순공시간 슬롯 생성
         generateStudySlots(dateKey);
+        
+        // 최종 정렬 및 중복 제거
+        schedulesByDate[dateKey] = schedulesByDate[dateKey]
+            .sort((a, b) => {
+                const timeA = a.startTime.split(':').map(Number);
+                const timeB = b.startTime.split(':').map(Number);
+                const minutesA = timeA[0] * 60 + timeA[1];
+                const minutesB = timeB[0] * 60 + timeB[1];
+                return minutesA - minutesB;
+            });
+            
+        // 연속된 순공 시간 병합
+        mergeConsecutiveStudySlots(dateKey);
     }
 }
 
@@ -206,6 +219,63 @@ function addStudySlot(dateKey, startSlot, endSlot, duration) {
     };
     
     schedulesByDate[dateKey].push(studySlot);
+    
+    // 시간 순서로 정렬
+    schedulesByDate[dateKey].sort((a, b) => {
+        const timeA = a.startTime.split(':').map(Number);
+        const timeB = b.startTime.split(':').map(Number);
+        const minutesA = timeA[0] * 60 + timeA[1];
+        const minutesB = timeB[0] * 60 + timeB[1];
+        return minutesA - minutesB;
+    });
+}
+
+// 연속된 순공 시간 병합
+function mergeConsecutiveStudySlots(dateKey) {
+    if (!schedulesByDate[dateKey]) return;
+    
+    const schedules = schedulesByDate[dateKey];
+    const merged = [];
+    let i = 0;
+    
+    while (i < schedules.length) {
+        const current = schedules[i];
+        
+        if (current.isStudySlot) {
+            // 연속된 순공 시간들을 찾아서 병합
+            let endTime = current.endTime;
+            let totalDuration = current.duration;
+            let j = i + 1;
+            
+            while (j < schedules.length && schedules[j].isStudySlot) {
+                const next = schedules[j];
+                // 현재 슬롯의 끝 시간과 다음 슬롯의 시작 시간이 같으면 병합
+                if (endTime === next.startTime) {
+                    endTime = next.endTime;
+                    totalDuration += next.duration;
+                    j++;
+                } else {
+                    break;
+                }
+            }
+            
+            // 병합된 순공 시간 슬롯 생성
+            const mergedSlot = {
+                ...current,
+                endTime: endTime,
+                duration: totalDuration,
+                title: `순공 가능 시간`
+            };
+            
+            merged.push(mergedSlot);
+            i = j;
+        } else {
+            merged.push(current);
+            i++;
+        }
+    }
+    
+    schedulesByDate[dateKey] = merged;
 }
 
 // 캘린더 렌더링 (원본과 유사하지만 수정 기능 제거)
@@ -261,6 +331,7 @@ function renderCalendar() {
             }
             
             scheduleItem.className = className;
+            scheduleItem.setAttribute('data-category', schedule.category || '기타');
             scheduleItem.textContent = schedule.title || schedule.category;
             schedulesContainer.appendChild(scheduleItem);
         });
