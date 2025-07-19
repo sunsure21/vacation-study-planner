@@ -363,7 +363,7 @@ body.modal-open {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* 줄바꿈 방지 */
     gap: 15px;
 }
 
@@ -1867,24 +1867,27 @@ body.modal-open {
     
     /* 액션 버튼 최적화 - 가로 한 줄 배치 */
     .action-buttons {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: nowrap; /* 줄바꿈 방지 */
-        gap: 15px;
-        margin: 15px 0;
-        width: 100%;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important; /* 줄바꿈 방지 */
+        gap: 15px !important;
+        margin: 15px 0 !important;
+        width: 100% !important;
     }
     
     .action-buttons .action-button {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        flex-shrink: 0; /* 크기 고정 */
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        flex-shrink: 0 !important; /* 크기 고정 */
+        font-size: 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
     }
     
     /* 로그아웃 버튼 */
