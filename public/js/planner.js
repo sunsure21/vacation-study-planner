@@ -977,6 +977,16 @@ function renderVacationCalendar(container) {
         
         dayCell.appendChild(schedulesContainer);
         
+        // 순공 가능 시간 표시 (박스 하단)
+        const studySlots = daySchedules.filter(s => s.isStudySlot);
+        if (studySlots.length > 0) {
+            const totalStudyTime = studySlots.reduce((sum, slot) => sum + (slot.duration || 0), 0);
+            const studyTimeDisplay = document.createElement('div');
+            studyTimeDisplay.className = 'daily-study-available';
+            studyTimeDisplay.textContent = `순공가능: ${formatMinutes(totalStudyTime)}`;
+            dayCell.appendChild(studyTimeDisplay);
+        }
+        
         // 실제 순공시간 총량 표시
         const dayStudyRecord = studyRecords[dateKey] || {};
         const totalStudyMinutes = Object.values(dayStudyRecord).reduce((sum, record) => {
@@ -988,7 +998,7 @@ function renderVacationCalendar(container) {
             studyTimeDisplay.className = 'daily-study-time';
             const hours = Math.floor(totalStudyMinutes / 60);
             const minutes = totalStudyMinutes % 60;
-            studyTimeDisplay.textContent = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
+            studyTimeDisplay.textContent = hours > 0 ? `실제: ${hours}시간 ${minutes}분` : `실제: ${minutes}분`;
             dayCell.appendChild(studyTimeDisplay);
         }
         

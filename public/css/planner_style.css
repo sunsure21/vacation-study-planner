@@ -2687,3 +2687,75 @@ body.modal-open {
         width: 100%;
     }
 }
+
+/* 순공시간 슬롯 스타일 */
+.schedule-item.study-slot {
+    background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
+    color: white;
+    border: none;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+
+.schedule-item.study-slot:hover {
+    background: linear-gradient(135deg, #d97706, #b45309, #92400e);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4);
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .link-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .share-link-input {
+        width: 100%;
+    }
+    
+    .btn-copy {
+        width: 100%;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+}
+
+/* 일일 순공시간 표시 */
+.daily-study-available {
+    position: absolute;
+    bottom: 25px;
+    left: 8px;
+    right: 8px;
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    text-align: center;
+}
+
+.daily-study-time {
+    position: absolute;
+    bottom: 5px;
+    left: 8px;
+    right: 8px;
+    background: rgba(16, 185, 129, 0.1);
+    color: #065f46;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    text-align: center;
+}
