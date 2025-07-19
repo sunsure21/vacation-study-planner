@@ -2553,10 +2553,12 @@ async function handleShareLinks() {
         // 🎯 로컬 데이터 수집
         const shareData = collectCurrentPlannerData();
         
-        if (!shareData || !shareData.vacationPeriod) {
-            showErrorMessage('공유할 데이터가 없습니다. 먼저 방학 기간을 설정해주세요.');
+        if (!shareData) {
+            showErrorMessage('데이터 수집에 실패했습니다. 페이지를 새로고침하고 다시 시도해주세요.');
             return;
         }
+        
+        console.log('📤 현재 상태 그대로 공유 진행:', shareData);
         
         // 🔄 서버에 데이터 저장하고 토큰 생성
         console.log('📤 서버에 공유 데이터 저장 중...');

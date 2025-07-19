@@ -758,13 +758,11 @@ app.post('/api/share/create', async (req, res) => {
         
         const { vacationPeriod, schedules, studyRecords, completedSchedules, createdAt } = req.body;
         
-        // 데이터 검증
-        if (!vacationPeriod || !vacationPeriod.start || !vacationPeriod.end) {
-            return res.status(400).json({ 
-                success: false, 
-                error: '방학 기간 정보가 필요합니다' 
-            });
-        }
+        // 데이터 검증 (최소한만)
+        console.log('📊 받은 데이터:', { 
+            hasVacationPeriod: !!vacationPeriod,
+            schedulesCount: schedules ? schedules.length : 0 
+        });
         
         // 고유 토큰 생성
         const viewToken = generateToken();
