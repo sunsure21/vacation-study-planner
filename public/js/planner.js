@@ -2662,8 +2662,8 @@ function displayNewLinks(viewToken, recordToken) {
     const modal = document.getElementById('share-modal');
     const content = modal.querySelector('.modal-body');
     const baseUrl = window.location.origin;
-    const viewUrl = `${baseUrl}/view/${viewToken}`;
-    const recordUrl = `${baseUrl}/record/${recordToken}`;
+    const viewUrl = `${baseUrl}/shared/view/${viewToken}`;
+    const recordUrl = `${baseUrl}/shared/record/${recordToken}`;
     
     content.innerHTML = `
         <div class="share-content">

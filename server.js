@@ -7,7 +7,7 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const nodemailer = require('nodemailer');
-const { saveUserData, getUserData, getAllUserData, deleteUserData } = require('./lib/kv');
+const { saveUserData, getUserData, getAllUserData, deleteUserData, memoryStore } = require('./lib/kv');
 
 const app = express();
 const port = 3001;
@@ -783,11 +783,17 @@ app.post('/api/share/create', async (req, res) => {
             recordToken
         };
         
-        // KV에 저장
-        const { Redis } = require('@upstash/redis');
-        const kvStore = Redis.fromEnv();
-        await kvStore.set(`share:view:${viewToken}`, JSON.stringify(shareData));
-        await kvStore.set(`share:record:${recordToken}`, JSON.stringify(shareData));
+        // KV에 저장 (로컬은 메모리, 운영은 Redis)
+        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            const { Redis } = require('@upstash/redis');
+            const kvStore = Redis.fromEnv();
+            await kvStore.set(`share:view:${viewToken}`, JSON.stringify(shareData));
+            await kvStore.set(`share:record:${recordToken}`, JSON.stringify(shareData));
+        } else {
+            // 로컬 개발 환경: 메모리 저장소 사용
+            memoryStore[`share:view:${viewToken}`] = JSON.stringify(shareData);
+            memoryStore[`share:record:${recordToken}`] = JSON.stringify(shareData);
+        }
         
         console.log('✅ 공유 데이터 저장 완료:', {
             viewToken: viewToken.substring(0, 8) + '...',
@@ -950,34 +956,53 @@ app.get('/api/shared/:token/data', async (req, res) => {
     try {
         const { token } = req.params;
         
-        // 토큰 유효성 확인
-        const viewUserEmail = await kv.get(`token:view:${token}`);
-        const recordUserEmail = await kv.get(`token:record:${token}`);
-        const userEmail = viewUserEmail || recordUserEmail;
+        // 새로운 공유 시스템: 토큰으로 직접 데이터 조회
+        let shareData = null;
         
-        if (!userEmail) {
+        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            const { Redis } = require('@upstash/redis');
+            const kvStore = Redis.fromEnv();
+            
+            // view 또는 record 토큰으로 데이터 조회
+            const viewData = await kvStore.get(`share:view:${token}`);
+            const recordData = await kvStore.get(`share:record:${token}`);
+            shareData = viewData || recordData;
+        } else {
+            // 로컬 개발 환경: 메모리 저장소 사용
+            const viewData = memoryStore[`share:view:${token}`];
+            const recordData = memoryStore[`share:record:${token}`];
+            shareData = viewData || recordData;
+        }
+        
+        if (!shareData) {
             return res.status(404).json({ error: '유효하지 않은 토큰입니다.' });
         }
         
-        // 사용자 데이터 조회
-        const [schedules, studyRecords, completedSchedules, vacationPeriod] = await Promise.all([
-            kv.get(`user:${userEmail}:schedules`) || [],
-            kv.get(`user:${userEmail}:studyRecords`) || {},
-            kv.get(`user:${userEmail}:completedSchedules`) || {},
-            kv.get(`user:${userEmail}:vacationPeriod`) || null
-        ]);
+        // JSON 문자열이면 파싱
+        if (typeof shareData === 'string') {
+            shareData = JSON.parse(shareData);
+        }
         
-        // 권한 정보 추가
-        const canRecord = !!recordUserEmail;
+        // 권한 확인 (record 토큰인지 확인)
+        let canRecord = false;
+        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            const { Redis } = require('@upstash/redis');
+            const kvStore = Redis.fromEnv();
+            const recordData = await kvStore.get(`share:record:${token}`);
+            canRecord = !!recordData;
+        } else {
+            const recordData = memoryStore[`share:record:${token}`];
+            canRecord = !!recordData;
+        }
         
         res.json({
-            schedules,
-            studyRecords,
-            completedSchedules,
-            vacationPeriod,
+            schedules: shareData.schedules || [],
+            studyRecords: shareData.studyRecords || {},
+            completedSchedules: shareData.completedSchedules || {},
+            vacationPeriod: shareData.vacationPeriod || null,
             permissions: {
                 canRecord,
-                ownerEmail: userEmail
+                ownerEmail: 'shared'
             }
         });
         
@@ -992,31 +1017,62 @@ app.post('/api/shared/:token/study-record', async (req, res) => {
     try {
         const { token } = req.params;
         
-        // record 토큰 확인
-        const userEmail = await kv.get(`token:record:${token}`);
-        if (!userEmail) {
+        // record 토큰으로 공유 데이터 조회
+        let shareData = null;
+        
+        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            const { Redis } = require('@upstash/redis');
+            const kvStore = Redis.fromEnv();
+            const data = await kvStore.get(`share:record:${token}`);
+            shareData = data;
+        } else {
+            // 로컬 개발 환경: 메모리 저장소 사용
+            shareData = memoryStore[`share:record:${token}`];
+        }
+        
+        if (!shareData) {
             return res.status(403).json({ error: '실적 입력 권한이 없습니다.' });
+        }
+        
+        // JSON 문자열이면 파싱
+        if (typeof shareData === 'string') {
+            shareData = JSON.parse(shareData);
         }
         
         const { dateKey, slotId, minutes, subject, notes } = req.body;
         
-        // 기존 실적 데이터 조회
-        const studyRecords = await kv.get(`user:${userEmail}:studyRecords`) || {};
-        
-        // 새 실적 추가/업데이트
-        if (!studyRecords[dateKey]) {
-            studyRecords[dateKey] = {};
+        // 공유 데이터의 실적 업데이트
+        if (!shareData.studyRecords) {
+            shareData.studyRecords = {};
+        }
+        if (!shareData.studyRecords[dateKey]) {
+            shareData.studyRecords[dateKey] = {};
         }
         
-        studyRecords[dateKey][slotId] = {
+        shareData.studyRecords[dateKey][slotId] = {
             minutes: parseInt(minutes) || 0,
             subject: subject || '',
             notes: notes || '',
             timestamp: new Date().toISOString()
         };
         
-        // 저장
-        await kv.set(`user:${userEmail}:studyRecords`, studyRecords);
+        // 공유 데이터 다시 저장
+        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            const { Redis } = require('@upstash/redis');
+            const kvStore = Redis.fromEnv();
+            await kvStore.set(`share:record:${token}`, JSON.stringify(shareData));
+            // view 토큰도 같은 데이터로 업데이트
+            if (shareData.viewToken) {
+                await kvStore.set(`share:view:${shareData.viewToken}`, JSON.stringify(shareData));
+            }
+        } else {
+            // 로컬 개발 환경: 메모리 저장소 사용
+            memoryStore[`share:record:${token}`] = JSON.stringify(shareData);
+            // view 토큰도 같은 데이터로 업데이트
+            if (shareData.viewToken) {
+                memoryStore[`share:view:${shareData.viewToken}`] = JSON.stringify(shareData);
+            }
+        }
         
         res.json({ success: true });
         
