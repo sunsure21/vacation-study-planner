@@ -322,7 +322,7 @@ function updateWeeklySchedule() {
     
     weeklySchedulesContainer.innerHTML = weeklySchedulesHtml;
     
-    // 순공 가능 시간 계산 (24시간 - 식사, 학원, 취침, 기타 시간)
+    // 순공 가능 시간 계산 - 캘린더와 동일한 방식 사용
     let studyHoursHtml = '';
     let totalWeeklyStudyHours = 0;
     
@@ -330,23 +330,70 @@ function updateWeeklySchedule() {
         const dateKey = toYYYYMMDD(d);
         const daySchedules = schedulesByDate[dateKey] || [];
         
-        // 해당 날짜의 실제 순공 시간 슬롯들을 계산해서 사용
-        const studySlots = daySchedules.filter(s => s.isStudySlot);
-        let totalStudySlotMinutes = 0;
+        // 방학 첫날 체크
+        const isFirstVacationDay = vacationStartDate && dateKey === toYYYYMMDD(vacationStartDate);
         
-        if (studySlots.length > 0) {
-            // 순공 슬롯이 있으면 그 시간들의 합
-            studySlots.forEach(slot => {
-                totalStudySlotMinutes += slot.duration || 0;
+        // 기본 순공 가능 시간: 방학 첫날은 09:00~24:00, 그 외는 00:00~24:00
+        let totalStudyMinutes = isFirstVacationDay ? (24 - 9) * 60 : 24 * 60; // 첫날은 15시간
+        
+        // 해당 날짜의 등록된 스케줄들 (순공시간 제외)
+        const existingSchedules = daySchedules.filter(s => !s.isStudySlot);
+        
+        // 1️⃣ 방학 첫날이 아닌 경우만 전일 취침시간 차감
+        if (!isFirstVacationDay) {
+            const [year, month, day] = dateKey.split('-').map(Number);
+            const currentDate = new Date(year, month - 1, day);
+            const previousDate = new Date(currentDate);
+            previousDate.setDate(previousDate.getDate() - 1);
+            const previousDateKey = toYYYYMMDD(previousDate);
+            
+            // 전일 스케줄 중 자정을 넘는 취침시간 찾기
+            const previousSchedules = schedulesByDate[previousDateKey] || [];
+            previousSchedules.forEach(schedule => {
+                if (schedule.category === '취침') {
+                    const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
+                    const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
+                    
+                    // 자정을 넘는 취침시간 확인: endMinutes > 24*60이면 다음날로 넘어감
+                    if (endMinutes > 24 * 60) {
+                        // 당일 새벽 부분 차감 (00:00부터 기상시간까지)
+                        const morningEndMinutes = endMinutes - 24 * 60; // 기상시간
+                        totalStudyMinutes -= morningEndMinutes;
+                    }
+                }
             });
-        } else {
-            // 순공 슬롯이 없으면 기본 24시간 (00:00~24:00)
-            totalStudySlotMinutes = 24 * 60; // 1440분
         }
         
-        const availableStudyMinutes = totalStudySlotMinutes;
-        const availableStudyHours = Math.max(0, Math.floor(availableStudyMinutes / 60));
-        const availableStudyMinutesRemainder = Math.max(0, availableStudyMinutes % 60);
+        // 2️⃣ 당일 스케줄들 차감
+        existingSchedules.forEach(schedule => {
+            const start = timeToMinutes(schedule.startTime, false, schedule.category);
+            const end = timeToMinutes(schedule.endTime, true, schedule.category);
+            
+            if (schedule.category === '취침') {
+                // 취침: 취침시간만 차감 (버퍼 없음)
+                if (end < start) {
+                    // 다음날로 넘어가는 취침 → 당일 밤 부분만
+                    const nightMinutes = (24 * 60 - start);
+                    totalStudyMinutes -= nightMinutes;
+                } else {
+                    // 같은 날 취침 (드문 경우)
+                    totalStudyMinutes -= (end - start);
+                }
+            } else if (schedule.category === '학원/과외' || schedule.category === '학원') {
+                // 학원/과외: 이동시간 앞뒤 1시간씩 포함
+                const classMinutes = end - start;
+                const bufferMinutes = 120; // 앞뒤 1시간씩
+                totalStudyMinutes -= (classMinutes + bufferMinutes);
+            } else {
+                // 일반 스케줄: 전체 시간 차감 (버퍼 없음)
+                totalStudyMinutes -= (end - start);
+            }
+        });
+        
+        // 최소 0분 보장
+        const availableStudyMinutes = Math.max(0, totalStudyMinutes);
+        const availableStudyHours = Math.floor(availableStudyMinutes / 60);
+        const availableStudyMinutesRemainder = availableStudyMinutes % 60;
         
         // 실제 순공 시간 계산
         const dayStudyRecord = studyRecords[dateKey] || {};
