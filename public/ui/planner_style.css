@@ -43,7 +43,6 @@
     --category-study: #a7f3d0;        /* 순공/자습 - 민트그린 */
     --category-meal: #fef3c7;         /* 식사 - 레몬색 */
     --category-sleep: #bae6fd;        /* 취침 - 스카이블루 */
-    --category-travel: #ff9d50;       /* 이동 - 기존 색상 유지 */
     --category-play: #ddd6fe;         /* 놀이 - 라벤더 */
     --category-etc: #e5e7eb;          /* 기타 - 라이트그레이 */
 }
@@ -615,10 +614,10 @@ html {
     border: 1px solid #0284c7;
 }
 
-.schedule-item.travel {
-    background-color: rgba(255, 157, 80, 0.3);
-    color: #ea580c;
-    border: 1px solid #ea580c;
+.schedule-item.play {
+    background-color: rgba(221, 214, 254, 0.3);
+    color: #7c3aed;
+    border: 1px solid #7c3aed;
 }
 
 .schedule-item.etc {
@@ -773,7 +772,6 @@ html {
 .highlight-item-category-color-dot.academy { background-color: #fed7aa; }
 .highlight-item-category-color-dot.meal { background-color: #fef3c7; }
 .highlight-item-category-color-dot.sleep { background-color: #bae6fd; }
-.highlight-item-category-color-dot.travel { background-color: #ff9d50; }
 .highlight-item-category-color-dot.etc { background-color: #e5e7eb; }
 
 .highlight-item-content {
