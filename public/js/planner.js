@@ -1962,6 +1962,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // 모달 닫기 이벤트
     document.getElementById('schedule-modal-close').addEventListener('click', closeScheduleModal);
+    document.getElementById('schedule-cancel-btn').addEventListener('click', closeScheduleModal); // 취소 버튼 추가
     document.getElementById('day-modal-close').addEventListener('click', () => {
         closeModal('day-summary-modal');
     });
