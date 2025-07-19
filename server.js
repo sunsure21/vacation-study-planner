@@ -171,9 +171,14 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json()); // JSON 요청 본문을 파싱하기 위해 추가
 
-// favicon 404 에러 방지
+// favicon 제공
 app.get('/favicon.ico', (req, res) => {
-    res.status(204).send();
+    res.sendFile(path.join(__dirname, 'logo.ico'));
+});
+
+// logo.ico 파일 제공
+app.get('/logo.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, 'logo.ico'));
 });
 
 // JWT 인증 미들웨어 (세션 대체용)
