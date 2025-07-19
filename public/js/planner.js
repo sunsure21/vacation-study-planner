@@ -668,67 +668,114 @@ function addStudyTimeSlots(dateKey) {
         schedulesByDate[dateKey] = [];
     }
     
-    // 기존 스케줄들의 시간대 확인
+    // 해당 날짜의 등록된 스케줄들 (순공시간 제외)
     const existingSchedules = schedulesByDate[dateKey].filter(s => !s.isStudySlot);
-    const busyTimes = [];
     
+    // 기본 순공 가능 시간: 00:00~24:00 (24시간 = 1440분)
+    let totalStudyMinutes = 24 * 60;
+    
+    console.log(`📅 ${dateKey} 순공시간 계산:`);
+    console.log(`🕐 기본: 24시간 0분`);
+    
+    // 1️⃣ 먼저 전일에서 넘어온 취침시간 확인
+    const [year, month, day] = dateKey.split('-').map(Number);
+    const currentDate = new Date(year, month - 1, day);
+    const previousDate = new Date(currentDate);
+    previousDate.setDate(previousDate.getDate() - 1);
+    const previousDateKey = toYYYYMMDD(previousDate);
+    
+    // 전일 스케줄 중 자정을 넘는 취침시간 찾기
+    const previousSchedules = schedulesByDate[previousDateKey] || [];
+    previousSchedules.forEach(schedule => {
+        if (schedule.category === '취침' && !schedule.isStudySlot) {
+            const start = timeToMinutes(schedule.startTime, false, schedule.category);
+            const end = timeToMinutes(schedule.endTime, true, schedule.category);
+            
+            if (end > 24 * 60) {
+                // 자정을 넘는 취침: 다음날(당일) 새벽 부분 차감
+                const nextDayMinutes = end - 24 * 60;
+                totalStudyMinutes -= nextDayMinutes;
+                
+                const endHour = schedule.endTime.split(':')[0].padStart(2,'0');
+                const endMinute = schedule.endTime.split(':')[1];
+                console.log(`😴 전일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(nextDayMinutes)} (00:00-${endHour}:${endMinute})`);
+            }
+        }
+    });
+    
+    // 2️⃣ 당일 등록된 스케줄들 처리
     existingSchedules.forEach(schedule => {
         if (!schedule.startTime || !schedule.endTime) {
             console.warn('Invalid schedule found:', schedule);
             return;
         }
+        
         const start = timeToMinutes(schedule.startTime, false, schedule.category);
         const end = timeToMinutes(schedule.endTime, true, schedule.category);
         
-        if (schedule.category === '학원/과외' || schedule.category === '학원') {
-            // 학원/과외: 앞뒤 1시간씩 추가로 제외 (이동시간 고려)
-            // 기존 '학원' 카테고리도 호환 처리
-            busyTimes.push({
-                start: Math.max(0, start - 60), // 1시간 전 (0시 이전은 불가)
-                end: Math.min(24 * 60, end + 60) // 1시간 후 (24시 이후는 불가)
-            });
-        } else if (schedule.category === '취침') {
-            // 취침: 취침 전 1시간, 기상 후 1시간 제외
-            // 자정을 넘나드는 경우 특별 처리
+        let scheduleMinutes = 0;
+        
+        if (schedule.category === '취침') {
+            // 당일 취침시간 처리
             if (end > 24 * 60) {
-                // 취침 시간이 자정을 넘는 경우
-                busyTimes.push({
-                    start: Math.max(0, start - 60), // 취침 전 1시간
-                    end: 24 * 60 // 자정까지
-                });
-                // 다음 날 새벽 부분
-                busyTimes.push({
-                    start: 0, // 자정부터
-                    end: Math.min(24 * 60, (end - 24 * 60) + 60) // 기상 후 1시간
-                });
+                // 자정을 넘는 취침: 당일은 시작시간~24:00만 차감
+                scheduleMinutes = 24 * 60 - start;
+                console.log(`😴 당일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-24:00)`);
             } else {
-                busyTimes.push({
-                    start: Math.max(0, start - 60), // 취침 전 1시간
-                    end: Math.min(24 * 60, end + 60) // 기상 후 1시간
-                });
+                // 같은 날 취침: 전체 차감
+                scheduleMinutes = end - start;
+                console.log(`😴 당일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-${schedule.endTime})`);
             }
         } else {
-            // 일반 스케줄: 정확한 시간만 제외
-            busyTimes.push({
-                start: start,
-                end: end
-            });
+            // 일반 스케줄: 전체 시간 차감
+            scheduleMinutes = end - start;
+            const emoji = getScheduleEmoji(schedule.category);
+            console.log(`${emoji} ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-${schedule.endTime})`);
         }
+        
+        totalStudyMinutes -= scheduleMinutes;
     });
     
-    // 순공 가능 시간대 계산 (9:00-22:00)
-    const studyPeriods = calculateStudyPeriods(busyTimes);
+    // 최소 0분 보장
+    totalStudyMinutes = Math.max(0, totalStudyMinutes);
     
-    studyPeriods.forEach(period => {
+    console.log(`✨ 결과: ${formatHoursMinutes(totalStudyMinutes)} ⭐`);
+    
+    // 순공 가능 시간이 있으면 하나의 큰 슬롯으로 생성
+    if (totalStudyMinutes > 0) {
         schedulesByDate[dateKey].push({
             isStudySlot: true,
-            startTime: minutesToTime(period.start),
-            endTime: minutesToTime(period.end),
-            duration: period.end - period.start,
+            startTime: '00:00',
+            endTime: '24:00',
+            duration: totalStudyMinutes,
             category: '순공',
-            title: `순공가능 ${formatMinutes(period.end - period.start)}`
+            title: `순공가능 ${formatMinutes(totalStudyMinutes)}`
         });
-    });
+    }
+}
+
+// 시간/분 형식으로 포맷팅
+function formatHoursMinutes(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (mins === 0) {
+        return `${hours}시간`;
+    } else {
+        return `${hours}시간 ${mins}분`;
+    }
+}
+
+// 스케줄 카테고리별 이모지
+function getScheduleEmoji(category) {
+    const emojiMap = {
+        '학원': '🏫',
+        '학원/과외': '🏫',
+        '자택과외': '🏠',
+        '식사': '🍽️',
+        '운동': '💪',
+        '기타': '📋'
+    };
+    return emojiMap[category] || '📅';
 }
 
 function timeToMinutes(timeStr, isEndTime = false, category = null) {
@@ -760,6 +807,12 @@ function calculateStudyPeriods(busyTimes) {
     const dayStart = 9 * 60; // 9:00
     const dayEnd = 24 * 60; // 24:00
     
+    // 🐛 디버그: 바쁜 시간들 확인
+    console.log('🔍 바쁜 시간들:', busyTimes.map(bt => ({ 
+        start: Math.floor(bt.start/60) + ':' + String(bt.start%60).padStart(2,'0'), 
+        end: Math.floor(bt.end/60) + ':' + String(bt.end%60).padStart(2,'0') 
+    })));
+    
     // 바쁜 시간들을 정렬
     busyTimes.sort((a, b) => a.start - b.start);
     
@@ -789,6 +842,13 @@ function calculateStudyPeriods(busyTimes) {
             });
         }
     }
+    
+    // 🐛 디버그: 생성된 순공 시간들 확인
+    console.log('📚 생성된 순공 시간들:', studyPeriods.map(sp => ({ 
+        start: Math.floor(sp.start/60) + ':' + String(sp.start%60).padStart(2,'0'), 
+        end: Math.floor(sp.end/60) + ':' + String(sp.end%60).padStart(2,'0'),
+        duration: Math.floor((sp.end - sp.start)/60) + '시간 ' + ((sp.end - sp.start)%60) + '분'
+    })));
     
     return studyPeriods;
 }
