@@ -692,13 +692,17 @@ function addStudyTimeSlots(dateKey) {
             const end = timeToMinutes(schedule.endTime, true, schedule.category);
             
             if (end > 24 * 60) {
-                // 자정을 넘는 취침: 다음날(당일) 새벽 부분 차감
-                const nextDayMinutes = end - 24 * 60;
-                totalStudyMinutes -= nextDayMinutes;
+                // 자정을 넘는 취침: 다음날(당일) 새벽 부분 + 기상 후 1시간 차감
+                const nextDayMinutes = end - 24 * 60; // 실제 취침 시간
+                const totalDeductionMinutes = nextDayMinutes + 60; // 기상 후 1시간 추가
+                const finalDeduction = Math.min(totalDeductionMinutes, 24 * 60); // 최대 24시간
+                
+                totalStudyMinutes -= finalDeduction;
                 
                 const endHour = schedule.endTime.split(':')[0].padStart(2,'0');
                 const endMinute = schedule.endTime.split(':')[1];
-                console.log(`😴 전일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(nextDayMinutes)} (00:00-${endHour}:${endMinute})`);
+                const bufferEndHour = Math.min(parseInt(endHour) + 1, 24);
+                console.log(`😴 전일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(finalDeduction)} (00:00-${endHour}:${endMinute} + 기상후 1시간)`);
             }
         }
     });
@@ -716,18 +720,31 @@ function addStudyTimeSlots(dateKey) {
         let scheduleMinutes = 0;
         
         if (schedule.category === '취침') {
-            // 당일 취침시간 처리
+            // 당일 취침시간 처리 (취침 전 1시간 포함)
             if (end > 24 * 60) {
-                // 자정을 넘는 취침: 당일은 시작시간~24:00만 차감
-                scheduleMinutes = 24 * 60 - start;
-                console.log(`😴 당일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-24:00)`);
+                // 자정을 넘는 취침: 당일은 (취침전 1시간 + 시작시간~24:00) 차감
+                const sleepMinutes = 24 * 60 - start; // 실제 취침 시간
+                const bufferMinutes = 60; // 취침 전 1시간
+                scheduleMinutes = sleepMinutes + bufferMinutes;
+                
+                const bufferStartHour = Math.max(Math.floor(start / 60) - 1, 0);
+                console.log(`😴 당일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(scheduleMinutes)} (취침전 1시간 + ${schedule.startTime}-24:00)`);
             } else {
-                // 같은 날 취침: 전체 차감
-                scheduleMinutes = end - start;
-                console.log(`😴 당일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-${schedule.endTime})`);
+                // 같은 날 취침: 취침 전후 1시간씩 포함
+                const sleepMinutes = end - start;
+                const bufferMinutes = 120; // 취침 전 1시간 + 기상 후 1시간
+                scheduleMinutes = sleepMinutes + bufferMinutes;
+                console.log(`😴 당일 취침(${schedule.title || '취침'}): -${formatHoursMinutes(scheduleMinutes)} (취침전 1시간 + ${schedule.startTime}-${schedule.endTime} + 기상후 1시간)`);
             }
+        } else if (schedule.category === '학원/과외' || schedule.category === '학원') {
+            // 학원/과외: 이동시간 앞뒤 1시간씩 포함
+            const classMinutes = end - start;
+            const bufferMinutes = 120; // 앞뒤 1시간씩
+            scheduleMinutes = classMinutes + bufferMinutes;
+            const emoji = getScheduleEmoji(schedule.category);
+            console.log(`${emoji} ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (이동시간 포함: ${schedule.startTime}-${schedule.endTime} + 앞뒤 각 1시간)`);
         } else {
-            // 일반 스케줄: 전체 시간 차감
+            // 일반 스케줄: 전체 시간 차감 (버퍼 없음)
             scheduleMinutes = end - start;
             const emoji = getScheduleEmoji(schedule.category);
             console.log(`${emoji} ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-${schedule.endTime})`);
