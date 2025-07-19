@@ -338,7 +338,17 @@ function updateWeeklySchedule() {
     console.log('📊 현재 schedulesByDate:', Object.keys(schedulesByDate).length, '일 데이터');
     console.log('📅 이번주 범위:', weekRange);
     
-    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
+    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
+    const startYear = weekRange.start.getFullYear();
+    const startMonth = weekRange.start.getMonth();
+    const startDate = weekRange.start.getDate();
+    const endYear = weekRange.end.getFullYear();
+    const endMonth = weekRange.end.getMonth();
+    const endDate = weekRange.end.getDate();
+    
+    for (let d = new Date(startYear, startMonth, startDate); 
+         d <= new Date(endYear, endMonth, endDate); 
+         d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         const daySchedules = schedulesByDate[dateKey] || [];
         
@@ -377,7 +387,10 @@ function updateWeeklySchedule() {
     let studyHoursHtml = '';
     let totalWeeklyStudyHours = 0;
     
-    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
+    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
+    for (let d = new Date(startYear, startMonth, startDate); 
+         d <= new Date(endYear, endMonth, endDate); 
+         d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         const daySchedules = schedulesByDate[dateKey] || [];
         
@@ -476,7 +489,10 @@ function updateWeeklySchedule() {
     
     // 이번주 총 실제 순공 시간 계산
     let totalWeeklyActualStudyMinutes = 0;
-    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
+    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
+    for (let d = new Date(startYear, startMonth, startDate); 
+         d <= new Date(endYear, endMonth, endDate); 
+         d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         const dayStudyRecord = studyRecords[dateKey] || {};
         const actualStudyMinutes = Object.values(dayStudyRecord).reduce((sum, record) => {
@@ -2655,7 +2671,17 @@ function updateWeeklyEvaluation() {
     let elapsedDays = 0;
     
     // 현재 주 범위에서만 계산 (방학 기간과 교집합)
-    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
+    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
+    const weekStartYear = weekRange.start.getFullYear();
+    const weekStartMonth = weekRange.start.getMonth();
+    const weekStartDate = weekRange.start.getDate();
+    const weekEndYear = weekRange.end.getFullYear();
+    const weekEndMonth = weekRange.end.getMonth();
+    const weekEndDate = weekRange.end.getDate();
+    
+    for (let d = new Date(weekStartYear, weekStartMonth, weekStartDate); 
+         d <= new Date(weekEndYear, weekEndMonth, weekEndDate); 
+         d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         
         // 방학 기간 내 날짜만 계산
