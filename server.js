@@ -790,14 +790,20 @@ app.post('/api/share/create', requireAuth, async (req, res) => {
         }
         
         if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
-            const { Redis } = require('@upstash/redis');
-            const kvStore = Redis.fromEnv();
-            await kvStore.set(`token:view:${viewToken}`, userEmail);
-            await kvStore.set(`token:record:${recordToken}`, userEmail);
+            try {
+                const { Redis } = require('@upstash/redis');
+                const kvStore = Redis.fromEnv();
+                await kvStore.set(`token:view:${viewToken}`, userEmail);
+                await kvStore.set(`token:record:${recordToken}`, userEmail);
+            } catch (error) {
+                console.log('⚠️ Redis 연결 실패, 메모리 저장소 사용:', error.message);
+                memoryStore.set(`token:view:${viewToken}`, userEmail);
+                memoryStore.set(`token:record:${recordToken}`, userEmail);
+            }
         } else {
             // 로컬 개발 환경: 메모리 저장소 사용
-            memoryStore[`token:view:${viewToken}`] = userEmail;
-            memoryStore[`token:record:${recordToken}`] = userEmail;
+            memoryStore.set(`token:view:${viewToken}`, userEmail);
+            memoryStore.set(`token:record:${recordToken}`, userEmail);
         }
         
         console.log('✅ 공유 데이터 저장 완료:', {
@@ -909,11 +915,16 @@ app.get('/shared/view/:token', async (req, res) => {
         let userEmail = null;
         
         if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
-            const { Redis } = require('@upstash/redis');
-            const kvStore = Redis.fromEnv();
-            userEmail = await kvStore.get(`token:view:${token}`);
+            try {
+                const { Redis } = require('@upstash/redis');
+                const kvStore = Redis.fromEnv();
+                userEmail = await kvStore.get(`token:view:${token}`);
+            } catch (error) {
+                console.log('⚠️ Redis 조회 실패, 메모리 저장소 사용:', error.message);
+                userEmail = memoryStore.get(`token:view:${token}`);
+            }
         } else {
-            userEmail = memoryStore[`token:view:${token}`];
+            userEmail = memoryStore.get(`token:view:${token}`);
         }
         
         if (!userEmail) {
@@ -937,11 +948,16 @@ app.get('/shared/record/:token', async (req, res) => {
         let userEmail = null;
         
         if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
-            const { Redis } = require('@upstash/redis');
-            const kvStore = Redis.fromEnv();
-            userEmail = await kvStore.get(`token:record:${token}`);
+            try {
+                const { Redis } = require('@upstash/redis');
+                const kvStore = Redis.fromEnv();
+                userEmail = await kvStore.get(`token:record:${token}`);
+            } catch (error) {
+                console.log('⚠️ Redis 조회 실패, 메모리 저장소 사용:', error.message);
+                userEmail = memoryStore.get(`token:record:${token}`);
+            }
         } else {
-            userEmail = memoryStore[`token:record:${token}`];
+            userEmail = memoryStore.get(`token:record:${token}`);
         }
         
         if (!userEmail) {
@@ -976,8 +992,8 @@ app.get('/api/shared/:token/data', async (req, res) => {
             canRecord = !!recordUserEmail;
         } else {
             // 로컬 개발 환경: 메모리 저장소 사용
-            const viewUserEmail = memoryStore[`token:view:${token}`];
-            const recordUserEmail = memoryStore[`token:record:${token}`];
+            const viewUserEmail = memoryStore.get(`token:view:${token}`);
+            const recordUserEmail = memoryStore.get(`token:record:${token}`);
             userEmail = viewUserEmail || recordUserEmail;
             canRecord = !!recordUserEmail;
         }
@@ -1019,12 +1035,17 @@ app.post('/api/shared/:token/study-record', async (req, res) => {
         let userEmail = null;
         
         if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
-            const { Redis } = require('@upstash/redis');
-            const kvStore = Redis.fromEnv();
-            userEmail = await kvStore.get(`token:record:${token}`);
+            try {
+                const { Redis } = require('@upstash/redis');
+                const kvStore = Redis.fromEnv();
+                userEmail = await kvStore.get(`token:record:${token}`);
+            } catch (error) {
+                console.log('⚠️ Redis 조회 실패, 메모리 저장소 사용:', error.message);
+                userEmail = memoryStore.get(`token:record:${token}`);
+            }
         } else {
             // 로컬 개발 환경: 메모리 저장소 사용
-            userEmail = memoryStore[`token:record:${token}`];
+            userEmail = memoryStore.get(`token:record:${token}`);
         }
         
         if (!userEmail) {
