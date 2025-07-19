@@ -2069,7 +2069,7 @@ function markdownToHtml(text) {
 
 // 초기화
 document.addEventListener('DOMContentLoaded', async function() {
-    alert('🚀 플래너 초기화 시작!');
+    console.log('🚀 플래너 시작');
     
     console.log('🚀 플래너 페이지 초기화 시작');
     console.log('📍 현재 URL:', window.location.href);
@@ -2085,14 +2085,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     
     try {
-        alert('📅 한국 시간 함수 테스트 시작');
+        console.log('📅 한국 시간 함수 테스트 시작');
         const koreanDate = getCurrentKoreanDate();
         const koreanDateString = getCurrentKoreanDateString();
-        alert(`✅ 한국 시간 성공: ${koreanDateString}`);
+        console.log('✅ 한국 시간 성공:', koreanDateString);
         console.log('🇰🇷 한국 시간:', koreanDate);
         console.log('📅 한국 날짜 문자열:', koreanDateString);
     } catch (error) {
-        alert(`❌ 한국 시간 함수 오류: ${error.message}`);
         console.error('❌ 한국 시간 함수 호출 오류:', error);
         console.error('스택 트레이스:', error.stack);
         return; // 여기서 중단
@@ -2109,59 +2108,37 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     try {
-        alert('🔍 세션 확인 시작');
+        console.log('🔍 세션 확인 시작');
         // 세션 확인을 먼저 수행
         console.log('🔍 세션 확인 중...');
         const isAuthenticated = await checkSession();
         if (!isAuthenticated) {
-            alert('❌ 세션 유효하지 않음 - 로그인 페이지로 이동');
             console.log('❌ 세션이 유효하지 않습니다. 로그인 페이지로 이동합니다.');
             window.location.href = '/login';
             return;
         }
-        alert('✅ 세션 확인 완료');
         console.log('✅ 세션 확인 완료');
         
-        alert('📊 데이터 로딩 시작');
         console.log('📊 데이터 로딩 시작...');
         await loadDataFromStorage();
-        alert('✅ 데이터 로딩 완료');
         console.log('✅ 데이터 로딩 완료');
         
         // 방학 기간이 설정되어 있으면 플래너 화면으로
         if (vacationStartDate && vacationEndDate) {
-            alert('📅 플래너 화면 표시');
             console.log('📅 방학 기간 설정됨, 플래너 화면 표시');
             showPlannerScreen();
         } else {
-            alert('⚙️ 설정 화면 표시');
             console.log('⚙️ 방학 기간 미설정, 설정 화면 표시');
             showSetupScreen();
         }
-        alert('✅ 플래너 초기화 완료!');
         console.log('✅ 플래너 페이지 초기화 완료');
         
     } catch (error) {
-        alert(`❌ 초기화 오류: ${error.message}\n위치: ${error.stack ? error.stack.split('\n')[1] : '알 수 없음'}`);
         console.error('❌ 초기화 중 오류 발생:', error);
         console.error('스택 트레이스:', error.stack);
         
-        // 오류 발생 시 사용자에게 구체적인 알림
-        const errorMessage = `페이지 로딩 중 오류가 발생했습니다.
-
-오류 정보:
-- 메시지: ${error.message}
-- 타입: ${error.name}
-- 위치: ${error.stack ? error.stack.split('\n')[1] : '알 수 없음'}
-
-해결 방법:
-1. 페이지를 새로고침해주세요
-2. 브라우저 캐시를 지워주세요
-3. 다른 브라우저를 사용해보세요
-
-문제가 지속되면 개발자 콘솔(F12)의 오류 메시지를 확인해주세요.`;
-        
-        alert(errorMessage);
+        // 오류 발생 시 토스트 알림으로 변경
+        showToast('초기화 오류가 발생했습니다. 페이지를 새로고침해주세요.', 'error');
     }
     
     // 이벤트 리스너 등록
