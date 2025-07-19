@@ -84,26 +84,33 @@ function getUserStorageKey(key) {
 function getCurrentKoreanDate() {
     const now = new Date();
     
-    // 모바일 Safari 호환성을 위해 Intl.DateTimeFormat 사용
+    // 아이패드 Safari 호환성을 위해 더 간단한 방식 사용
     try {
+        // 방법 1: en-CA 로케일로 직접 YYYY-MM-DD 문자열 생성
         const formatter = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Asia/Seoul',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
+            timeZone: 'Asia/Seoul'
         });
         
-        const parts = formatter.formatToParts(now);
-        const year = parseInt(parts.find(p => p.type === 'year').value);
-        const month = parseInt(parts.find(p => p.type === 'month').value) - 1; // 0-based month
-        const day = parseInt(parts.find(p => p.type === 'day').value);
+        const koreDateString = formatter.format(now); // YYYY-MM-DD
+        const [year, month, day] = koreDateString.split('-').map(Number);
         
-        return new Date(year, month, day);
+        console.log('🇰🇷 한국 날짜 파싱:', { koreDateString, year, month, day });
+        return new Date(year, month - 1, day); // month는 0-based
+        
     } catch (error) {
-        console.warn('Intl.DateTimeFormat 실패, UTC 기준으로 fallback:', error);
-        // fallback: UTC 기준으로 대략적인 한국 시간 계산
+        console.warn('Intl.DateTimeFormat 실패, 간단한 오프셋 방식 사용:', error);
+        
+        // fallback: UTC + 9시간 오프셋
         const koreaOffsetMs = 9 * 60 * 60 * 1000;
-        return new Date(now.getTime() + koreaOffsetMs);
+        const koreaTime = new Date(now.getTime() + koreaOffsetMs);
+        
+        // 날짜만 추출 (시간은 00:00:00으로 설정)
+        const year = koreaTime.getUTCFullYear();
+        const month = koreaTime.getUTCMonth();
+        const day = koreaTime.getUTCDate();
+        
+        console.log('⏰ 오프셋 방식 날짜:', { year, month, day });
+        return new Date(year, month, day);
     }
 }
 
@@ -111,33 +118,30 @@ function getCurrentKoreanDate() {
 function getCurrentKoreanDateString() {
     const now = new Date();
     
-    // 모바일 Safari 호환성을 위해 Intl.DateTimeFormat 사용
+    // 아이패드 Safari 호환성을 위해 더 간단한 방식 사용
     try {
         const formatter = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Asia/Seoul',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
+            timeZone: 'Asia/Seoul'
         });
         
-        return formatter.format(now); // YYYY-MM-DD 형식으로 반환
+        const koreDateString = formatter.format(now); // YYYY-MM-DD 형식
+        console.log('📅 한국 날짜 문자열:', koreDateString);
+        return koreDateString;
+        
     } catch (error) {
         console.warn('getCurrentKoreanDateString fallback 사용:', error);
-        // fallback: 기존 방식
-        const koreanDateString = now.toLocaleDateString("ko-KR", {
-            timeZone: "Asia/Seoul",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit"
-        });
         
-        // "2025. 07. 14." 형식을 "2025-07-14" 형식으로 변환
-        const parts = koreanDateString.split('. ');
-        const year = parts[0];
-        const month = parts[1];
-        const day = parts[2].replace('.', '');
+        // fallback: UTC + 9시간 오프셋으로 직접 계산
+        const koreaOffsetMs = 9 * 60 * 60 * 1000;
+        const koreaTime = new Date(now.getTime() + koreaOffsetMs);
         
-        return `${year}-${month}-${day}`;
+        const year = koreaTime.getUTCFullYear();
+        const month = String(koreaTime.getUTCMonth() + 1).padStart(2, '0'); // 1-based month
+        const day = String(koreaTime.getUTCDate()).padStart(2, '0');
+        
+        const fallbackDateString = `${year}-${month}-${day}`;
+        console.log('⏰ fallback 날짜 문자열:', fallbackDateString);
+        return fallbackDateString;
     }
 }
 
@@ -2044,8 +2048,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('📍 현재 URL:', window.location.href);
     console.log('🕒 현재 시간:', new Date().toISOString());
     console.log('🌍 User Agent:', navigator.userAgent);
-    console.log('🇰🇷 한국 시간:', getCurrentKoreanDate());
-    console.log('📅 한국 날짜 문자열:', getCurrentKoreanDateString());
+    
+    // 아이패드 디버깅을 위한 상세 정보
+    console.log('📱 디바이스 정보:', {
+        platform: navigator.platform,
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+    
+    try {
+        const koreanDate = getCurrentKoreanDate();
+        const koreanDateString = getCurrentKoreanDateString();
+        console.log('🇰🇷 한국 시간:', koreanDate);
+        console.log('📅 한국 날짜 문자열:', koreanDateString);
+    } catch (error) {
+        console.error('❌ 한국 시간 함수 호출 오류:', error);
+        console.error('스택 트레이스:', error.stack);
+    }
     
     // URL 파라미터 확인 (OAuth 콜백에서 타임스탬프가 있는지)
     const urlParams = new URLSearchParams(window.location.search);
@@ -2057,29 +2077,38 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.history.replaceState({}, document.title, cleanUrl);
     }
     
-    // 세션 확인을 먼저 수행
-    console.log('🔍 세션 확인 중...');
-    const isAuthenticated = await checkSession();
-    if (!isAuthenticated) {
-        console.log('❌ 세션이 유효하지 않습니다. 로그인 페이지로 이동합니다.');
-        window.location.href = '/login';
-        return;
+    try {
+        // 세션 확인을 먼저 수행
+        console.log('🔍 세션 확인 중...');
+        const isAuthenticated = await checkSession();
+        if (!isAuthenticated) {
+            console.log('❌ 세션이 유효하지 않습니다. 로그인 페이지로 이동합니다.');
+            window.location.href = '/login';
+            return;
+        }
+        console.log('✅ 세션 확인 완료');
+        
+        console.log('📊 데이터 로딩 시작...');
+        await loadDataFromStorage();
+        console.log('✅ 데이터 로딩 완료');
+        
+        // 방학 기간이 설정되어 있으면 플래너 화면으로
+        if (vacationStartDate && vacationEndDate) {
+            console.log('📅 방학 기간 설정됨, 플래너 화면 표시');
+            showPlannerScreen();
+        } else {
+            console.log('⚙️ 방학 기간 미설정, 설정 화면 표시');
+            showSetupScreen();
+        }
+        console.log('✅ 플래너 페이지 초기화 완료');
+        
+    } catch (error) {
+        console.error('❌ 초기화 중 오류 발생:', error);
+        console.error('스택 트레이스:', error.stack);
+        
+        // 오류 발생 시 사용자에게 알림
+        alert('페이지 로딩 중 오류가 발생했습니다. 페이지를 새로고침해주세요.');
     }
-    console.log('✅ 세션 확인 완료');
-    
-    console.log('📊 데이터 로딩 시작...');
-    await loadDataFromStorage();
-    console.log('✅ 데이터 로딩 완료');
-    
-    // 방학 기간이 설정되어 있으면 플래너 화면으로
-    if (vacationStartDate && vacationEndDate) {
-        console.log('📅 방학 기간 설정됨, 플래너 화면 표시');
-        showPlannerScreen();
-    } else {
-        console.log('⚙️ 방학 기간 미설정, 설정 화면 표시');
-        showSetupScreen();
-    }
-    console.log(' 플래너 페이지 초기화 완료');
     
     // 이벤트 리스너 등록
     document.getElementById('vacation-setup-form').addEventListener('submit', handleVacationSetup);
