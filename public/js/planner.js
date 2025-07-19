@@ -82,66 +82,91 @@ function getUserStorageKey(key) {
 
 // 대한민국 서울 기준 현재 날짜 가져오기
 function getCurrentKoreanDate() {
-    const now = new Date();
-    
-    // 아이패드 Safari 호환성을 위해 더 간단한 방식 사용
     try {
-        // 방법 1: en-CA 로케일로 직접 YYYY-MM-DD 문자열 생성
-        const formatter = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Asia/Seoul'
-        });
+        const now = new Date();
         
-        const koreDateString = formatter.format(now); // YYYY-MM-DD
-        const [year, month, day] = koreDateString.split('-').map(Number);
+        // 방법 1: 가장 안전한 방식 - Intl.DateTimeFormat
+        try {
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Seoul'
+            });
+            
+            const koreDateString = formatter.format(now);
+            console.log('🇰🇷 Intl 한국 날짜:', koreDateString);
+            
+            if (koreDateString && koreDateString.includes('-')) {
+                const [year, month, day] = koreDateString.split('-').map(Number);
+                if (year && month && day) {
+                    return new Date(year, month - 1, day);
+                }
+            }
+        } catch (intlError) {
+            console.warn('Intl.DateTimeFormat 실패:', intlError);
+        }
         
-        console.log('🇰🇷 한국 날짜 파싱:', { koreDateString, year, month, day });
-        return new Date(year, month - 1, day); // month는 0-based
-        
-    } catch (error) {
-        console.warn('Intl.DateTimeFormat 실패, 간단한 오프셋 방식 사용:', error);
-        
-        // fallback: UTC + 9시간 오프셋
-        const koreaOffsetMs = 9 * 60 * 60 * 1000;
+        // 방법 2: 수동 계산 (가장 안전한 fallback)
+        console.log('⏰ 수동 계산 방식 사용');
+        const koreaOffsetMs = 9 * 60 * 60 * 1000; // 9시간
         const koreaTime = new Date(now.getTime() + koreaOffsetMs);
         
-        // 날짜만 추출 (시간은 00:00:00으로 설정)
         const year = koreaTime.getUTCFullYear();
         const month = koreaTime.getUTCMonth();
         const day = koreaTime.getUTCDate();
         
-        console.log('⏰ 오프셋 방식 날짜:', { year, month, day });
+        console.log('📅 수동 계산 결과:', { year, month, day });
         return new Date(year, month, day);
+        
+    } catch (error) {
+        console.error('getCurrentKoreanDate 전체 실패:', error);
+        // 최후의 fallback - 현재 로컬 날짜
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return today;
     }
 }
 
 // 대한민국 서울 기준 현재 날짜 문자열 (YYYY-MM-DD)
 function getCurrentKoreanDateString() {
-    const now = new Date();
-    
-    // 아이패드 Safari 호환성을 위해 더 간단한 방식 사용
     try {
-        const formatter = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Asia/Seoul'
-        });
+        const now = new Date();
         
-        const koreDateString = formatter.format(now); // YYYY-MM-DD 형식
-        console.log('📅 한국 날짜 문자열:', koreDateString);
-        return koreDateString;
+        // 방법 1: Intl.DateTimeFormat 사용
+        try {
+            const formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Seoul'
+            });
+            
+            const koreDateString = formatter.format(now);
+            console.log('📅 Intl 한국 날짜 문자열:', koreDateString);
+            
+            if (koreDateString && /^\d{4}-\d{2}-\d{2}$/.test(koreDateString)) {
+                return koreDateString;
+            }
+        } catch (intlError) {
+            console.warn('getCurrentKoreanDateString Intl 실패:', intlError);
+        }
         
-    } catch (error) {
-        console.warn('getCurrentKoreanDateString fallback 사용:', error);
-        
-        // fallback: UTC + 9시간 오프셋으로 직접 계산
+        // 방법 2: 수동 계산
+        console.log('⏰ 문자열 수동 계산 방식 사용');
         const koreaOffsetMs = 9 * 60 * 60 * 1000;
         const koreaTime = new Date(now.getTime() + koreaOffsetMs);
         
         const year = koreaTime.getUTCFullYear();
-        const month = String(koreaTime.getUTCMonth() + 1).padStart(2, '0'); // 1-based month
+        const month = String(koreaTime.getUTCMonth() + 1).padStart(2, '0');
         const day = String(koreaTime.getUTCDate()).padStart(2, '0');
         
         const fallbackDateString = `${year}-${month}-${day}`;
-        console.log('⏰ fallback 날짜 문자열:', fallbackDateString);
+        console.log('📅 수동 계산 날짜 문자열:', fallbackDateString);
         return fallbackDateString;
+        
+    } catch (error) {
+        console.error('getCurrentKoreanDateString 전체 실패:', error);
+        // 최후의 fallback
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 }
 
@@ -2044,6 +2069,8 @@ function markdownToHtml(text) {
 
 // 초기화
 document.addEventListener('DOMContentLoaded', async function() {
+    alert('🚀 플래너 초기화 시작!');
+    
     console.log('🚀 플래너 페이지 초기화 시작');
     console.log('📍 현재 URL:', window.location.href);
     console.log('🕒 현재 시간:', new Date().toISOString());
@@ -2058,13 +2085,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     
     try {
+        alert('📅 한국 시간 함수 테스트 시작');
         const koreanDate = getCurrentKoreanDate();
         const koreanDateString = getCurrentKoreanDateString();
+        alert(`✅ 한국 시간 성공: ${koreanDateString}`);
         console.log('🇰🇷 한국 시간:', koreanDate);
         console.log('📅 한국 날짜 문자열:', koreanDateString);
     } catch (error) {
+        alert(`❌ 한국 시간 함수 오류: ${error.message}`);
         console.error('❌ 한국 시간 함수 호출 오류:', error);
         console.error('스택 트레이스:', error.stack);
+        return; // 여기서 중단
     }
     
     // URL 파라미터 확인 (OAuth 콜백에서 타임스탬프가 있는지)
@@ -2078,36 +2109,59 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     try {
+        alert('🔍 세션 확인 시작');
         // 세션 확인을 먼저 수행
         console.log('🔍 세션 확인 중...');
         const isAuthenticated = await checkSession();
         if (!isAuthenticated) {
+            alert('❌ 세션 유효하지 않음 - 로그인 페이지로 이동');
             console.log('❌ 세션이 유효하지 않습니다. 로그인 페이지로 이동합니다.');
             window.location.href = '/login';
             return;
         }
+        alert('✅ 세션 확인 완료');
         console.log('✅ 세션 확인 완료');
         
+        alert('📊 데이터 로딩 시작');
         console.log('📊 데이터 로딩 시작...');
         await loadDataFromStorage();
+        alert('✅ 데이터 로딩 완료');
         console.log('✅ 데이터 로딩 완료');
         
         // 방학 기간이 설정되어 있으면 플래너 화면으로
         if (vacationStartDate && vacationEndDate) {
+            alert('📅 플래너 화면 표시');
             console.log('📅 방학 기간 설정됨, 플래너 화면 표시');
             showPlannerScreen();
         } else {
+            alert('⚙️ 설정 화면 표시');
             console.log('⚙️ 방학 기간 미설정, 설정 화면 표시');
             showSetupScreen();
         }
+        alert('✅ 플래너 초기화 완료!');
         console.log('✅ 플래너 페이지 초기화 완료');
         
     } catch (error) {
+        alert(`❌ 초기화 오류: ${error.message}\n위치: ${error.stack ? error.stack.split('\n')[1] : '알 수 없음'}`);
         console.error('❌ 초기화 중 오류 발생:', error);
         console.error('스택 트레이스:', error.stack);
         
-        // 오류 발생 시 사용자에게 알림
-        alert('페이지 로딩 중 오류가 발생했습니다. 페이지를 새로고침해주세요.');
+        // 오류 발생 시 사용자에게 구체적인 알림
+        const errorMessage = `페이지 로딩 중 오류가 발생했습니다.
+
+오류 정보:
+- 메시지: ${error.message}
+- 타입: ${error.name}
+- 위치: ${error.stack ? error.stack.split('\n')[1] : '알 수 없음'}
+
+해결 방법:
+1. 페이지를 새로고침해주세요
+2. 브라우저 캐시를 지워주세요
+3. 다른 브라우저를 사용해보세요
+
+문제가 지속되면 개발자 콘솔(F12)의 오류 메시지를 확인해주세요.`;
+        
+        alert(errorMessage);
     }
     
     // 이벤트 리스너 등록
