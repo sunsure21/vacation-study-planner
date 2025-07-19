@@ -1865,22 +1865,26 @@ body.modal-open {
         margin: 0;
     }
     
-    /* 액션 버튼 최적화 */
+    /* 액션 버튼 최적화 - 가로 한 줄 배치 */
     .action-buttons {
-        width: 100%;
-        justify-content: stretch;
-        flex-wrap: wrap;
-        gap: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: nowrap; /* 줄바꿈 방지 */
+        gap: 15px;
         margin: 15px 0;
+        width: 100%;
     }
     
-    .action-buttons button {
-        flex: 1;
-        min-width: 130px;
-        min-height: 44px;
-        font-size: 15px;
-        padding: 12px 16px;
-        border-radius: 8px;
+    .action-buttons .action-button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        flex-shrink: 0; /* 크기 고정 */
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     /* 로그아웃 버튼 */
@@ -2749,17 +2753,21 @@ body.modal-open {
         padding: 6px 12px;
     }
     
-    /* 방학 기간 박스 모바일 대응 */
+    /* 방학 기간 박스 모바일 대응 - 한 줄 표시 */
     .vacation-period-box {
-        flex-direction: column;
-        padding: 15px;
+        flex-direction: row; /* 가로 배치 */
+        align-items: center;
+        justify-content: center;
+        padding: 12px 15px;
         text-align: center;
+        gap: 8px;
     }
     
     #vacation-period-display {
-        font-size: 16px;
+        font-size: 14px; /* 더 작은 폰트 */
         min-width: auto;
-        margin-bottom: 10px;
+        margin: 0;
+        white-space: nowrap; /* 줄바꿈 방지 */
     }
     
     /* 섹션 헤더 모바일 대응 */
