@@ -683,34 +683,43 @@ function addStudyTimeSlots(dateKey) {
     // 해당 날짜의 등록된 스케줄들 (순공시간 제외)
     const existingSchedules = schedulesByDate[dateKey].filter(s => !s.isStudySlot);
     
-    // 기본 순공 가능 시간: 00:00~24:00 (24시간 = 1440분)
-    let totalStudyMinutes = 24 * 60;
+    // 방학 첫날 체크
+    const isFirstVacationDay = vacationStartDate && dateKey === toYYYYMMDD(vacationStartDate);
+    
+    // 기본 순공 가능 시간: 방학 첫날은 09:00~24:00, 그 외는 00:00~24:00
+    let totalStudyMinutes = isFirstVacationDay ? (24 - 9) * 60 : 24 * 60; // 첫날은 15시간
     
     console.log(`📅 ${dateKey} 순공시간 계산:`);
-    console.log(`🕐 기본: 24시간 0분`);
+    if (isFirstVacationDay) {
+        console.log(`🌅 방학 첫날: 09:00부터 시작 (15시간 0분)`);
+    } else {
+        console.log(`🕐 기본: 24시간 0분`);
+    }
     
-    // 1️⃣ 먼저 전일에서 넘어온 취침시간 확인
-    const [year, month, day] = dateKey.split('-').map(Number);
-    const currentDate = new Date(year, month - 1, day);
-    const previousDate = new Date(currentDate);
-    previousDate.setDate(previousDate.getDate() - 1);
-    const previousDateKey = toYYYYMMDD(previousDate);
-    
-    // 전일 스케줄 중 자정을 넘는 취침시간 찾기
-    const previousSchedules = schedulesByDate[previousDateKey] || [];
-    previousSchedules.forEach(schedule => {
-        if (schedule.category === '취침') {
-            const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
-            const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
-            
-            if (endMinutes < startMinutes) {
-                // 자정을 넘는 취침시간 → 당일 새벽 부분 차감 (버퍼 없음)
-                const morningMinutes = endMinutes;
-                totalStudyMinutes -= morningMinutes;
-                console.log(`😴 전일 취침(새벽): -${formatHoursMinutes(morningMinutes)} (00:00-${schedule.endTime})`);
+    // 1️⃣ 방학 첫날이 아닌 경우만 전일 취침시간 확인
+    if (!isFirstVacationDay) {
+        const [year, month, day] = dateKey.split('-').map(Number);
+        const currentDate = new Date(year, month - 1, day);
+        const previousDate = new Date(currentDate);
+        previousDate.setDate(previousDate.getDate() - 1);
+        const previousDateKey = toYYYYMMDD(previousDate);
+        
+        // 전일 스케줄 중 자정을 넘는 취침시간 찾기
+        const previousSchedules = schedulesByDate[previousDateKey] || [];
+        previousSchedules.forEach(schedule => {
+            if (schedule.category === '취침') {
+                const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
+                const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
+                
+                if (endMinutes < startMinutes) {
+                    // 자정을 넘는 취침시간 → 당일 새벽 부분 차감 (버퍼 없음)
+                    const morningMinutes = endMinutes;
+                    totalStudyMinutes -= morningMinutes;
+                    console.log(`😴 전일 취침(새벽): -${formatHoursMinutes(morningMinutes)} (00:00-${schedule.endTime})`);
+                }
             }
-        }
-    });
+        });
+    }
     
     // 2️⃣ 당일 스케줄들 차감
     let scheduleMinutes = 0;
@@ -783,23 +792,32 @@ function addStudyTimeSlots(dateKey) {
         }
     });
     
-    // 전일 취침 고려
-    previousSchedules.forEach(schedule => {
-        if (schedule.category === '취침') {
-            const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
-            const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
-            
-            if (endMinutes < startMinutes) {
-                busyTimes.push({
-                    start: 0,
-                    end: endMinutes // 버퍼 없음
-                });
+    // 방학 첫날이 아닌 경우만 전일 취침 고려
+    if (!isFirstVacationDay) {
+        const [year, month, day] = dateKey.split('-').map(Number);
+        const currentDate = new Date(year, month - 1, day);
+        const previousDate = new Date(currentDate);
+        previousDate.setDate(previousDate.getDate() - 1);
+        const previousDateKey = toYYYYMMDD(previousDate);
+        const previousSchedules = schedulesByDate[previousDateKey] || [];
+        
+        previousSchedules.forEach(schedule => {
+            if (schedule.category === '취침') {
+                const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
+                const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
+                
+                if (endMinutes < startMinutes) {
+                    busyTimes.push({
+                        start: 0,
+                        end: endMinutes // 버퍼 없음
+                    });
+                }
             }
-        }
-    });
+        });
+    }
     
     // 빈 시간대 계산하여 순공 슬롯 생성
-    const studyPeriods = calculateStudyPeriods(busyTimes);
+    const studyPeriods = calculateStudyPeriods(busyTimes, dateKey);
     
     studyPeriods.forEach((period, index) => {
         const startHour = Math.floor(period.start / 60);
@@ -871,8 +889,11 @@ function minutesToTime(minutes) {
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
 }
 
-function calculateStudyPeriods(busyTimes) {
-    const dayStart = 0 * 60; // 00:00 (24시간 기준)
+function calculateStudyPeriods(busyTimes, dateKey) {
+    // 방학 첫날 체크
+    const isFirstVacationDay = vacationStartDate && dateKey === toYYYYMMDD(vacationStartDate);
+    
+    const dayStart = isFirstVacationDay ? 9 * 60 : 0 * 60; // 방학 첫날은 09:00, 그 외는 00:00
     const dayEnd = 24 * 60; // 24:00
     
     // 🐛 디버그: 바쁜 시간들 확인

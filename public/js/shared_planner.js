@@ -142,7 +142,18 @@ function generateStudySlots(dateKey) {
     if (!schedulesByDate[dateKey]) return;
     
     const daySchedules = schedulesByDate[dateKey].filter(s => !s.isStudySlot);
+    
+    // 방학 첫날 체크
+    const isFirstVacationDay = vacationStartDate && dateKey === toYYYYMMDD(vacationStartDate);
+    
     const timeSlots = Array(24 * 2).fill(false);
+    
+    // 방학 첫날이면 00:00-09:00 시간대를 차단
+    if (isFirstVacationDay) {
+        for (let i = 0; i < 18; i++) { // 9시간 * 2 = 18개 슬롯
+            timeSlots[i] = true;
+        }
+    }
     
     daySchedules.forEach(schedule => {
         const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
