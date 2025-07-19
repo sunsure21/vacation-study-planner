@@ -95,7 +95,6 @@ async function loadSharedData() {
         
         generateSchedulesByDate();
         renderCalendar();
-        updateWeeklySchedule();
         updateWeeklyEvaluation();
         
     } catch (error) {
@@ -485,56 +484,7 @@ async function saveStudyTime(slotId, dateKey) {
     }
 }
 
-// 주간 스케줄 업데이트
-function updateWeeklySchedule() {
-    const container = document.querySelector('#weekly-schedule');
-    if (!container) return;
-    
-    const now = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay());
-    
-    let weeklyHtml = '<div class="weekly-schedule-grid">';
-    
-    for (let i = 0; i < 7; i++) {
-        const date = new Date(weekStart);
-        date.setDate(weekStart.getDate() + i);
-        const dateKey = toYYYYMMDD(date);
-        const daySchedules = schedulesByDate[dateKey] || [];
-        
-        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-        
-        weeklyHtml += `
-            <div class="weekly-day">
-                <div class="weekly-day-header">
-                    <span class="day-name">${dayNames[i]}</span>
-                    <span class="day-date">${date.getDate()}</span>
-                </div>
-                <div class="weekly-schedules">
-        `;
-        
-        const mainSchedules = daySchedules.filter(s => !s.isStudySlot).slice(0, 3);
-        mainSchedules.forEach(schedule => {
-            weeklyHtml += `
-                <div class="weekly-schedule-item category-${schedule.category}">
-                    ${schedule.title || schedule.category}
-                </div>
-            `;
-        });
-        
-        const studyMinutes = studyRecords[dateKey] ? 
-            Object.values(studyRecords[dateKey]).reduce((sum, record) => sum + (record.minutes || 0), 0) : 0;
-        
-        if (studyMinutes > 0) {
-            weeklyHtml += `<div class="weekly-study-time">순공: ${formatMinutes(studyMinutes)}</div>`;
-        }
-        
-        weeklyHtml += '</div></div>';
-    }
-    
-    weeklyHtml += '</div>';
-    container.innerHTML = weeklyHtml;
-}
+
 
 // 주간 평가 업데이트
 function updateWeeklyEvaluation() {

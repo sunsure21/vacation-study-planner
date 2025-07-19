@@ -2550,8 +2550,8 @@ async function handleShareLinks() {
     try {
         console.log('🔍 클라이언트 기반 공유 링크 생성 시작...');
         
-        // 🎯 로컬 데이터 수집
-        const shareData = collectCurrentPlannerData();
+        // 🎯 로컬 데이터 수집 (최신 데이터로 새로고침)
+        const shareData = await collectCurrentPlannerData();
         
         if (!shareData) {
             showErrorMessage('데이터 수집에 실패했습니다. 페이지를 새로고침하고 다시 시도해주세요.');
@@ -2570,28 +2570,19 @@ async function handleShareLinks() {
     }
 }
 
-// 현재 플래너의 모든 데이터 수집
-function collectCurrentPlannerData() {
+// 현재 플래너의 모든 데이터 수집 (최신 데이터로 강제 새로고침)
+async function collectCurrentPlannerData() {
     try {
-        // 로컬스토리지에서 데이터 수집 - 상세 로그 추가
-        console.log('🔍 로컬스토리지 원본 데이터:');
-        console.log('- vacationPeriod 원본:', localStorage.getItem('vacationPeriod'));
-        console.log('- schedules 원본:', localStorage.getItem('schedules'));
-        console.log('- studyRecords 원본:', localStorage.getItem('studyRecords'));
-        console.log('- completedSchedules 원본:', localStorage.getItem('completedSchedules'));
+        // 먼저 서버에서 최신 데이터를 가져와서 로컬스토리지 동기화
+        await refreshDataFromServer();
         
+        // 로컬스토리지에서 데이터 수집
         const vacationPeriod = JSON.parse(localStorage.getItem('vacationPeriod'));
         const schedules = JSON.parse(localStorage.getItem('schedules')) || [];
         const studyRecords = JSON.parse(localStorage.getItem('studyRecords')) || {};
         const completedSchedules = JSON.parse(localStorage.getItem('completedSchedules')) || {};
         
-        console.log('📊 파싱된 데이터:');
-        console.log('- vacationPeriod:', vacationPeriod);
-        console.log('- schedules:', schedules);
-        console.log('- studyRecords:', studyRecords);
-        console.log('- completedSchedules:', completedSchedules);
-        
-        console.log('📊 수집된 데이터 요약:', {
+        console.log('✅ 최신 데이터로 공유 링크 생성:', {
             vacationPeriod: !!vacationPeriod,
             schedulesCount: schedules.length,
             studyRecordsCount: Object.keys(studyRecords).length,
@@ -2608,6 +2599,47 @@ function collectCurrentPlannerData() {
     } catch (error) {
         console.error('데이터 수집 오류:', error);
         return null;
+    }
+}
+
+// 서버에서 최신 데이터 가져와서 로컬스토리지 동기화
+async function refreshDataFromServer() {
+    try {
+        console.log('🔄 서버에서 최신 데이터 새로고침 중...');
+        
+        // 서버에서 최신 데이터 조회
+        const response = await fetch('/api/user/data');
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data) {
+                const { vacationPeriod, schedules, studyRecords, completedSchedules } = result.data;
+                
+                // 로컬스토리지 업데이트
+                if (vacationPeriod) localStorage.setItem('vacationPeriod', JSON.stringify(vacationPeriod));
+                if (schedules) localStorage.setItem('schedules', JSON.stringify(schedules));
+                if (studyRecords) localStorage.setItem('studyRecords', JSON.stringify(studyRecords));
+                if (completedSchedules) localStorage.setItem('completedSchedules', JSON.stringify(completedSchedules));
+                
+                console.log('✅ 로컬스토리지 최신 데이터로 동기화 완료');
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ 서버 데이터 새로고침 실패, 로컬 데이터 사용:', error.message);
+    }
+}
+
+// 데이터 새로고침 후 새 링크 생성
+async function refreshAndGenerateNewLinks() {
+    try {
+        const shareData = await collectCurrentPlannerData();
+        if (shareData) {
+            await generateShareLinksFromData(shareData);
+        } else {
+            showErrorMessage('최신 데이터를 가져올 수 없습니다.');
+        }
+    } catch (error) {
+        console.error('새 링크 생성 오류:', error);
+        showErrorMessage('새 링크 생성에 실패했습니다.');
     }
 }
 
@@ -2691,14 +2723,14 @@ function displayNewLinks(viewToken, recordToken) {
             
             <div class="share-actions">
                 <button class="revoke-btn" onclick="revokeShareLinks()">🗑️ 링크 삭제</button>
-                <button class="new-link-btn" onclick="generateShareLinksFromData(collectCurrentPlannerData())">🔄 새 링크 생성</button>
+                <button class="new-link-btn" onclick="refreshAndGenerateNewLinks()">🔄 새 링크 생성</button>
             </div>
             
             <div class="share-info">
                 <p><strong>💡 사용 방법:</strong></p>
                 <ul>
-                    <li><strong>조회 전용:</strong> 친구들이 내 계획을 볼 수 있습니다</li>
-                    <li><strong>실적 입력:</strong> 스터디 메이트가 내 실적을 기록할 수 있습니다</li>
+                    <li><strong>조회 전용:</strong> 나의 방학 플랜을 공유할 수 있습니다</li>
+                    <li><strong>실적 입력:</strong> 스케쥴 작성자와 수행자가 다를 경우 수행자가 실적을 입력할 수 있습니다</li>
                 </ul>
             </div>
         </div>

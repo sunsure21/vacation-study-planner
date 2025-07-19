@@ -756,8 +756,8 @@ function generateToken() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-// 클라이언트 데이터 기반 공유 링크 생성 (인증 불필요)
-app.post('/api/share/create', async (req, res) => {
+// 클라이언트 데이터 기반 공유 링크 생성 (인증 필요)
+app.post('/api/share/create', requireAuth, async (req, res) => {
     try {
         console.log('📤 클라이언트 기반 공유 링크 생성 시작');
         
@@ -783,16 +783,21 @@ app.post('/api/share/create', async (req, res) => {
             recordToken
         };
         
-        // KV에 저장 (로컬은 메모리, 운영은 Redis)
+        // 실시간 연동: 토큰에 사용자 이메일 연결 (데이터 복사 없음)
+        const userEmail = req.user?.email;
+        if (!userEmail) {
+            return res.status(401).json({ error: '인증이 필요합니다.' });
+        }
+        
         if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
             const { Redis } = require('@upstash/redis');
             const kvStore = Redis.fromEnv();
-            await kvStore.set(`share:view:${viewToken}`, JSON.stringify(shareData));
-            await kvStore.set(`share:record:${recordToken}`, JSON.stringify(shareData));
+            await kvStore.set(`token:view:${viewToken}`, userEmail);
+            await kvStore.set(`token:record:${recordToken}`, userEmail);
         } else {
             // 로컬 개발 환경: 메모리 저장소 사용
-            memoryStore[`share:view:${viewToken}`] = JSON.stringify(shareData);
-            memoryStore[`share:record:${recordToken}`] = JSON.stringify(shareData);
+            memoryStore[`token:view:${viewToken}`] = userEmail;
+            memoryStore[`token:record:${recordToken}`] = userEmail;
         }
         
         console.log('✅ 공유 데이터 저장 완료:', {
@@ -895,26 +900,26 @@ app.post('/api/share/revoke', requireAuth, async (req, res) => {
     }
 });
 
-// 공유된 캘린더 보기 (읽기 전용)
+// 공유된 캘린더 보기 (읽기 전용) - 실시간 연동
 app.get('/shared/view/:token', async (req, res) => {
     try {
         const { token } = req.params;
         
-        // 토큰으로 사용자 확인
-        const userEmail = await kv.get(`token:view:${token}`);
-        if (!userEmail) {
-            return res.status(404).send(`
-                <html>
-                    <head><title>유효하지 않은 링크</title></head>
-                    <body style="font-family: Arial; text-align: center; padding: 50px;">
-                        <h2>⚠️ 유효하지 않은 공유 링크입니다</h2>
-                        <p>링크가 만료되었거나 삭제되었을 수 있습니다.</p>
-                    </body>
-                </html>
-            `);
+        // 실시간 연동: 토큰 검증 후 HTML 반환
+        let userEmail = null;
+        
+        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            const { Redis } = require('@upstash/redis');
+            const kvStore = Redis.fromEnv();
+            userEmail = await kvStore.get(`token:view:${token}`);
+        } else {
+            userEmail = memoryStore[`token:view:${token}`];
         }
         
-        // 공유용 HTML 페이지 반환
+        if (!userEmail) {
+            return res.status(404).send('<h1>❌ 유효하지 않은 공유 링크입니다.</h1>');
+        }
+        
         res.send(generateSharedCalendarHTML(userEmail, token, 'view'));
         
     } catch (error) {
@@ -923,26 +928,26 @@ app.get('/shared/view/:token', async (req, res) => {
     }
 });
 
-// 공유된 캘린더 보기 (실적 입력 가능)
+// 공유된 캘린더 보기 (실적 입력 가능) - 실시간 연동
 app.get('/shared/record/:token', async (req, res) => {
     try {
         const { token } = req.params;
         
-        // 토큰으로 사용자 확인
-        const userEmail = await kv.get(`token:record:${token}`);
-        if (!userEmail) {
-            return res.status(404).send(`
-                <html>
-                    <head><title>유효하지 않은 링크</title></head>
-                    <body style="font-family: Arial; text-align: center; padding: 50px;">
-                        <h2>⚠️ 유효하지 않은 공유 링크입니다</h2>
-                        <p>링크가 만료되었거나 삭제되었을 수 있습니다.</p>
-                    </body>
-                </html>
-            `);
+        // 실시간 연동: 토큰 검증 후 HTML 반환
+        let userEmail = null;
+        
+        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            const { Redis } = require('@upstash/redis');
+            const kvStore = Redis.fromEnv();
+            userEmail = await kvStore.get(`token:record:${token}`);
+        } else {
+            userEmail = memoryStore[`token:record:${token}`];
         }
         
-        // 공유용 HTML 페이지 반환
+        if (!userEmail) {
+            return res.status(404).send('<h1>❌ 유효하지 않은 공유 링크입니다.</h1>');
+        }
+        
         res.send(generateSharedCalendarHTML(userEmail, token, 'record'));
         
     } catch (error) {
@@ -951,58 +956,51 @@ app.get('/shared/record/:token', async (req, res) => {
     }
 });
 
-// 공유된 캘린더 데이터 API
+// 공유된 캘린더 데이터 API (실시간 연동)
 app.get('/api/shared/:token/data', async (req, res) => {
     try {
         const { token } = req.params;
         
-        // 새로운 공유 시스템: 토큰으로 직접 데이터 조회
-        let shareData = null;
+        // 실시간 연동: 토큰에서 사용자 이메일 조회
+        let userEmail = null;
+        let canRecord = false;
         
         if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
             const { Redis } = require('@upstash/redis');
             const kvStore = Redis.fromEnv();
             
-            // view 또는 record 토큰으로 데이터 조회
-            const viewData = await kvStore.get(`share:view:${token}`);
-            const recordData = await kvStore.get(`share:record:${token}`);
-            shareData = viewData || recordData;
+            // view 또는 record 토큰으로 사용자 이메일 조회
+            const viewUserEmail = await kvStore.get(`token:view:${token}`);
+            const recordUserEmail = await kvStore.get(`token:record:${token}`);
+            userEmail = viewUserEmail || recordUserEmail;
+            canRecord = !!recordUserEmail;
         } else {
             // 로컬 개발 환경: 메모리 저장소 사용
-            const viewData = memoryStore[`share:view:${token}`];
-            const recordData = memoryStore[`share:record:${token}`];
-            shareData = viewData || recordData;
+            const viewUserEmail = memoryStore[`token:view:${token}`];
+            const recordUserEmail = memoryStore[`token:record:${token}`];
+            userEmail = viewUserEmail || recordUserEmail;
+            canRecord = !!recordUserEmail;
         }
         
-        if (!shareData) {
+        if (!userEmail) {
             return res.status(404).json({ error: '유효하지 않은 토큰입니다.' });
         }
         
-        // JSON 문자열이면 파싱
-        if (typeof shareData === 'string') {
-            shareData = JSON.parse(shareData);
-        }
-        
-        // 권한 확인 (record 토큰인지 확인)
-        let canRecord = false;
-        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
-            const { Redis } = require('@upstash/redis');
-            const kvStore = Redis.fromEnv();
-            const recordData = await kvStore.get(`share:record:${token}`);
-            canRecord = !!recordData;
-        } else {
-            const recordData = memoryStore[`share:record:${token}`];
-            canRecord = !!recordData;
-        }
+        // 실시간으로 원본 사용자 데이터 조회 (개별 조회)
+        const vacationPeriodResult = await getUserData(userEmail, 'vacationPeriod');
+        const schedulesResult = await getUserData(userEmail, 'schedules');
+        const studyRecordsResult = await getUserData(userEmail, 'studyRecords');
+        const completedSchedulesResult = await getUserData(userEmail, 'completedSchedules');
         
         res.json({
-            schedules: shareData.schedules || [],
-            studyRecords: shareData.studyRecords || {},
-            completedSchedules: shareData.completedSchedules || {},
-            vacationPeriod: shareData.vacationPeriod || null,
+            schedules: schedulesResult.success ? (schedulesResult.data || []) : [],
+            studyRecords: studyRecordsResult.success ? (studyRecordsResult.data || {}) : {},
+            completedSchedules: completedSchedulesResult.success ? (completedSchedulesResult.data || {}) : {},
+            vacationPeriod: vacationPeriodResult.success ? vacationPeriodResult.data : null,
             permissions: {
                 canRecord,
-                ownerEmail: 'shared'
+                ownerEmail: userEmail,
+                isRealTime: true
             }
         });
         
@@ -1012,69 +1010,58 @@ app.get('/api/shared/:token/data', async (req, res) => {
     }
 });
 
-// 공유된 캘린더에서 실적 입력 (record 권한만)
+// 공유된 캘린더에서 실적 입력 (record 권한만) - 실시간 연동
 app.post('/api/shared/:token/study-record', async (req, res) => {
     try {
         const { token } = req.params;
         
-        // record 토큰으로 공유 데이터 조회
-        let shareData = null;
+        // 실시간 연동: record 토큰으로 사용자 이메일 조회
+        let userEmail = null;
         
         if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
             const { Redis } = require('@upstash/redis');
             const kvStore = Redis.fromEnv();
-            const data = await kvStore.get(`share:record:${token}`);
-            shareData = data;
+            userEmail = await kvStore.get(`token:record:${token}`);
         } else {
             // 로컬 개발 환경: 메모리 저장소 사용
-            shareData = memoryStore[`share:record:${token}`];
+            userEmail = memoryStore[`token:record:${token}`];
         }
         
-        if (!shareData) {
+        if (!userEmail) {
             return res.status(403).json({ error: '실적 입력 권한이 없습니다.' });
-        }
-        
-        // JSON 문자열이면 파싱
-        if (typeof shareData === 'string') {
-            shareData = JSON.parse(shareData);
         }
         
         const { dateKey, slotId, minutes, subject, notes } = req.body;
         
-        // 공유 데이터의 실적 업데이트
-        if (!shareData.studyRecords) {
-            shareData.studyRecords = {};
-        }
-        if (!shareData.studyRecords[dateKey]) {
-            shareData.studyRecords[dateKey] = {};
+        // 🚀 실시간 연동: 원본 사용자 데이터에 직접 실적 저장
+        const studyRecordsResult = await getUserData(userEmail, 'studyRecords');
+        const studyRecords = studyRecordsResult.success ? (studyRecordsResult.data || {}) : {};
+        
+        // 실적 데이터 업데이트
+        if (!studyRecords[dateKey]) {
+            studyRecords[dateKey] = {};
         }
         
-        shareData.studyRecords[dateKey][slotId] = {
+        studyRecords[dateKey][slotId] = {
             minutes: parseInt(minutes) || 0,
             subject: subject || '',
             notes: notes || '',
             timestamp: new Date().toISOString()
         };
         
-        // 공유 데이터 다시 저장
-        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
-            const { Redis } = require('@upstash/redis');
-            const kvStore = Redis.fromEnv();
-            await kvStore.set(`share:record:${token}`, JSON.stringify(shareData));
-            // view 토큰도 같은 데이터로 업데이트
-            if (shareData.viewToken) {
-                await kvStore.set(`share:view:${shareData.viewToken}`, JSON.stringify(shareData));
-            }
-        } else {
-            // 로컬 개발 환경: 메모리 저장소 사용
-            memoryStore[`share:record:${token}`] = JSON.stringify(shareData);
-            // view 토큰도 같은 데이터로 업데이트
-            if (shareData.viewToken) {
-                memoryStore[`share:view:${shareData.viewToken}`] = JSON.stringify(shareData);
-            }
-        }
+        // 원본 사용자 데이터에 저장 (실시간 반영)
+        const saveResult = await saveUserData(userEmail, 'studyRecords', studyRecords);
         
-        res.json({ success: true });
+        if (saveResult.success) {
+            console.log(`✅ 공유에서 실적 입력 완료 - 원본 반영: ${userEmail}, ${dateKey}, ${slotId}`);
+            res.json({ 
+                success: true,
+                message: '실적이 원본 스케줄에 저장되었습니다.',
+                isRealTime: true
+            });
+        } else {
+            res.status(500).json({ error: '실적 저장에 실패했습니다.' });
+        }
         
     } catch (error) {
         console.error('공유 캘린더 실적 입력 오류:', error);
@@ -1100,6 +1087,7 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏖️ 방학 순공 플래너 - 공유 캘린더</title>
     <link rel="stylesheet" href="/css/planner_style.css">
+    <link rel="icon" href="/logo.ico" type="image/x-icon">
     <style>
         .shared-header {
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -1163,11 +1151,7 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             </div>
         </div>
         
-        <!-- 이번주 주요일정 -->
-        <div class="weekly-schedule-section">
-            <h2>📅 이번주 주요일정</h2>
-            <div id="weekly-schedule"></div>
-        </div>
+
         
         <!-- 주간 평가 -->
         <div class="weekly-evaluation-section">
