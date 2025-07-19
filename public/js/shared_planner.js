@@ -200,7 +200,6 @@ function generateStudySlots(dateKey) {
         let blockedStart = startMinutes;
         let blockedEnd = endMinutes;
         
-        // 학원/과외도 실제 시간만 차단 (이동시간 제거)
         if (schedule.category === '취침') {
             if (endMinutes > 24 * 60) {
                 // 자정을 넘는 취침시간: 당일 밤 부분만 차단
@@ -213,6 +212,11 @@ function generateStudySlots(dateKey) {
                 blockedStart = startMinutes;
                 blockedEnd = endMinutes;
             }
+        } else if (schedule.category === '학원/과외' || schedule.category === '학원') {
+            // 학원/과외: 이동시간 앞뒤 1시간씩 포함하여 차단
+            const bufferMinutes = 60; // 앞뒤 각 1시간
+            blockedStart = Math.max(0, startMinutes - bufferMinutes);
+            blockedEnd = Math.min(24 * 60, endMinutes + bufferMinutes);
         }
         
         const startSlot = Math.floor(blockedStart / 30);
