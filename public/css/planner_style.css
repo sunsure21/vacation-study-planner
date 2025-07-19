@@ -2532,3 +2532,158 @@ body.modal-open {
         gap: 10px;
     }
 }
+
+/* 공유 기능 스타일 */
+.btn-share {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-share:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.share-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.share-option {
+    background: var(--light-gray);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.share-option h4 {
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.share-option p {
+    color: var(--common-600);
+    font-size: 14px;
+    margin: 0 0 16px 0;
+}
+
+.link-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.share-link-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: white;
+    color: var(--text-color);
+}
+
+.share-link-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.btn-copy {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-copy:hover {
+    background: var(--pressed-purple-2);
+    transform: translateY(-1px);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: var(--pressed-purple-2);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .link-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .share-link-input {
+        width: 100%;
+    }
+    
+    .btn-copy {
+        width: 100%;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+}

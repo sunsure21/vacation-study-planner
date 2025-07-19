@@ -1841,6 +1841,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 버튼 이벤트
     document.getElementById('schedule-register-btn').addEventListener('click', showScheduleModal);
     document.getElementById('mbti-coaching-btn').addEventListener('click', showMBTICoaching);
+    document.getElementById('share-calendar-btn').addEventListener('click', showShareModal);
     document.getElementById('logout-btn').addEventListener('click', handleLogout);
     
     // 모달 닫기 이벤트
@@ -1850,10 +1851,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     document.getElementById('study-modal-close').addEventListener('click', closeStudyTimeModal);
     document.getElementById('mbti-modal-close').addEventListener('click', closeMBTICoachingModal);
+    document.getElementById('share-modal-close').addEventListener('click', closeShareModal);
     
     // 모달 외부 클릭 시 닫기
     window.addEventListener('click', (event) => {
-        const modals = ['schedule-modal', 'day-summary-modal', 'study-time-modal', 'mbti-coaching-modal'];
+        const modals = ['schedule-modal', 'day-summary-modal', 'study-time-modal', 'mbti-coaching-modal', 'share-modal'];
         modals.forEach(modalId => {
             const modal = document.getElementById(modalId);
             if (event.target === modal) {
@@ -2397,4 +2399,166 @@ function handleLogout() {
     if (confirm('정말 로그아웃하시겠습니까?')) {
         window.location.href = '/logout';
     }
+}
+
+// 공유 기능
+function showShareModal() {
+    const modal = document.getElementById('share-modal');
+    
+    // 링크 입력 필드 초기화
+    document.getElementById('view-only-link').value = '';
+    document.getElementById('record-link').value = '';
+    
+    // 버튼 상태 초기화
+    document.getElementById('generate-share-links').style.display = 'block';
+    document.getElementById('revoke-share-links').style.display = 'none';
+    
+    // 기존 공유 링크가 있는지 확인
+    checkExistingShareLinks();
+    
+    openModal('share-modal');
+}
+
+function closeShareModal() {
+    closeModal('share-modal');
+}
+
+// 기존 공유 링크 확인
+async function checkExistingShareLinks() {
+    try {
+        const response = await fetch('/api/share/status', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.hasActiveLinks) {
+                // 기존 링크 표시
+                const baseUrl = window.location.origin;
+                document.getElementById('view-only-link').value = `${baseUrl}/shared/view/${data.viewToken}`;
+                document.getElementById('record-link').value = `${baseUrl}/shared/record/${data.recordToken}`;
+                
+                // 버튼 상태 변경
+                document.getElementById('generate-share-links').style.display = 'none';
+                document.getElementById('revoke-share-links').style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('공유 링크 상태 확인 오류:', error);
+    }
+}
+
+// 공유 링크 생성
+async function generateShareLinks() {
+    const generateBtn = document.getElementById('generate-share-links');
+    const originalText = generateBtn.textContent;
+    
+    generateBtn.textContent = '생성 중...';
+    generateBtn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/share/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('링크 생성 실패');
+        }
+        
+        const data = await response.json();
+        const baseUrl = window.location.origin;
+        
+        // 링크 표시
+        document.getElementById('view-only-link').value = `${baseUrl}/shared/view/${data.viewToken}`;
+        document.getElementById('record-link').value = `${baseUrl}/shared/record/${data.recordToken}`;
+        
+        // 버튼 상태 변경
+        generateBtn.style.display = 'none';
+        document.getElementById('revoke-share-links').style.display = 'block';
+        
+        showToast('공유 링크가 생성되었습니다!', 'success');
+        
+    } catch (error) {
+        console.error('공유 링크 생성 오류:', error);
+        showToast('링크 생성에 실패했습니다.', 'error');
+    } finally {
+        generateBtn.textContent = originalText;
+        generateBtn.disabled = false;
+    }
+}
+
+// 공유 링크 취소
+async function revokeShareLinks() {
+    if (!confirm('공유를 중단하시겠습니까? 기존 링크는 더 이상 사용할 수 없게 됩니다.')) {
+        return;
+    }
+    
+    const revokeBtn = document.getElementById('revoke-share-links');
+    const originalText = revokeBtn.textContent;
+    
+    revokeBtn.textContent = '중단 중...';
+    revokeBtn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/share/revoke', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('공유 중단 실패');
+        }
+        
+        // 링크 필드 초기화
+        document.getElementById('view-only-link').value = '';
+        document.getElementById('record-link').value = '';
+        
+        // 버튼 상태 변경
+        revokeBtn.style.display = 'none';
+        document.getElementById('generate-share-links').style.display = 'block';
+        
+        showToast('공유가 중단되었습니다.', 'success');
+        
+    } catch (error) {
+        console.error('공유 중단 오류:', error);
+        showToast('공유 중단에 실패했습니다.', 'error');
+    } finally {
+        revokeBtn.textContent = originalText;
+        revokeBtn.disabled = false;
+    }
+}
+
+// 링크 복사
+function copyToClipboard(inputId) {
+    const input = document.getElementById(inputId);
+    const link = input.value;
+    
+    if (!link) {
+        showToast('먼저 링크를 생성해주세요.', 'warning');
+        return;
+    }
+    
+    // 클립보드에 복사
+    navigator.clipboard.writeText(link).then(() => {
+        showToast('링크가 복사되었습니다!', 'success');
+    }).catch(() => {
+        // 폴백: 텍스트 선택 방식
+        input.select();
+        input.setSelectionRange(0, 99999); // 모바일 대응
+        
+        try {
+            document.execCommand('copy');
+            showToast('링크가 복사되었습니다!', 'success');
+        } catch (err) {
+            showToast('복사에 실패했습니다. 링크를 직접 선택해서 복사해주세요.', 'error');
+        }
+    });
 } 

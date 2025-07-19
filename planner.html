@@ -89,6 +89,7 @@
                     <div class="action-buttons">
                         <button id="schedule-register-btn" class="btn-register">스케줄 등록하기</button>
                         <button id="mbti-coaching-btn" class="btn-mbti">🧠 MBTI 학습 코칭</button>
+                        <button id="share-calendar-btn" class="btn-share">🔗 공유하기</button>
                     </div>
                 </div>
                 
@@ -142,7 +143,7 @@
                         <div class="info-item">
                             <h4>🎯 사용 방법</h4>
                             <ul>
-                                <li>초록색 "순공가능" 시간대를 클릭하여 실제 공부한 시간을 기록</li>
+                                <li>주황색 그라데이션 "순공가능" 시간대를 클릭하여 실제 공부한 시간을 기록</li>
                                 <li>과목별로 구분하여 기록 가능</li>
                                 <li>일일 순공시간 총량이 캘린더 하단에 자동 표시</li>
                                 <li>주간 평가에서 계획 대비 실제 달성률 확인</li>
@@ -445,6 +446,42 @@
                 </div>
                 
                 <div id="mbti-coaching-result" class="mbti-result-container" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 공유 모달 -->
+    <div id="share-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔗 캘린더 공유하기</h2>
+                <span class="close-button" id="share-modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="share-section">
+                    <div class="share-option">
+                        <h4>📖 읽기 전용 링크</h4>
+                        <p>캘린더와 통계만 확인 가능</p>
+                        <div class="link-container">
+                            <input type="text" id="view-only-link" class="share-link-input" readonly placeholder="링크 생성 중...">
+                            <button id="copy-view-link" class="btn-copy" onclick="copyToClipboard('view-only-link')">복사</button>
+                        </div>
+                    </div>
+                    
+                    <div class="share-option">
+                        <h4>📝 실적 입력 가능 링크</h4>
+                        <p>캘린더 확인 + 순공 시간 실적 입력 가능</p>
+                        <div class="link-container">
+                            <input type="text" id="record-link" class="share-link-input" readonly placeholder="링크 생성 중...">
+                            <button id="copy-record-link" class="btn-copy" onclick="copyToClipboard('record-link')">복사</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button id="generate-share-links" class="btn-primary" onclick="generateShareLinks()">링크 생성</button>
+                    <button id="revoke-share-links" class="btn-secondary" style="display: none;" onclick="revokeShareLinks()">공유 중단</button>
+                </div>
             </div>
         </div>
     </div>

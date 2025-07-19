@@ -705,6 +705,377 @@ app.post('/mbti-coaching', async (req, res) => {
     }
 });
 
+// 📤 공유 기능 API
+// 공유 링크 상태 확인
+app.get('/api/share/status', requireAuth, async (req, res) => {
+    try {
+        const userEmail = req.session.user.email;
+        
+        // 기존 공유 토큰 확인
+        const viewToken = await kv.get(`share:view:${userEmail}`);
+        const recordToken = await kv.get(`share:record:${userEmail}`);
+        
+        if (viewToken && recordToken) {
+            res.json({
+                hasActiveLinks: true,
+                viewToken,
+                recordToken
+            });
+        } else {
+            res.json({
+                hasActiveLinks: false
+            });
+        }
+        
+    } catch (error) {
+        console.error('공유 상태 확인 오류:', error);
+        res.status(500).json({ error: '공유 상태 확인 중 오류가 발생했습니다.' });
+    }
+});
+
+// 공유 링크 생성
+app.post('/api/share/generate', requireAuth, async (req, res) => {
+    try {
+        const userEmail = req.session.user.email;
+        
+        // 랜덤 토큰 생성
+        const viewToken = generateShareToken();
+        const recordToken = generateShareToken();
+        
+        // 토큰 저장 (30일 만료)
+        const expirationTime = 30 * 24 * 60 * 60; // 30일
+        
+        await Promise.all([
+            // 사용자별 토큰 저장
+            kv.set(`share:view:${userEmail}`, viewToken, { ex: expirationTime }),
+            kv.set(`share:record:${userEmail}`, recordToken, { ex: expirationTime }),
+            
+            // 토큰별 사용자 정보 저장
+            kv.set(`token:view:${viewToken}`, userEmail, { ex: expirationTime }),
+            kv.set(`token:record:${recordToken}`, userEmail, { ex: expirationTime })
+        ]);
+        
+        res.json({
+            success: true,
+            viewToken,
+            recordToken
+        });
+        
+    } catch (error) {
+        console.error('공유 링크 생성 오류:', error);
+        res.status(500).json({ error: '공유 링크 생성 중 오류가 발생했습니다.' });
+    }
+});
+
+// 공유 링크 취소
+app.post('/api/share/revoke', requireAuth, async (req, res) => {
+    try {
+        const userEmail = req.session.user.email;
+        
+        // 기존 토큰 조회
+        const viewToken = await kv.get(`share:view:${userEmail}`);
+        const recordToken = await kv.get(`share:record:${userEmail}`);
+        
+        // 모든 관련 키 삭제
+        const deletePromises = [
+            kv.del(`share:view:${userEmail}`),
+            kv.del(`share:record:${userEmail}`)
+        ];
+        
+        if (viewToken) {
+            deletePromises.push(kv.del(`token:view:${viewToken}`));
+        }
+        if (recordToken) {
+            deletePromises.push(kv.del(`token:record:${recordToken}`));
+        }
+        
+        await Promise.all(deletePromises);
+        
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('공유 링크 취소 오류:', error);
+        res.status(500).json({ error: '공유 링크 취소 중 오류가 발생했습니다.' });
+    }
+});
+
+// 공유된 캘린더 보기 (읽기 전용)
+app.get('/shared/view/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        
+        // 토큰으로 사용자 확인
+        const userEmail = await kv.get(`token:view:${token}`);
+        if (!userEmail) {
+            return res.status(404).send(`
+                <html>
+                    <head><title>유효하지 않은 링크</title></head>
+                    <body style="font-family: Arial; text-align: center; padding: 50px;">
+                        <h2>⚠️ 유효하지 않은 공유 링크입니다</h2>
+                        <p>링크가 만료되었거나 삭제되었을 수 있습니다.</p>
+                    </body>
+                </html>
+            `);
+        }
+        
+        // 공유용 HTML 페이지 반환
+        res.send(generateSharedCalendarHTML(userEmail, token, 'view'));
+        
+    } catch (error) {
+        console.error('공유 캘린더 조회 오류:', error);
+        res.status(500).send('서버 오류가 발생했습니다.');
+    }
+});
+
+// 공유된 캘린더 보기 (실적 입력 가능)
+app.get('/shared/record/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        
+        // 토큰으로 사용자 확인
+        const userEmail = await kv.get(`token:record:${token}`);
+        if (!userEmail) {
+            return res.status(404).send(`
+                <html>
+                    <head><title>유효하지 않은 링크</title></head>
+                    <body style="font-family: Arial; text-align: center; padding: 50px;">
+                        <h2>⚠️ 유효하지 않은 공유 링크입니다</h2>
+                        <p>링크가 만료되었거나 삭제되었을 수 있습니다.</p>
+                    </body>
+                </html>
+            `);
+        }
+        
+        // 공유용 HTML 페이지 반환
+        res.send(generateSharedCalendarHTML(userEmail, token, 'record'));
+        
+    } catch (error) {
+        console.error('공유 캘린더 조회 오류:', error);
+        res.status(500).send('서버 오류가 발생했습니다.');
+    }
+});
+
+// 공유된 캘린더 데이터 API
+app.get('/api/shared/:token/data', async (req, res) => {
+    try {
+        const { token } = req.params;
+        
+        // 토큰 유효성 확인
+        const viewUserEmail = await kv.get(`token:view:${token}`);
+        const recordUserEmail = await kv.get(`token:record:${token}`);
+        const userEmail = viewUserEmail || recordUserEmail;
+        
+        if (!userEmail) {
+            return res.status(404).json({ error: '유효하지 않은 토큰입니다.' });
+        }
+        
+        // 사용자 데이터 조회
+        const [schedules, studyRecords, completedSchedules, vacationPeriod] = await Promise.all([
+            kv.get(`user:${userEmail}:schedules`) || [],
+            kv.get(`user:${userEmail}:studyRecords`) || {},
+            kv.get(`user:${userEmail}:completedSchedules`) || {},
+            kv.get(`user:${userEmail}:vacationPeriod`) || null
+        ]);
+        
+        // 권한 정보 추가
+        const canRecord = !!recordUserEmail;
+        
+        res.json({
+            schedules,
+            studyRecords,
+            completedSchedules,
+            vacationPeriod,
+            permissions: {
+                canRecord,
+                ownerEmail: userEmail
+            }
+        });
+        
+    } catch (error) {
+        console.error('공유 캘린더 데이터 조회 오류:', error);
+        res.status(500).json({ error: '데이터 조회 중 오류가 발생했습니다.' });
+    }
+});
+
+// 공유된 캘린더에서 실적 입력 (record 권한만)
+app.post('/api/shared/:token/study-record', async (req, res) => {
+    try {
+        const { token } = req.params;
+        
+        // record 토큰 확인
+        const userEmail = await kv.get(`token:record:${token}`);
+        if (!userEmail) {
+            return res.status(403).json({ error: '실적 입력 권한이 없습니다.' });
+        }
+        
+        const { dateKey, slotId, minutes, subject, notes } = req.body;
+        
+        // 기존 실적 데이터 조회
+        const studyRecords = await kv.get(`user:${userEmail}:studyRecords`) || {};
+        
+        // 새 실적 추가/업데이트
+        if (!studyRecords[dateKey]) {
+            studyRecords[dateKey] = {};
+        }
+        
+        studyRecords[dateKey][slotId] = {
+            minutes: parseInt(minutes) || 0,
+            subject: subject || '',
+            notes: notes || '',
+            timestamp: new Date().toISOString()
+        };
+        
+        // 저장
+        await kv.set(`user:${userEmail}:studyRecords`, studyRecords);
+        
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('공유 캘린더 실적 입력 오류:', error);
+        res.status(500).json({ error: '실적 입력 중 오류가 발생했습니다.' });
+    }
+});
+
+// 공유 토큰 생성 함수
+function generateShareToken() {
+    return require('crypto').randomBytes(32).toString('hex');
+}
+
+// 공유용 HTML 생성 함수
+function generateSharedCalendarHTML(userEmail, token, permission) {
+    const permissionText = permission === 'view' ? '읽기 전용' : '실적 입력 가능';
+    const canRecord = permission === 'record';
+    
+    return `
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏖️ 방학 순공 플래너 - 공유 캘린더</title>
+    <link rel="stylesheet" href="/css/planner_style.css">
+    <style>
+        .shared-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .shared-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .permission-badge {
+            display: inline-block;
+            background: ${canRecord ? '#10b981' : '#6366f1'};
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .readonly-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="shared-header">
+            <h1>🏖️ 방학 순공 플래너</h1>
+            <p>공유된 캘린더 <span class="permission-badge">${permissionText}</span></p>
+        </div>
+        
+        <div class="shared-info">
+            <p><strong>📌 이 캘린더는 공유 링크로 접근하고 있습니다.</strong></p>
+            ${canRecord ? 
+                '<p>✅ 캘린더 보기 + 순공 시간 실적 입력이 가능합니다.</p>' : 
+                '<p>👀 캘린더와 통계만 확인할 수 있습니다.</p>'
+            }
+        </div>
+        
+        ${!canRecord ? '<div class="readonly-notice">📖 읽기 전용 모드입니다. 실적 입력 및 일정 수정은 불가능합니다.</div>' : ''}
+        
+        <!-- 캘린더 영역 -->
+        <div class="my-schedule-section">
+            <div class="section-header">
+                <h2>📚 방학 계획표</h2>
+            </div>
+            
+            <div id="calendar-container">
+                <div id="calendar"></div>
+            </div>
+        </div>
+        
+        <!-- 이번주 주요일정 -->
+        <div class="weekly-schedule-section">
+            <h2>📅 이번주 주요일정</h2>
+            <div id="weekly-schedule"></div>
+        </div>
+        
+        <!-- 주간 평가 -->
+        <div class="weekly-evaluation-section">
+            <h2>📊 학습 진도 평가</h2>
+            <div class="evaluation-box" id="evaluation-box">
+                <p>데이터를 불러오는 중...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 모달들 -->
+    <div id="day-summary-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="day-summary-title">날짜 요약</h2>
+                <span class="close-button" id="day-modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="day-summary-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    ${canRecord ? `
+    <div id="study-time-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⏱️ 순공 시간 입력</h2>
+                <span class="close-button" id="study-modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="study-time-content"></div>
+            </div>
+        </div>
+    </div>
+    ` : ''}
+    
+    <div id="toast-container"></div>
+    
+    <script>
+        // 공유 모드 설정
+        window.SHARED_MODE = {
+            isShared: true,
+            token: '${token}',
+            canRecord: ${canRecord},
+            userEmail: '${userEmail}'
+        };
+    </script>
+    <script src="/js/shared_planner.js"></script>
+</body>
+</html>
+    `;
+}
+
 app.listen(port, () => {
     console.log(`✨ 서버가 시작되었습니다. http://localhost:${port} 에서 확인하세요.`);
 });
