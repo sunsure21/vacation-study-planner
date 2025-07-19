@@ -883,12 +883,9 @@ function timeToMinutes(timeStr, isEndTime = false, category = null) {
     const [hours, minutes] = timeStr.split(':').map(Number);
     let totalMinutes = hours * 60 + minutes;
     
-    // 취침 시간의 종료 시간이 시작 시간보다 작으면 다음 날로 처리
+    // 취침 시간의 종료 시간은 항상 다음 날로 처리 (자정을 넘나드는 취침 고려)
     if (category === '취침' && isEndTime) {
-        // 종료 시간이 12시 이전이면 다음 날로 간주 (24시간 추가)
-        if (hours < 12) {
-            totalMinutes += 24 * 60;
-        }
+        totalMinutes += 24 * 60; // 무조건 24시간 추가
     }
     
     return totalMinutes;
