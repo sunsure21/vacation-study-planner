@@ -784,8 +784,10 @@ app.post('/api/share/create', async (req, res) => {
         };
         
         // KV에 저장
-        await kv.set(`share:view:${viewToken}`, JSON.stringify(shareData));
-        await kv.set(`share:record:${recordToken}`, JSON.stringify(shareData));
+        const { Redis } = require('@upstash/redis');
+        const kvStore = Redis.fromEnv();
+        await kvStore.set(`share:view:${viewToken}`, JSON.stringify(shareData));
+        await kvStore.set(`share:record:${recordToken}`, JSON.stringify(shareData));
         
         console.log('✅ 공유 데이터 저장 완료:', {
             viewToken: viewToken.substring(0, 8) + '...',
