@@ -1249,8 +1249,12 @@ function renderVacationCalendar(container) {
             dayCell.appendChild(studyTimeDisplay);
         }
         
-        // 클릭 이벤트
-        dayCell.addEventListener('click', () => showDayModal(dateKey, daySchedules));
+        // 클릭 이벤트 - 중복 호출 방지
+        dayCell.addEventListener('click', (event) => {
+            event.stopPropagation(); // 이벤트 버블링 방지
+            event.preventDefault();  // 기본 동작 방지
+            showDayModal(dateKey, daySchedules);
+        });
         
         calendarGrid.appendChild(dayCell);
     }
@@ -1259,8 +1263,19 @@ function renderVacationCalendar(container) {
     container.appendChild(calendarDiv);
 }
 
+// 중복 호출 방지를 위한 변수
+let isModalOpening = false;
+
 // 모달 관리
 function showDayModal(dateKey, daySchedules) {
+    // 중복 호출 방지
+    if (isModalOpening) {
+        console.log('🚫 showDayModal 중복 호출 차단:', dateKey);
+        return;
+    }
+    
+    isModalOpening = true;
+    
     const modal = document.getElementById('day-summary-modal');
     const title = document.getElementById('day-summary-title');
     const content = document.getElementById('day-summary-content');
@@ -1416,6 +1431,11 @@ function showDayModal(dateKey, daySchedules) {
     
     content.innerHTML = modalHtml;
     openModal('day-summary-modal');
+    
+    // 모달 열기 완료 후 플래그 리셋
+    setTimeout(() => {
+        isModalOpening = false;
+    }, 100);
 }
 
 function showStudyTimeModal(slotId, dateKey, startTime, endTime) {
