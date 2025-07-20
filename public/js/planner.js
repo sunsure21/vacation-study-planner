@@ -1255,6 +1255,8 @@ function renderVacationCalendar(container) {
                 event.stopPropagation(); // 이벤트 버블링 방지
                 event.preventDefault();  // 기본 동작 방지
                 console.log('🔥 클릭된 날짜:', capturedDateKey, '스케줄 수:', capturedSchedules.length);
+                console.log('🔥 클릭 이벤트 발생 시간:', new Date().toLocaleTimeString());
+                alert(`클릭한 날짜: ${capturedDateKey}\n표시될 모달: ${capturedDateKey}의 요약`);
                 showDayModal(capturedDateKey, capturedSchedules);
             };
         })(dateKey, daySchedules));
