@@ -1249,12 +1249,15 @@ function renderVacationCalendar(container) {
             dayCell.appendChild(studyTimeDisplay);
         }
         
-        // 클릭 이벤트 - 중복 호출 방지
-        dayCell.addEventListener('click', (event) => {
-            event.stopPropagation(); // 이벤트 버블링 방지
-            event.preventDefault();  // 기본 동작 방지
-            showDayModal(dateKey, daySchedules);
-        });
+        // 클릭 이벤트 - 클로저 문제 해결을 위해 즉시 실행 함수 사용
+        dayCell.addEventListener('click', ((capturedDateKey, capturedSchedules) => {
+            return (event) => {
+                event.stopPropagation(); // 이벤트 버블링 방지
+                event.preventDefault();  // 기본 동작 방지
+                console.log('🔥 클릭된 날짜:', capturedDateKey, '스케줄 수:', capturedSchedules.length);
+                showDayModal(capturedDateKey, capturedSchedules);
+            };
+        })(dateKey, daySchedules));
         
         calendarGrid.appendChild(dayCell);
     }
