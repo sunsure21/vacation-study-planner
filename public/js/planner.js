@@ -1174,9 +1174,9 @@ function renderVacationCalendar(container) {
             continue;
         }
         
-        // 방학 기간 내 날짜 - 올바른 날짜 계산을 위해 setDate 사용
-        const currentDate = new Date(vacationStartDate);
-        currentDate.setDate(vacationStartDate.getDate() + dayIndex);
+        // 방학 기간 내 날짜 - 각 루프마다 새로운 Date 객체 생성
+        const currentDate = new Date(vacationStartDate.getTime());
+        currentDate.setDate(currentDate.getDate() + dayIndex);
         const dateKey = toYYYYMMDD(currentDate);
         
         // 🚨 디버깅: 날짜 계산 과정 확인  
@@ -1255,8 +1255,6 @@ function renderVacationCalendar(container) {
                 event.stopPropagation(); // 이벤트 버블링 방지
                 event.preventDefault();  // 기본 동작 방지
                 console.log('🔥 클릭된 날짜:', capturedDateKey, '스케줄 수:', capturedSchedules.length);
-                console.log('🔥 클릭 이벤트 발생 시간:', new Date().toLocaleTimeString());
-                alert(`클릭한 날짜: ${capturedDateKey}\n표시될 모달: ${capturedDateKey}의 요약`);
                 showDayModal(capturedDateKey, capturedSchedules);
             };
         })(dateKey, daySchedules));
