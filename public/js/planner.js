@@ -1197,6 +1197,9 @@ function renderVacationCalendar(container) {
         // 해당 날짜의 스케줄들을 시간순으로 정렬하여 표시
         const daySchedules = schedulesByDate[dateKey] || [];
         
+        // 🚨 디버깅: schedulesByDate 매칭 확인
+        console.log(`🔥 스케줄 데이터 매칭: dateKey=${dateKey}, schedulesFound=${daySchedules.length}, firstSchedule=${daySchedules[0]?.title || 'none'}`);
+        
         // 시간순으로 정렬
         const sortedSchedules = daySchedules.sort((a, b) => {
             const aTime = a.startTime || '00:00';
@@ -1261,8 +1264,21 @@ function renderVacationCalendar(container) {
                     cellIndex: capturedIndex,
                     capturedKey: capturedDateKey,
                     expectedDate: capturedCurrentDate.toDateString(),
-                    scheduleData: capturedSchedules.map(s => s.title || s.category)
+                    scheduleData: capturedSchedules.map(s => s.title || s.category),
+                    realDataCheck: schedulesByDate[capturedDateKey]?.length || 0
                 });
+                
+                // 🚨 긴급 확인: 실시간 schedulesByDate와 비교
+                const realTimeSchedules = schedulesByDate[capturedDateKey] || [];
+                if (realTimeSchedules.length !== capturedSchedules.length) {
+                    console.error('🚨 MISMATCH: capturedSchedules와 실시간 데이터가 다름!', {
+                        captured: capturedSchedules.length,
+                        realTime: realTimeSchedules.length,
+                        capturedData: capturedSchedules.map(s => s.title),
+                        realTimeData: realTimeSchedules.map(s => s.title)
+                    });
+                }
+                
                 showDayModal(capturedDateKey, capturedSchedules);
             };
         })(dateKey, daySchedules, dayIndex, currentDate));
