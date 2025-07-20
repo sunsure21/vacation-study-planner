@@ -1174,15 +1174,13 @@ function renderVacationCalendar(container) {
             continue;
         }
         
-        // 방학 기간 내 날짜 - 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
-        const startYear = vacationStartDate.getFullYear();
-        const startMonth = vacationStartDate.getMonth();
-        const startDay = vacationStartDate.getDate();
-        const currentDate = new Date(startYear, startMonth, startDay + dayIndex);
+        // 방학 기간 내 날짜 - 올바른 날짜 계산을 위해 setDate 사용
+        const currentDate = new Date(vacationStartDate);
+        currentDate.setDate(vacationStartDate.getDate() + dayIndex);
         const dateKey = toYYYYMMDD(currentDate);
         
-        // 🚨 디버깅: 날짜 계산 과정 확인
-        console.log(`🔥 캘린더 셀 생성: dayIndex=${dayIndex}, startDay=${startDay}, 계산된 날짜=${currentDate.getDate()}, dateKey=${dateKey}`);
+        // 🚨 디버깅: 날짜 계산 과정 확인  
+        console.log(`🔥 캘린더 셀 생성: dayIndex=${dayIndex}, 기준날짜=${vacationStartDate.getDate()}, 계산된 날짜=${currentDate.getDate()}, dateKey=${dateKey}`);
         
         dayCell.className = 'day-cell';
         
