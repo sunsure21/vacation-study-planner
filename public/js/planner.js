@@ -1252,20 +1252,20 @@ function renderVacationCalendar(container) {
         }
         
         // 클릭 이벤트 - 클로저 문제 해결을 위해 즉시 실행 함수 사용
-        dayCell.addEventListener('click', ((capturedDateKey, capturedSchedules) => {
+        dayCell.addEventListener('click', ((capturedDateKey, capturedSchedules, capturedIndex, capturedCurrentDate) => {
             return (event) => {
                 event.stopPropagation(); // 이벤트 버블링 방지
                 event.preventDefault();  // 기본 동작 방지
                 console.log('🔥 클릭된 날짜:', capturedDateKey, '스케줄 수:', capturedSchedules.length);
                 console.log('🔥 이벤트 리스너 상세:', {
-                    cellIndex: dayIndex,
+                    cellIndex: capturedIndex,
                     capturedKey: capturedDateKey,
-                    expectedDate: currentDate.toDateString(),
+                    expectedDate: capturedCurrentDate.toDateString(),
                     scheduleData: capturedSchedules.map(s => s.title || s.category)
                 });
                 showDayModal(capturedDateKey, capturedSchedules);
             };
-        })(dateKey, daySchedules));
+        })(dateKey, daySchedules, dayIndex, currentDate));
         
         calendarGrid.appendChild(dayCell);
     }
