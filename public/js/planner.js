@@ -1181,6 +1181,8 @@ function renderVacationCalendar(container) {
         
         // 🚨 디버깅: 날짜 계산 과정 확인  
         console.log(`🔥 캘린더 셀 생성: dayIndex=${dayIndex}, 기준날짜=${vacationStartDate.getDate()}, 계산된 날짜=${currentDate.getDate()}, dateKey=${dateKey}`);
+        console.log(`🔥 상세 날짜 정보: vacationStartDate=${vacationStartDate.toDateString()}, currentDate=${currentDate.toDateString()}`);
+        console.log(`🔥 Date 객체 독립성 확인: startTime=${vacationStartDate.getTime()}, currentTime=${currentDate.getTime()}`);
         
         dayCell.className = 'day-cell';
         
@@ -1255,6 +1257,12 @@ function renderVacationCalendar(container) {
                 event.stopPropagation(); // 이벤트 버블링 방지
                 event.preventDefault();  // 기본 동작 방지
                 console.log('🔥 클릭된 날짜:', capturedDateKey, '스케줄 수:', capturedSchedules.length);
+                console.log('🔥 이벤트 리스너 상세:', {
+                    cellIndex: dayIndex,
+                    capturedKey: capturedDateKey,
+                    expectedDate: currentDate.toDateString(),
+                    scheduleData: capturedSchedules.map(s => s.title || s.category)
+                });
                 showDayModal(capturedDateKey, capturedSchedules);
             };
         })(dateKey, daySchedules));
