@@ -823,9 +823,9 @@ app.post('/api/share/create', requireAuth, async (req, res) => {
             await kvStore.ping();
             console.log('🔗 Redis 연결 테스트 성공');
             
-            // 토큰 저장 (만료 시간 7일)
-            await kvStore.set(`token:view:${viewToken}`, userEmail, { ex: 7 * 24 * 60 * 60 });
-            await kvStore.set(`token:record:${recordToken}`, userEmail, { ex: 7 * 24 * 60 * 60 });
+            // 토큰 저장 (만료 없이 영구 저장)
+            await kvStore.set(`token:view:${viewToken}`, userEmail);
+            await kvStore.set(`token:record:${recordToken}`, userEmail);
             
             console.log('✅ Redis에 토큰 저장 완료');
             redisSuccess = true;
