@@ -573,9 +573,32 @@ app.delete('/api/user/data/:dataType', requireAuth, async (req, res) => {
     }
 });
 
-// Google OAuth 라우트 - 표준 설정
+// Google OAuth 라우트 - 인앱 브라우저 차단
 app.get('/auth/google', (req, res, next) => {
-    console.log('🔐 OAuth 요청 시작');
+    const userAgent = req.headers['user-agent'] || '';
+    
+    // 인앱 브라우저 감지
+    const isKakaoTalk = /KAKAOTALK/i.test(userAgent);
+    const isNaverApp = /NAVER\(inapp/i.test(userAgent);
+    const isLineApp = /Line/i.test(userAgent);
+    const isFacebookApp = /FBAN|FBAV/i.test(userAgent);
+    const isInstagramApp = /Instagram/i.test(userAgent);
+    const isWechatApp = /MicroMessenger/i.test(userAgent);
+    
+    const isInAppBrowser = isKakaoTalk || isNaverApp || isLineApp || 
+                          isFacebookApp || isInstagramApp || isWechatApp;
+    
+    console.log('🔐 OAuth 요청:', {
+        userAgent: userAgent.substring(0, 100),
+        isInAppBrowser,
+        isKakaoTalk,
+        isNaverApp
+    });
+    
+    // 인앱 브라우저에서 접근 시 안내 페이지로 리다이렉트
+    if (isInAppBrowser) {
+        return res.redirect('/login?error=inapp_browser');
+    }
     
     passport.authenticate('google', { 
         scope: ['profile', 'email']

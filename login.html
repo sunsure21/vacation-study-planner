@@ -70,15 +70,83 @@
                     간편하게 Google 계정으로 시작하세요.<br>
                     별도 회원가입 절차 없이 바로 이용 가능합니다.
                 </p>
+                <!-- 인앱 브라우저 경고 메시지 -->
+                <div id="inapp-warning" style="display: none; margin-top: 15px; padding: 12px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px;">
+                    <p style="margin: 0; font-size: 13px; color: #856404; line-height: 1.4;">
+                        <strong>📱 카카오톡/네이버에서 접속하셨나요?</strong><br>
+                        Google 정책으로 인해 일부 앱 내부 브라우저에서는 로그인이 제한됩니다.<br>
+                        <br>
+                        <strong>해결 방법:</strong><br>
+                        우상단 <strong>⋯ 메뉴 → "브라우저에서 열기"</strong> 또는 <strong>"외부 브라우저로 열기"</strong>를 선택해주세요.
+                    </p>
+                </div>
+                
                 <p class="login-help" style="margin-top: 15px; font-size: 12px; color: #666;">
                     로그인에 문제가 있나요? <a href="/login?error=oauth_failed" style="color: #007bff; text-decoration: none;">Gmail로 로그인하기</a>
                 </p>
             </div>
         </div>
     </div>
-        </div>
-    </div>
 
-
+    <script>
+        // 인앱 브라우저 감지 및 경고 표시
+        function detectInAppBrowser() {
+            const userAgent = navigator.userAgent || '';
+            
+            // 카카오톡, 네이버, 라인 등 주요 인앱 브라우저 감지
+            const isKakaoTalk = /KAKAOTALK/i.test(userAgent);
+            const isNaverApp = /NAVER\(inapp/i.test(userAgent);
+            const isLineApp = /Line/i.test(userAgent);
+            const isFacebookApp = /FBAN|FBAV/i.test(userAgent);
+            const isInstagramApp = /Instagram/i.test(userAgent);
+            const isWechatApp = /MicroMessenger/i.test(userAgent);
+            
+            const isInAppBrowser = isKakaoTalk || isNaverApp || isLineApp || 
+                                  isFacebookApp || isInstagramApp || isWechatApp;
+            
+            console.log('🔍 브라우저 감지:', {
+                userAgent: userAgent.substring(0, 100),
+                isKakaoTalk,
+                isNaverApp,
+                isInAppBrowser
+            });
+            
+            if (isInAppBrowser) {
+                const warningDiv = document.getElementById('inapp-warning');
+                if (warningDiv) {
+                    warningDiv.style.display = 'block';
+                }
+                
+                // Google 로그인 버튼 클릭 시 추가 안내
+                const googleBtn = document.getElementById('google-login-btn');
+                if (googleBtn) {
+                    googleBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        alert('📱 앱 내부 브라우저에서는 Google 로그인이 제한됩니다.\n\n우상단 ⋯ 메뉴에서 "브라우저에서 열기"를 선택해주세요.');
+                    });
+                }
+            }
+        }
+        
+        // URL 파라미터에서 에러 확인
+        function checkUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            
+            if (error === 'inapp_browser') {
+                const warningDiv = document.getElementById('inapp-warning');
+                if (warningDiv) {
+                    warningDiv.style.display = 'block';
+                    warningDiv.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        }
+        
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            detectInAppBrowser();
+            checkUrlParams();
+        });
+    </script>
 </body>
 </html> 
