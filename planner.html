@@ -6,8 +6,8 @@
     <title>방학 순공 플래너</title>
     <link rel="icon" type="image/x-icon" href="/logo.ico">
     <link rel="shortcut icon" href="/logo.ico">
-    <link rel="stylesheet" href="/css/planner_style.css?v=20250121-0045-WHITE-TEXT-STUDY">
-    <link rel="stylesheet" href="/ui/planner_style.css?v=20250121-0045-WHITE-TEXT-STUDY">
+    <link rel="stylesheet" href="/css/planner_style.css?v=20250121-0050-EXCEPTION-DATES">
+    <link rel="stylesheet" href="/ui/planner_style.css?v=20250121-0050-EXCEPTION-DATES">
     <!-- 인라인 스타일 제거됨 - CSS 파일에서 처리 -->
 </head>
 <body>
@@ -234,6 +234,21 @@
                             <div class="form-group">
                                 <label for="repeat-period-end">종료일</label>
                                 <input type="date" id="repeat-period-end" name="repeat-period-end">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 예외 날짜 설정 (NEW) -->
+                    <div class="exception-dates-section" id="exception-dates-section">
+                        <label>예외 날짜 설정 (선택사항)</label>
+                        <p class="exception-description">반복 일정에서 제외할 특정 날짜를 설정하세요. 예: 학원 휴무일, 다른 일정이 있는 날</p>
+                        <div class="exception-dates-container">
+                            <div class="exception-input-group">
+                                <input type="date" id="exception-date-input" placeholder="제외할 날짜 선택">
+                                <button type="button" id="add-exception-btn" class="btn-secondary">추가</button>
+                            </div>
+                            <div class="exception-dates-list" id="exception-dates-list">
+                                <!-- 추가된 예외 날짜들이 여기에 표시됩니다 -->
                             </div>
                         </div>
                     </div>
@@ -493,7 +508,7 @@
     <div id="toast-container"></div>
     
     <!-- 세션 체크는 planner.js에서 처리 -->
-    <script src="/js/planner.js?v=20250121-0030-TWO-LINE-STUDY-RECORD"></script>
+    <script src="/js/planner.js?v=20250121-0050-EXCEPTION-DATES"></script>
     <script>
         // 🚨 HTML에서 강제 로그
         console.log('🏠 planner.html 로드 완료!');

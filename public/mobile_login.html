@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 모바일 로그인 - 방학 순공 플래너</title>
+    <link rel="icon" type="image/x-icon" href="/logo.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .mobile-login-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .mobile-title {
+            color: #333;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .mobile-subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .notice-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .email-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+        
+        .email-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .desktop-link {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .desktop-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-login-container">
+        <h1 class="mobile-title">📱 모바일 로그인</h1>
+        <p class="mobile-subtitle">방학 순공 플래너에 오신 것을 환영합니다!</p>
+        
+        <div class="notice-box">
+            <strong>📱 안드로이드 브라우저 대체 로그인</strong><br>
+            일부 안드로이드 브라우저에서 Google OAuth가 제한됩니다.<br>
+            Gmail 주소로 간편 로그인을 제공합니다.
+        </div>
+        
+        <div class="error-message" id="error-message"></div>
+        <div class="success-message" id="success-message"></div>
+        
+        <form id="mobile-login-form">
+            <input 
+                type="email" 
+                class="email-input" 
+                id="email-input" 
+                placeholder="Gmail 주소를 입력하세요"
+                required
+            >
+            <button type="submit" class="login-btn" id="login-btn">
+                🚀 로그인하기
+            </button>
+        </form>
+        
+        <div class="desktop-link">
+            PC에서 접속하신다면 <a href="/?force-desktop=1">여기를 클릭</a>하여<br>
+            정상적인 Google 로그인을 이용하세요.
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('mobile-login-form');
+        const emailInput = document.getElementById('email-input');
+        const loginBtn = document.getElementById('login-btn');
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+        
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = emailInput.value.trim();
+            if (!email) {
+                showError('이메일을 입력해주세요.');
+                return;
+            }
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = '⏳ 로그인 중...';
+            
+            try {
+                const response = await fetch('/auth/mobile-gmail', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showSuccess('✅ 로그인 성공! 잠시 후 이동합니다...');
+                    setTimeout(() => {
+                        window.location.href = '/planner';
+                    }, 1500);
+                } else {
+                    showError(result.error || '로그인에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                showError('네트워크 오류가 발생했습니다.');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '🚀 로그인하기';
+            }
+        });
+        
+        // Gmail 힌트
+        emailInput.addEventListener('focus', () => {
+            if (!emailInput.value) {
+                emailInput.placeholder = '예: yourname@gmail.com';
+            }
+        });
+        
+        emailInput.addEventListener('blur', () => {
+            if (!emailInput.value) {
+                emailInput.placeholder = 'Gmail 주소를 입력하세요';
+            }
+        });
+    </script>
+</body>
+</html> 

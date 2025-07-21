@@ -3003,4 +3003,141 @@ body.modal-open {
         width: 100%;
         padding: 14px 20px;
     }
+}
+
+/* 예외 날짜 설정 스타일 (NEW) */
+.exception-dates-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #fd7e14;
+}
+
+.exception-description {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.exception-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.exception-input-group input[type="date"] {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.exception-input-group .btn-secondary {
+    padding: 8px 16px;
+    background-color: #fd7e14;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.exception-input-group .btn-secondary:hover {
+    background-color: #e8690a;
+}
+
+.exception-dates-list {
+    min-height: 40px;
+}
+
+.no-exceptions {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    margin: 0;
+    padding: 15px;
+}
+
+.exception-date-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.exception-date-text {
+    font-size: 14px;
+    color: #495057;
+}
+
+.remove-exception-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.remove-exception-btn:hover {
+    background-color: #f8d7da;
+}
+
+/* 우클릭 컨텍스트 메뉴 스타일 (NEW) */
+.context-menu {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    min-width: 200px;
+    font-size: 14px;
+    z-index: 10000;
+}
+
+.context-menu-header {
+    padding: 8px 16px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.context-menu-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+    background-color: #f8f9fa;
+}
+
+.context-menu-item.cancel {
+    color: #6c757d;
+    border-top: 1px solid #dee2e6;
+    margin-top: 4px;
+}
+
+.context-menu-item.cancel:hover {
+    background-color: #e9ecef;
+}
+
+.context-menu-divider {
+    height: 1px;
+    background-color: #dee2e6;
+    margin: 4px 0;
 } 

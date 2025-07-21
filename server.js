@@ -53,7 +53,7 @@ if (process.env.UPSTASH_REDIS_REST_URL) {
     sessionStore = undefined;
 }
 
-// 세션 설정 - Redis 저장소 + OAuth 친화적 설정
+// 세션 설정 - 단순화된 설정
 app.use(session({
     store: sessionStore,
     secret: process.env.SESSION_SECRET || 'your-secret-key-here',
@@ -84,11 +84,15 @@ passport.deserializeUser((user, done) => {
     done(null, user); // 저장된 사용자 객체를 그대로 반환
 });
 
-// Google OAuth 전략 설정
+// Google OAuth 전략 설정 - 안드로이드 브라우저 지원
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'your_google_client_id',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'your_google_client_secret',
-    callbackURL: process.env.VERCEL ? "https://vacation-study-planner.vercel.app/auth/google/callback" : "/auth/google/callback"
+    callbackURL: process.env.VERCEL ? "https://vacation-study-planner.vercel.app/auth/google/callback" : "/auth/google/callback",
+    // 안드로이드 브라우저 호환성 강화
+    userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
+    scope: ['profile', 'email'],
+    passReqToCallback: false
 }, async (accessToken, refreshToken, profile, done) => {
     // 사용자 정보를 세션에 저장
     const user = {
@@ -277,8 +281,59 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+
+
+// 로그인 페이지 - 단순화 (OAuth 먼저 시도)
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
+    const oauthError = req.query.error;
+    
+    // OAuth 실패 시에만 Gmail 로그인 페이지
+    if (oauthError === 'oauth_failed') {
+        console.log('📱 OAuth 실패 - Gmail 로그인 페이지 제공');
+        res.sendFile(path.join(__dirname, 'public', 'mobile_login.html'));
+    } else {
+        // 기본: 모든 사용자에게 Google OAuth 시도
+        res.sendFile(path.join(__dirname, 'login.html'));
+    }
+});
+
+// 안드로이드 브라우저용 대체 로그인 (Gmail만 허용)
+app.post('/auth/mobile-gmail', express.json(), (req, res) => {
+    const { email } = req.body;
+    
+    // Gmail 주소만 허용
+    if (!email || !email.endsWith('@gmail.com')) {
+        return res.status(403).json({ error: 'Gmail 주소만 사용할 수 있습니다.' });
+    }
+    
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@gmail\.com$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: '올바른 Gmail 주소를 입력해주세요.' });
+    }
+    
+    // 사용자 객체 생성 (Google OAuth와 동일한 구조)
+    const user = {
+        id: 'gmail_' + email.split('@')[0],
+        email: email,
+        name: email.split('@')[0],
+        picture: `https://ui-avatars.com/api/?name=${encodeURIComponent(email.split('@')[0])}&background=4285f4&color=fff`
+    };
+    
+    // JWT 토큰 생성
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(user, process.env.SESSION_SECRET || 'your-secret-key-here', { expiresIn: '7d' });
+    
+    // JWT를 쿠키로 설정
+    res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.VERCEL ? true : false,
+        sameSite: process.env.VERCEL ? 'none' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+    
+    console.log(`📱 Gmail 대체 로그인: ${email}`);
+    res.json({ success: true, message: '로그인 성공' });
 });
 
 app.get('/planner', requireAuth, (req, res) => {
@@ -514,12 +569,25 @@ app.delete('/api/user/data/:dataType', requireAuth, async (req, res) => {
     }
 });
 
-// Google OAuth 라우트
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+// Google OAuth 라우트 - 안드로이드 WebView 차단 우회
+app.get('/auth/google', (req, res, next) => {
+    const userAgent = req.headers['user-agent'] || '';
+    console.log('📱 OAuth 요청 User-Agent:', userAgent.substring(0, 100));
+    
+    // 안드로이드 WebView가 아님을 표시하는 헤더 설정
+    res.setHeader('X-Requested-With', 'XMLHttpRequest');
+    
+    passport.authenticate('google', { 
+        scope: ['profile', 'email'],
+        // WebView 차단 우회 파라미터
+        hd: undefined, // 호스트 도메인 제한 없음
+        include_granted_scopes: true
+    })(req, res, next);
+});
 
 app.get('/auth/google/callback', 
     passport.authenticate('google', { 
-        failureRedirect: '/login',
+        failureRedirect: '/login?error=oauth_failed',
         failureMessage: true 
     }),
     (req, res) => {

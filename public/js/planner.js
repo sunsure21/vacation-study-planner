@@ -704,6 +704,11 @@ function loadFromLocalStorage() {
                 schedule.periodEnd = null;
             }
             
+            // 예외 날짜 필드 초기화 (새로운 기능)
+            if (!schedule.excludeDates) {
+                schedule.excludeDates = [];
+            }
+            
             return true;
         });
         
@@ -823,6 +828,11 @@ function generateSchedulesByDate() {
 function shouldIncludeSchedule(schedule, date) {
     const dayOfWeek = date.getDay();
     const dateString = toYYYYMMDD(date);
+    
+    // 🚨 NEW: 예외 날짜 체크 - 반복 일정에서 특정 날짜 제외
+    if (schedule.excludeDates && schedule.excludeDates.includes(dateString)) {
+        return false; // 예외 날짜에 포함된 경우 제외
+    }
     
     // 스케줄 타입에 따른 처리
     if (schedule.scheduleType === 'specific') {
@@ -1336,6 +1346,24 @@ function renderVacationCalendar(container) {
             };
         })(dateKey, daySchedules, dayIndex, currentDate));
         
+        // 🚨 NEW: 우클릭 이벤트 - 반복 일정 예외 처리
+        dayCell.addEventListener('contextmenu', ((capturedDateKey, capturedCurrentDate) => {
+            return (event) => {
+                event.preventDefault(); // 기본 우클릭 메뉴 방지
+                
+                // 해당 날짜의 반복 일정들 찾기
+                const repeatSchedules = schedules.filter(schedule => 
+                    schedule.scheduleType === 'repeat' && 
+                    shouldIncludeSchedule(schedule, capturedCurrentDate) &&
+                    !schedule.isStudySlot
+                );
+                
+                if (repeatSchedules.length > 0) {
+                    showExceptionDateMenu(capturedDateKey, repeatSchedules, event.clientX, event.clientY);
+                }
+            };
+        })(dateKey, currentDate));
+        
         calendarGrid.appendChild(dayCell);
     }
     
@@ -1703,6 +1731,10 @@ function editSchedule(scheduleId) {
         if (schedule.periodEnd) {
             document.getElementById('repeat-period-end').value = schedule.periodEnd;
         }
+        
+        // 예외 날짜 불러오기 (NEW)
+        currentExceptionDates = schedule.excludeDates ? [...schedule.excludeDates] : [];
+        updateExceptionDatesList();
     } else if (scheduleType === 'specific') {
         document.getElementById('specific-date-section').style.display = 'block';
         
@@ -1842,6 +1874,7 @@ function resetScheduleForm() {
     document.getElementById('custom-days-section').style.display = 'block';
     document.getElementById('specific-date-section').style.display = 'none';
     document.getElementById('period-section').style.display = 'none';
+    document.getElementById('exception-dates-section').style.display = 'block'; // 예외 날짜 표시
     
     // 요일별 체크박스 초기화
     document.querySelectorAll('input[name="custom-days"]').forEach(checkbox => {
@@ -1859,6 +1892,9 @@ function resetScheduleForm() {
     // 반복 기간 옵션 초기화
     document.getElementById('repeat-period-start').value = '';
     document.getElementById('repeat-period-end').value = '';
+    
+    // 예외 날짜 초기화 (NEW)
+    clearExceptionDates();
     
     // 시간 선택 초기화
     populateTimeSelects();
@@ -2074,6 +2110,7 @@ function handleScheduleSubmit(e) {
         specificWeekday: specificWeekday,
         periodStart: periodStart,
         periodEnd: periodEnd,
+        excludeDates: [...currentExceptionDates], // 예외 날짜 추가 (NEW)
         createdAt: isEditMode ? schedules.find(s => s.id === editId)?.createdAt || new Date().toISOString() : new Date().toISOString()
     };
     
@@ -2354,11 +2391,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             customDaysSection.style.display = 'none';
             specificSection.style.display = 'none';
             periodSection.style.display = 'none';
+            const exceptionSection = document.getElementById('exception-dates-section');
+            if (exceptionSection) exceptionSection.style.display = 'none';
             
             // 선택된 타입에 따라 해당 섹션 표시
             const selectedType = this.dataset.type;
             if (selectedType === 'repeat') {
                 repeatSection.style.display = 'block';
+                if (exceptionSection) exceptionSection.style.display = 'block'; // 반복 일정에서만 예외 날짜 표시
                 // 반복 타입이 요일별인 경우 요일 선택 섹션도 표시
                 const activeRepeatBtn = document.querySelector('.repeat-btn.active');
                 if (activeRepeatBtn && activeRepeatBtn.dataset.repeat === 'custom') {
@@ -2416,6 +2456,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
     });
+    
+    // 예외 날짜 기능 초기화 (NEW)
+    initializeExceptionDates();
 });
 
 // MBTI 학습 코칭 기능
@@ -3404,4 +3447,179 @@ function copyToClipboard(inputId) {
             showToast('복사에 실패했습니다. 링크를 직접 선택해서 복사해주세요.', 'error');
         }
     });
-} 
+}
+
+// 예외 날짜 관리 함수들 (NEW)
+let currentExceptionDates = [];
+
+function initializeExceptionDates() {
+    const addBtn = document.getElementById('add-exception-btn');
+    const dateInput = document.getElementById('exception-date-input');
+    
+    if (addBtn) {
+        addBtn.addEventListener('click', addExceptionDate);
+    }
+    
+    if (dateInput) {
+        dateInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addExceptionDate();
+            }
+        });
+    }
+}
+
+function addExceptionDate() {
+    const dateInput = document.getElementById('exception-date-input');
+    const selectedDate = dateInput.value;
+    
+    if (!selectedDate) {
+        showToast('날짜를 선택해주세요.', 'warning');
+        return;
+    }
+    
+    if (currentExceptionDates.includes(selectedDate)) {
+        showToast('이미 추가된 날짜입니다.', 'warning');
+        return;
+    }
+    
+    currentExceptionDates.push(selectedDate);
+    dateInput.value = '';
+    updateExceptionDatesList();
+    showToast('예외 날짜가 추가되었습니다.', 'success');
+}
+
+function removeExceptionDate(dateToRemove) {
+    currentExceptionDates = currentExceptionDates.filter(date => date !== dateToRemove);
+    updateExceptionDatesList();
+    showToast('예외 날짜가 제거되었습니다.', 'info');
+}
+
+function updateExceptionDatesList() {
+    const listContainer = document.getElementById('exception-dates-list');
+    if (!listContainer) return;
+    
+    if (currentExceptionDates.length === 0) {
+        listContainer.innerHTML = '<p class="no-exceptions">추가된 예외 날짜가 없습니다.</p>';
+        return;
+    }
+    
+    const sortedDates = [...currentExceptionDates].sort();
+    const html = sortedDates.map(date => {
+        const dateObj = new Date(date + 'T00:00:00');
+        const formatted = dateObj.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'short'
+        });
+        
+        return `
+            <div class="exception-date-item">
+                <span class="exception-date-text">${formatted}</span>
+                <button type="button" class="remove-exception-btn" onclick="removeExceptionDate('${date}')">
+                    ❌
+                </button>
+            </div>
+        `;
+    }).join('');
+    
+    listContainer.innerHTML = html;
+}
+
+function clearExceptionDates() {
+    currentExceptionDates = [];
+    updateExceptionDatesList();
+}
+
+// 우클릭 예외 날짜 메뉴 표시 (NEW)
+function showExceptionDateMenu(dateKey, repeatSchedules, x, y) {
+    // 기존 메뉴가 있으면 제거
+    const existingMenu = document.getElementById('exception-menu');
+    if (existingMenu) {
+        existingMenu.remove();
+    }
+    
+    const menu = document.createElement('div');
+    menu.id = 'exception-menu';
+    menu.className = 'context-menu';
+    menu.style.position = 'fixed';
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    menu.style.zIndex = '10000';
+    
+    const dateObj = new Date(dateKey + 'T00:00:00');
+    const formattedDate = dateObj.toLocaleDateString('ko-KR', {
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short'
+    });
+    
+    menu.innerHTML = `
+        <div class="context-menu-header">
+            <strong>${formattedDate} 반복 일정</strong>
+        </div>
+        ${repeatSchedules.map(schedule => `
+            <div class="context-menu-item" onclick="addExceptionForSchedule('${schedule.id}', '${dateKey}')">
+                <span>❌</span>
+                <span>${schedule.title || schedule.category} 제외</span>
+            </div>
+        `).join('')}
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item cancel" onclick="closeExceptionMenu()">
+            <span>✖️</span>
+            <span>취소</span>
+        </div>
+    `;
+    
+    document.body.appendChild(menu);
+    
+    // 메뉴 외부 클릭 시 닫기
+    setTimeout(() => {
+        document.addEventListener('click', closeExceptionMenu, { once: true });
+    }, 100);
+}
+
+function addExceptionForSchedule(scheduleId, dateKey) {
+    const schedule = schedules.find(s => s.id === scheduleId);
+    if (!schedule) {
+        showToast('스케줄을 찾을 수 없습니다.', 'error');
+        return;
+    }
+    
+    // 예외 날짜 추가
+    if (!schedule.excludeDates) {
+        schedule.excludeDates = [];
+    }
+    
+    if (schedule.excludeDates.includes(dateKey)) {
+        showToast('이미 예외 처리된 날짜입니다.', 'warning');
+        closeExceptionMenu();
+        return;
+    }
+    
+    schedule.excludeDates.push(dateKey);
+    
+    // 저장 및 UI 업데이트
+    saveDataToStorage();
+    generateSchedulesByDate();
+    renderCalendar();
+    updateWeeklySchedule();
+    
+    const dateObj = new Date(dateKey + 'T00:00:00');
+    const formattedDate = dateObj.toLocaleDateString('ko-KR', {
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    showToast(`${formattedDate} ${schedule.title || schedule.category} 일정이 제외되었습니다.`, 'success');
+    closeExceptionMenu();
+}
+
+function closeExceptionMenu() {
+    const menu = document.getElementById('exception-menu');
+    if (menu) {
+        menu.remove();
+    }
+}
