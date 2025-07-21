@@ -184,12 +184,12 @@ app.use(express.json()); // JSON 요청 본문을 파싱하기 위해 추가
 
 // favicon 제공
 app.get('/favicon.ico', (req, res) => {
-    res.sendFile(path.join(__dirname, 'logo.ico'));
+    res.status(404).end();
 });
 
-// logo.ico 파일 제공
+// 파비콘 제거됨
 app.get('/logo.ico', (req, res) => {
-    res.sendFile(path.join(__dirname, 'logo.ico'));
+    res.status(404).end();
 });
 
 // JWT 인증 미들웨어 (세션 대체용)
@@ -1258,7 +1258,7 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏖️ 방학 순공 플래너 - 공유 캘린더</title>
     <link rel="stylesheet" href="/css/planner_style.css">
-    <link rel="icon" href="/logo.ico" type="image/x-icon">
+    <!-- 파비콘 제거됨 -->
     <style>
         .shared-header {
             background: linear-gradient(135deg, #667eea, #764ba2);
