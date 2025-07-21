@@ -396,9 +396,21 @@ function renderCalendar() {
         if (totalStudyMinutes > 0) {
             const studyTimeDisplay = document.createElement('div');
             studyTimeDisplay.className = 'daily-study-time';
+            
+            // 두 줄 포맷: 첫 줄은 '순공 실적', 둘째 줄은 시간
             const hours = Math.floor(totalStudyMinutes / 60);
             const minutes = totalStudyMinutes % 60;
-            studyTimeDisplay.textContent = hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
+            let timeText;
+            
+            if (hours === 0) {
+                timeText = `${minutes}분`;
+            } else if (minutes === 0) {
+                timeText = `${hours}시간`;
+            } else {
+                timeText = `${hours}시간 ${minutes}분`;
+            }
+            
+            studyTimeDisplay.textContent = `순공 실적\n${timeText}`;
             dayCell.appendChild(studyTimeDisplay);
         }
         

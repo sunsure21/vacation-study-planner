@@ -1229,6 +1229,30 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             opacity: 0.7;
             text-decoration: line-through;
         }
+        
+        /* 순공 실적 오렌지 스타일 */
+        .daily-study-time {
+            position: absolute;
+            bottom: 4px;
+            left: 4px;
+            right: 4px;
+            font-size: 10px;
+            color: #ea580c;
+            font-weight: 600;
+            background-color: rgba(251, 146, 60, 0.9);
+            padding: 3px 4px;
+            border-radius: 3px;
+            border: 1px solid #ea580c;
+            white-space: pre-line;
+            z-index: 10;
+            text-align: center;
+            box-sizing: border-box;
+            max-width: calc(100% - 8px);
+            overflow: hidden;
+            line-height: 1.2;
+            height: auto;
+            min-height: 24px;
+        }
     </style>
 </head>
 <body>
