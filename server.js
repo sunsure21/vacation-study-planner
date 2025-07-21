@@ -542,12 +542,16 @@ app.get('/auth/google/callback',
         console.log(`🎫 JWT 토큰 생성: ${req.user.email}`);
         
         // JWT를 httpOnly 쿠키로 설정
-        res.cookie('auth_token', token, {
+        const cookieOptions = {
             httpOnly: true,
             secure: process.env.VERCEL ? true : false,
             sameSite: process.env.VERCEL ? 'none' : 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
-        });
+        };
+        
+        console.log('🍪 쿠키 설정:', cookieOptions);
+        res.cookie('auth_token', token, cookieOptions);
+        console.log('🍪 JWT 쿠키 설정 완료');
         
         // 명시적으로 세션에도 사용자 정보 저장 (이중 보장)
         console.log(`🔧 수동 세션 설정 전:`, req.session.passport);

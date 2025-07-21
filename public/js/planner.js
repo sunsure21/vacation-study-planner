@@ -3125,22 +3125,51 @@ async function generateShareLinksFromData(shareData) {
             </div>
         `;
         
-        const response = await fetch('/api/share/create', {
+        console.log('🌐 브라우저 정보:', {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            isSafari: /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent),
+            isChrome: /Chrome/.test(navigator.userAgent),
+            origin: window.location.origin
+        });
+        
+        // 사파리 브라우저 감지
+        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+        console.log('🔍 브라우저 감지:', { isSafari });
+        
+        const requestOptions = {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(shareData)
-        });
+            body: JSON.stringify(shareData),
+            credentials: 'include'  // 사파리를 위한 쿠키 포함
+        };
+        
+        console.log('📤 요청 옵션:', requestOptions);
+        
+        const response = await fetch('/api/share/create', requestOptions);
+        
+        console.log('📡 API 응답 상태:', response.status);
+        console.log('📡 응답 헤더:', Object.fromEntries(response.headers.entries()));
         
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            const errorText = await response.text();
+            console.error('❌ API 응답 오류:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
         
         const data = await response.json();
+        console.log('📦 응답 데이터:', data);
         
         if (data.success) {
             console.log('✅ 공유 링크 생성 성공');
+            console.log('🔗 생성된 토큰:', {
+                viewToken: data.viewToken?.substring(0, 8) + '...',
+                recordToken: data.recordToken?.substring(0, 8) + '...',
+                fullViewToken: data.viewToken,
+                fullRecordToken: data.recordToken
+            });
             displayNewLinks(data.viewToken, data.recordToken);
         } else {
             throw new Error(data.error || '링크 생성 실패');
@@ -3148,6 +3177,7 @@ async function generateShareLinksFromData(shareData) {
         
     } catch (error) {
         console.error('링크 생성 오류:', error);
+        console.error('오류 스택:', error.stack);
         showErrorMessage(`링크 생성에 실패했습니다: ${error.message}`);
     }
 }
