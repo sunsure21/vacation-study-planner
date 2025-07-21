@@ -18,7 +18,14 @@ if (process.env.VERCEL) {
 }
 
 // 미들웨어 설정
-app.use(cookieParser()); // 쿠키 파서 추가
+app.use(cookieParser());
+
+// 📋 모든 요청 로깅
+app.use((req, res, next) => {
+    console.log(`📥 ${req.method} ${req.url} - ${new Date().toISOString()}`);
+    console.log('📋 요청 헤더:', req.headers);
+    next();
+}); // 쿠키 파서 추가
 
 // Redis 세션 저장소 설정 (Vercel 서버리스에서 세션 유지)
 let sessionStore;
@@ -764,6 +771,9 @@ function generateToken() {
 app.post('/api/share/create', requireAuth, async (req, res) => {
     try {
         console.log('📤 클라이언트 기반 공유 링크 생성 시작');
+        console.log('📤 요청 헤더:', req.headers);
+        console.log('📤 요청 메소드:', req.method);
+        console.log('📤 요청 URL:', req.url);
         
         const { vacationPeriod, schedules, studyRecords, completedSchedules, createdAt } = req.body;
         

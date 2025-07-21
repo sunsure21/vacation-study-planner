@@ -3133,6 +3133,19 @@ async function generateShareLinksFromData(shareData) {
             origin: window.location.origin
         });
         
+        // 🔍 기본 연결 테스트
+        console.log('🔍 기본 연결 테스트 시작...');
+        try {
+            const testResponse = await fetch('/api/user', { credentials: 'include' });
+            console.log('🔍 /api/user 테스트 결과:', {
+                status: testResponse.status,
+                ok: testResponse.ok,
+                url: testResponse.url
+            });
+        } catch (testError) {
+            console.error('❌ 기본 연결 테스트 실패:', testError);
+        }
+        
         // 사파리 브라우저 감지
         const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
         console.log('🔍 브라우저 감지:', { isSafari });
@@ -3147,15 +3160,23 @@ async function generateShareLinksFromData(shareData) {
         };
         
         console.log('📤 요청 옵션:', requestOptions);
+        console.log('📤 요청 URL:', `${window.location.origin}/api/share/create`);
         
         const response = await fetch('/api/share/create', requestOptions);
         
         console.log('📡 API 응답 상태:', response.status);
+        console.log('📡 응답 URL:', response.url);
         console.log('📡 응답 헤더:', Object.fromEntries(response.headers.entries()));
         
         if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ API 응답 오류:', errorText);
+            console.error('❌ 응답 상세:', {
+                status: response.status,
+                statusText: response.statusText,
+                url: response.url,
+                redirected: response.redirected
+            });
             throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
         
@@ -3178,7 +3199,13 @@ async function generateShareLinksFromData(shareData) {
     } catch (error) {
         console.error('링크 생성 오류:', error);
         console.error('오류 스택:', error.stack);
-        showErrorMessage(`링크 생성에 실패했습니다: ${error.message}`);
+        
+        // 404 오류인 경우 특별 처리
+        if (error.message.includes('404')) {
+            showErrorMessage(`서버에서 API를 찾을 수 없습니다. 페이지를 새로고침하고 다시 로그인해보세요.`);
+        } else {
+            showErrorMessage(`링크 생성에 실패했습니다: ${error.message}`);
+        }
     }
 }
 
