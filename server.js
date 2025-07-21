@@ -1272,6 +1272,38 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             height: auto;
             min-height: 24px;
         }
+        
+        /* 공유 캘린더 레이아웃 개선 */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 20px;
+        }
+        
+        .calendar-day {
+            position: relative;
+            min-height: 150px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .date-number {
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+        
+        .day-schedules {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
     </style>
 </head>
 <body>
@@ -1299,16 +1331,6 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             
             <div id="calendar-container">
                 <div id="calendar"></div>
-            </div>
-        </div>
-        
-
-        
-        <!-- 주간 평가 -->
-        <div class="weekly-evaluation-section">
-            <h2>📊 학습 진도 평가</h2>
-            <div class="evaluation-box" id="evaluation-box">
-                <p>데이터를 불러오는 중...</p>
             </div>
         </div>
     </div>

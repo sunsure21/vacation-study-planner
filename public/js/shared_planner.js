@@ -106,7 +106,7 @@ async function loadSharedData() {
         
         generateSchedulesByDate();
         renderCalendar();
-        updateWeeklyEvaluation();
+        // updateWeeklyEvaluation(); // 공유 캘린더에서는 주간 평가 제거
         
     } catch (error) {
         console.error('공유 데이터 로드 오류:', error);
