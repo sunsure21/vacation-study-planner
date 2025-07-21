@@ -1604,10 +1604,7 @@ body.modal-open {
 
 /* 일일 순공시간 표시 */
 .daily-study-time {
-    position: absolute;
-    bottom: 4px;
-    left: 4px;
-    right: 4px;
+    position: relative; /* position을 relative로 유지 */
     font-size: 9px;
     color: white;
     font-weight: 600;
@@ -1623,9 +1620,10 @@ body.modal-open {
     line-height: 1.2;
     height: 18px;
     max-height: 18px;
-    min-height: 18px;
     display: block;
-    z-index: 10;
+    width: 100%; /* 너비를 100%로 설정 */
+    margin: 2px 0; /* 상하 마진 추가 */
+    flex-shrink: 0;
 }
 
 /* 주간 평가 섹션 개선 */
