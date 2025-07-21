@@ -1814,15 +1814,16 @@ body.modal-open {
 
 /* MBTI 모바일 반응형 */
 @media (max-width: 768px) {
-    /* 메인 컨테이너 최적화 - 폭 최대 활용 */
+    /* 메인 컨테이너 최적화 - 여백 완전 제거 */
     .planner-screen {
-        padding: 8px;
+        padding: 0;
+        margin: 0;
         overflow-x: hidden;
     }
     
     .planner-container {
-        padding: 15px 8px;
-        border-radius: 12px;
+        padding: 8px 4px;
+        border-radius: 0;
         max-width: 100%;
         width: 100%;
         margin: 0;
@@ -1830,16 +1831,16 @@ body.modal-open {
     }
     
     .container {
-        padding: 5px;
+        padding: 1px;
         width: 100%;
         max-width: 100%;
     }
     
     .setup-container {
-        padding: 20px 8px;
+        padding: 8px 2px;
         max-width: 100%;
         width: 100%;
-        border-radius: 12px;
+        border-radius: 0;
         margin: 0;
     }
     
@@ -1855,12 +1856,12 @@ body.modal-open {
     
     /* 헤더 최적화 - 폭 최대 활용 */
     .header {
-        padding: 12px 4px;
+        padding: 6px 1px !important;
+        gap: 2px;
         flex-wrap: wrap;
-        gap: 6px;
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
         box-sizing: border-box;
     }
     
@@ -1872,18 +1873,18 @@ body.modal-open {
     /* 주간 디테일 최적화 - 폭 최대 활용 */
     .weekly-details {
         grid-template-columns: 1fr;
-        gap: 12px;
-        margin: 15px 0;
+        gap: 4px;
+        margin: 6px 0;
         width: 100%;
         max-width: 100%;
     }
     
     .week-card {
-        padding: 15px 8px;
-        border-radius: 8px;
-        width: 100%;
-        max-width: 100%;
-        margin: 0;
+        padding: 8px 2px !important;
+        border-radius: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
         box-sizing: border-box;
     }
     
@@ -2324,12 +2325,13 @@ body.modal-open {
 /* 480px 이하 모바일 - 최대 폭 활용 */
 @media (max-width: 480px) {
     .planner-screen {
-        padding: 5px;
+        padding: 0;
+        margin: 0;
     }
     
     .planner-container {
-        padding: 10px 5px;
-        border-radius: 8px;
+        padding: 6px 2px;
+        border-radius: 0;
     }
     
     .container {

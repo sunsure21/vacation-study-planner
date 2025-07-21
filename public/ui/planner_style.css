@@ -1702,13 +1702,14 @@ html {
     
     /* 전체 컨테이너 폭 최대 활용 */
     .planner-screen {
-        padding: 8px !important;
+        padding: 0 !important;
+        margin: 0 !important;
         overflow-x: hidden;
     }
     
     .planner-container {
-        padding: 15px 8px !important;
-        border-radius: 12px;
+        padding: 8px 4px !important;
+        border-radius: 0;
         max-width: 100% !important;
         width: 100% !important;
         margin: 0 !important;
@@ -1716,23 +1717,23 @@ html {
     }
     
     .container {
-        padding: 5px !important;
+        padding: 2px !important;
         width: 100% !important;
         max-width: 100% !important;
     }
     
     .setup-container {
-        padding: 20px 8px !important;
+        padding: 12px 4px !important;
         max-width: 100% !important;
         width: 100% !important;
-        border-radius: 12px;
+        border-radius: 0;
         margin: 0 !important;
     }
     
     .header {
-        padding: 12px 4px !important;
+        padding: 8px 2px !important;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 4px;
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 !important;
@@ -1748,8 +1749,8 @@ html {
     }
     
     .week-card {
-        padding: 15px 8px !important;
-        border-radius: 8px;
+        padding: 10px 4px !important;
+        border-radius: 0;
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 !important;
@@ -1817,41 +1818,42 @@ html {
 /* 480px 이하 모바일 - 최대 폭 활용 */
 @media (max-width: 480px) {
     .planner-screen {
-        padding: 5px !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
     
     .planner-container {
-        padding: 10px 5px !important;
-        border-radius: 8px;
+        padding: 6px 2px !important;
+        border-radius: 0;
     }
     
     .container {
-        padding: 3px !important;
+        padding: 1px !important;
         width: 100% !important;
         max-width: 100% !important;
     }
     
     .setup-container {
-        padding: 15px 5px !important;
+        padding: 8px 2px !important;
         max-width: 100% !important;
         width: 100% !important;
-        border-radius: 8px;
+        border-radius: 0;
         margin: 0 !important;
     }
     
     .weekly-details {
-        gap: 8px;
-        margin: 10px 0;
+        gap: 4px;
+        margin: 6px 0;
     }
     
     .week-card {
-        padding: 12px 5px !important;
-        border-radius: 6px;
+        padding: 8px 2px !important;
+        border-radius: 0;
     }
     
     .header {
-        padding: 8px 2px !important;
-        gap: 4px;
+        padding: 6px 1px !important;
+        gap: 2px;
     }
     
     .calendar-grid {
