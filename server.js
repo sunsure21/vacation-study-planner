@@ -84,14 +84,12 @@ passport.deserializeUser((user, done) => {
     done(null, user); // 저장된 사용자 객체를 그대로 반환
 });
 
-// Google OAuth 전략 설정 - 안드로이드 브라우저 지원
+// Google OAuth 전략 설정 - 2024 정책 호환
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || 'your_google_client_id',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'your_google_client_secret',
     callbackURL: process.env.VERCEL ? "https://vacation-study-planner.vercel.app/auth/google/callback" : "/auth/google/callback",
-    // 안드로이드 브라우저 호환성 강화
-    userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
-    scope: ['profile', 'email'],
+    // Google OAuth 2024 정책 호환 설정
     passReqToCallback: false
 }, async (accessToken, refreshToken, profile, done) => {
     // 사용자 정보를 세션에 저장
@@ -569,19 +567,12 @@ app.delete('/api/user/data/:dataType', requireAuth, async (req, res) => {
     }
 });
 
-// Google OAuth 라우트 - 안드로이드 WebView 차단 우회
+// Google OAuth 라우트 - 표준 설정
 app.get('/auth/google', (req, res, next) => {
-    const userAgent = req.headers['user-agent'] || '';
-    console.log('📱 OAuth 요청 User-Agent:', userAgent.substring(0, 100));
-    
-    // 안드로이드 WebView가 아님을 표시하는 헤더 설정
-    res.setHeader('X-Requested-With', 'XMLHttpRequest');
+    console.log('🔐 OAuth 요청 시작');
     
     passport.authenticate('google', { 
-        scope: ['profile', 'email'],
-        // WebView 차단 우회 파라미터
-        hd: undefined, // 호스트 도메인 제한 없음
-        include_granted_scopes: true
+        scope: ['profile', 'email']
     })(req, res, next);
 });
 
