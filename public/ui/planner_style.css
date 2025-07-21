@@ -1680,8 +1680,9 @@ html {
     color: #333;
 }
 
-/* 반응형 디자인 - 모바일 */
+/* 반응형 디자인 - 모바일 폭 최대 활용 */
 @media (max-width: 768px) {
+    /* 기존 요소들 */
     .user-name {
         display: none;
     }
@@ -1697,6 +1698,187 @@ html {
         right: 10px !important;
         top: 10px !important;
         font-size: 14px !important;
+    }
+    
+    /* 전체 컨테이너 폭 최대 활용 */
+    .planner-screen {
+        padding: 8px !important;
+        overflow-x: hidden;
+    }
+    
+    .planner-container {
+        padding: 15px 8px !important;
+        border-radius: 12px;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        overflow: hidden;
+    }
+    
+    .container {
+        padding: 5px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .setup-container {
+        padding: 20px 8px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        border-radius: 12px;
+        margin: 0 !important;
+    }
+    
+    .header {
+        padding: 12px 4px !important;
+        flex-wrap: wrap;
+        gap: 6px;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box;
+    }
+    
+    .weekly-details {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin: 15px 0;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .week-card {
+        padding: 15px 8px !important;
+        border-radius: 8px;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 15px;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0;
+    }
+    
+    .calendar-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible;
+    }
+    
+    .calendar-month {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 12px;
+        min-width: auto;
+    }
+    
+    .calendar-grid {
+        gap: 4px;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: auto;
+    }
+    
+    .days-header {
+        gap: 4px;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: auto;
+    }
+    
+    .day-header {
+        padding: 6px 2px;
+        font-size: 11px;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1 !important;
+    }
+    
+    .day-cell {
+        height: 130px;
+        padding: 3px;
+        font-size: 10px;
+        min-width: 0;
+        flex: 1 !important;
+    }
+}
+
+/* 480px 이하 모바일 - 최대 폭 활용 */
+@media (max-width: 480px) {
+    .planner-screen {
+        padding: 5px !important;
+    }
+    
+    .planner-container {
+        padding: 10px 5px !important;
+        border-radius: 8px;
+    }
+    
+    .container {
+        padding: 3px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .setup-container {
+        padding: 15px 5px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        border-radius: 8px;
+        margin: 0 !important;
+    }
+    
+    .weekly-details {
+        gap: 8px;
+        margin: 10px 0;
+    }
+    
+    .week-card {
+        padding: 12px 5px !important;
+        border-radius: 6px;
+    }
+    
+    .header {
+        padding: 8px 2px !important;
+        gap: 4px;
+    }
+    
+    .calendar-grid {
+        gap: 2px;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .days-header {
+        gap: 2px;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .day-header {
+        padding: 4px 1px;
+        font-size: 10px;
+        flex: 1 !important;
+        min-width: 0;
+    }
+    
+    .day-cell {
+        height: 110px;
+        padding: 2px;
+        font-size: 9px;
+        flex: 1 !important;
+        min-width: 0;
     }
 }
 
