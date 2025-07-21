@@ -2823,7 +2823,20 @@ function updateWeeklyEvaluation() {
     let totalCompletedHours = 0;
     let totalStudyDays = 0;
     let studyDaysWithRecords = 0;
+    
+    // 방학 시작일부터 현재까지의 경과일 계산
     let elapsedDays = 0;
+    if (vacationStartDate) {
+        const today = new Date();
+        const diffTime = today - vacationStartDate;
+        elapsedDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1은 시작일 포함
+        
+        // 방학 종료일을 넘어서면 전체 방학 기간으로 제한
+        if (vacationEndDate) {
+            const totalVacationDays = Math.floor((vacationEndDate - vacationStartDate) / (1000 * 60 * 60 * 24)) + 1;
+            elapsedDays = Math.min(elapsedDays, totalVacationDays);
+        }
+    }
     
     // 현재 주 범위에서만 계산 (방학 기간과 교집합)
     // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
@@ -2849,10 +2862,10 @@ function updateWeeklyEvaluation() {
             }
         }
         
+        // 경과일은 이미 위에서 계산됨 (방학 시작일부터 현재까지)
+        
         const daySchedules = schedulesByDate[dateKey] || [];
         const dayStudyRecord = studyRecords[dateKey] || {};
-        
-        elapsedDays++;
         
         // 계획된 학습 시간 계산
         let dayPlannedHours = 0;
