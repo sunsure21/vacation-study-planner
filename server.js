@@ -180,13 +180,19 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json()); // JSON 요청 본문을 파싱하기 위해 추가
 
-// favicon 제공
+// 파비콘 완전 제거 - 강제 404 및 캐시 방지
 app.get('/favicon.ico', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.status(404).end();
 });
 
-// 파비콘 제거됨
+// 로고 파일도 완전 제거
 app.get('/logo.ico', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.status(404).end();
 });
 
@@ -1249,7 +1255,10 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏖️ 방학 순공 플래너 - 공유 캘린더</title>
     <link rel="stylesheet" href="/css/planner_style.css">
-    <!-- 파비콘 제거됨 -->
+    <!-- 파비콘 완전 제거 및 캐시 방지 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
         .shared-header {
             background: linear-gradient(135deg, #667eea, #764ba2);
