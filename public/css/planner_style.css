@@ -490,8 +490,8 @@ body.modal-open {
     overflow-y: auto;
     overflow-x: hidden;
     margin-top: 4px;
-    margin-bottom: 30px;
-    height: 200px;
+    margin-bottom: 35px;
+    height: 190px;
     position: relative;
 }
 
@@ -1175,9 +1175,24 @@ body.modal-open {
     }
     
     .daily-study-time {
-        font-size: 9px;
-        padding: 2px 3px;
-        border-radius: 3px;
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        font-size: 8px;
+        color: var(--primary-purple-2);
+        font-weight: 600;
+        background-color: rgba(149, 246, 158, 0.9);
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid #4caf50;
+        white-space: nowrap;
+        z-index: 10;
+        text-align: center;
+        box-sizing: border-box;
+        max-width: calc(100% - 16px);
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     /* 주간 디테일 최적화 */
