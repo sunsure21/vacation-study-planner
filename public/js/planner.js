@@ -14,11 +14,7 @@ let currentUser = null; // 현재 로그인한 사용자 정보
 
 // 유틸리티 함수
 function toYYYYMMDD(date) {
-    // 🔧 수정: UTC 변환으로 인한 하루 전 날짜 문제 해결
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return date.toISOString().split('T')[0];
 }
 
 // 세션 유효성 확인 함수
@@ -86,114 +82,29 @@ function getUserStorageKey(key) {
 
 // 대한민국 서울 기준 현재 날짜 가져오기
 function getCurrentKoreanDate() {
-    try {
-        const now = new Date();
-        
-        // 방법 1: 아이패드 호환 방식 - 간단한 오프셋 계산
-        try {
-            const koreaOffsetMs = 9 * 60 * 60 * 1000; // 9시간
-            const koreaTime = new Date(now.getTime() + koreaOffsetMs);
-            
-            const year = koreaTime.getUTCFullYear();
-            const month = koreaTime.getUTCMonth();
-            const day = koreaTime.getUTCDate();
-            
-            console.log('📅 한국 시간 계산 결과:', { year, month, day });
-            return new Date(year, month, day);
-            
-        } catch (offsetError) {
-            console.warn('오프셋 계산 실패:', offsetError);
-        }
-        
-        // 방법 2: Intl.DateTimeFormat (아이패드에서 문제될 수 있음)
-        try {
-            const formatter = new Intl.DateTimeFormat('en-CA', {
-                timeZone: 'Asia/Seoul'
-            });
-            
-            const koreDateString = formatter.format(now);
-            console.log('🇰🇷 Intl 한국 날짜:', koreDateString);
-            
-            if (koreDateString && koreDateString.includes('-')) {
-                const [year, month, day] = koreDateString.split('-').map(Number);
-                if (year && month && day && !isNaN(year) && !isNaN(month) && !isNaN(day)) {
-                    return new Date(year, month - 1, day);
-                }
-            }
-        } catch (intlError) {
-            console.warn('Intl.DateTimeFormat 실패:', intlError);
-        }
-        
-        // 최후의 fallback - 현재 로컬 날짜
-        console.log('⚠️ 로컬 날짜 사용');
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return today;
-        
-    } catch (error) {
-        console.error('getCurrentKoreanDate 전체 실패:', error);
-        // 최종 fallback
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return today;
-    }
+    const now = new Date();
+    // 한국 시간대로 변환
+    const koreaTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+    return koreaTime;
 }
 
 // 대한민국 서울 기준 현재 날짜 문자열 (YYYY-MM-DD)
 function getCurrentKoreanDateString() {
-    try {
-        const now = new Date();
-        
-        // 방법 1: 아이패드 호환 방식 - 간단한 오프셋 계산
-        try {
-            const koreaOffsetMs = 9 * 60 * 60 * 1000;
-            const koreaTime = new Date(now.getTime() + koreaOffsetMs);
-            
-            const year = koreaTime.getUTCFullYear();
-            const month = String(koreaTime.getUTCMonth() + 1).padStart(2, '0');
-            const day = String(koreaTime.getUTCDate()).padStart(2, '0');
-            
-            const koreanDateString = `${year}-${month}-${day}`;
-            console.log('📅 한국 시간 문자열 계산:', koreanDateString);
-            return koreanDateString;
-            
-        } catch (offsetError) {
-            console.warn('오프셋 문자열 계산 실패:', offsetError);
-        }
-        
-        // 방법 2: Intl.DateTimeFormat (아이패드에서 문제될 수 있음)
-        try {
-            const formatter = new Intl.DateTimeFormat('en-CA', {
-                timeZone: 'Asia/Seoul'
-            });
-            
-            const koreDateString = formatter.format(now);
-            console.log('📅 Intl 한국 날짜 문자열:', koreDateString);
-            
-            if (koreDateString && /^\d{4}-\d{2}-\d{2}$/.test(koreDateString)) {
-                return koreDateString;
-            }
-        } catch (intlError) {
-            console.warn('getCurrentKoreanDateString Intl 실패:', intlError);
-        }
-        
-        // 최후의 fallback - 현재 로컬 날짜
-        console.log('⚠️ 로컬 날짜 문자열 사용');
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-        
-    } catch (error) {
-        console.error('getCurrentKoreanDateString 전체 실패:', error);
-        // 최종 fallback
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
+    const now = new Date();
+    const koreanDateString = now.toLocaleDateString("ko-KR", {
+        timeZone: "Asia/Seoul",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    });
+    
+    // "2025. 07. 14." 형식을 "2025-07-14" 형식으로 변환
+    const parts = koreanDateString.split('. ');
+    const year = parts[0];
+    const month = parts[1];
+    const day = parts[2].replace('.', '');
+    
+    return `${year}-${month}-${day}`;
 }
 
 function formatDate(date) {
@@ -320,8 +231,6 @@ function updateCurrentDateTime() {
 }
 
 function updateWeeklySchedule() {
-    console.log('📅 updateWeeklySchedule() 시작...');
-    
     const now = getCurrentKoreanDate();
     const weekRange = getWeekRange(now);
     
@@ -331,28 +240,13 @@ function updateWeeklySchedule() {
     const weeklySchedulesContainer = document.getElementById('weekly-registered-schedules');
     const weeklyStudyContainer = document.getElementById('weekly-study-hours');
     
-    if (!weeklySchedulesContainer || !weeklyStudyContainer) {
-        console.error('❌ 주요일정 컨테이너를 찾을 수 없습니다!');
-        return;
-    }
-    
     let weeklySchedulesHtml = '';
     let totalStudyHours = 0;
     
-    console.log('📊 현재 schedulesByDate:', Object.keys(schedulesByDate).length, '일 데이터');
-    console.log('📅 이번주 범위:', weekRange);
+    console.log('현재 schedulesByDate:', schedulesByDate);
+    console.log('이번주 범위:', weekRange);
     
-    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
-    const startYear = weekRange.start.getFullYear();
-    const startMonth = weekRange.start.getMonth();
-    const startDate = weekRange.start.getDate();
-    const endYear = weekRange.end.getFullYear();
-    const endMonth = weekRange.end.getMonth();
-    const endDate = weekRange.end.getDate();
-    
-    for (let d = new Date(startYear, startMonth, startDate); 
-         d <= new Date(endYear, endMonth, endDate); 
-         d.setDate(d.getDate() + 1)) {
+    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         const daySchedules = schedulesByDate[dateKey] || [];
         
@@ -364,6 +258,9 @@ function updateWeeklySchedule() {
             schedule.category !== '식사' && 
             schedule.category !== '취침'
         );
+        
+        // 시간순으로 정렬
+        mainSchedules.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
         
         if (mainSchedules.length > 0) {
             weeklySchedulesHtml += `<div class="weekly-day-schedules">`;
@@ -387,81 +284,31 @@ function updateWeeklySchedule() {
     
     weeklySchedulesContainer.innerHTML = weeklySchedulesHtml;
     
-    // 순공 가능 시간 계산 - 캘린더와 동일한 방식 사용
+    // 순공 가능 시간 계산 (24시간 - 식사, 학원, 취침, 기타 시간)
     let studyHoursHtml = '';
     let totalWeeklyStudyHours = 0;
     
-    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
-    for (let d = new Date(startYear, startMonth, startDate); 
-         d <= new Date(endYear, endMonth, endDate); 
-         d.setDate(d.getDate() + 1)) {
+    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         const daySchedules = schedulesByDate[dateKey] || [];
         
-        // 방학 첫날 체크
-        const isFirstVacationDay = vacationStartDate && dateKey === toYYYYMMDD(vacationStartDate);
+        // 해당 날짜의 실제 순공 시간 슬롯들을 계산해서 사용
+        const studySlots = daySchedules.filter(s => s.isStudySlot);
+        let totalStudySlotMinutes = 0;
         
-        // 기본 순공 가능 시간: 방학 첫날은 09:00~24:00, 그 외는 00:00~24:00
-        let totalStudyMinutes = isFirstVacationDay ? (24 - 9) * 60 : 24 * 60; // 첫날은 15시간
-        
-        // 해당 날짜의 등록된 스케줄들 (순공시간 제외)
-        const existingSchedules = daySchedules.filter(s => !s.isStudySlot);
-        
-        // 1️⃣ 방학 첫날이 아닌 경우만 전일 취침시간 차감
-        if (!isFirstVacationDay) {
-            const [year, month, day] = dateKey.split('-').map(Number);
-            const currentDate = new Date(year, month - 1, day);
-            const previousDate = new Date(currentDate);
-            previousDate.setDate(previousDate.getDate() - 1);
-            const previousDateKey = toYYYYMMDD(previousDate);
-            
-            // 전일 스케줄 중 자정을 넘는 취침시간 찾기
-            const previousSchedules = schedulesByDate[previousDateKey] || [];
-            previousSchedules.forEach(schedule => {
-                if (schedule.category === '취침') {
-                    const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
-                    const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
-                    
-                    // 자정을 넘는 취침시간 확인: endMinutes > 24*60이면 다음날로 넘어감
-                    if (endMinutes > 24 * 60) {
-                        // 당일 새벽 부분 차감 (00:00부터 기상시간까지)
-                        const morningEndMinutes = endMinutes - 24 * 60; // 기상시간
-                        totalStudyMinutes -= morningEndMinutes;
-                    }
-                }
+        if (studySlots.length > 0) {
+            // 순공 슬롯이 있으면 그 시간들의 합
+            studySlots.forEach(slot => {
+                totalStudySlotMinutes += slot.duration || 0;
             });
+    } else {
+            // 순공 슬롯이 없으면 기본 24시간 (00:00~24:00)
+            totalStudySlotMinutes = 24 * 60; // 1440분
         }
         
-        // 2️⃣ 당일 스케줄들 차감
-        existingSchedules.forEach(schedule => {
-            const start = timeToMinutes(schedule.startTime, false, schedule.category);
-            const end = timeToMinutes(schedule.endTime, true, schedule.category);
-            
-            if (schedule.category === '취침') {
-                // 취침: 취침시간만 차감 (버퍼 없음)
-                if (end < start) {
-                    // 다음날로 넘어가는 취침 → 당일 밤 부분만
-                    const nightMinutes = (24 * 60 - start);
-                    totalStudyMinutes -= nightMinutes;
-                } else {
-                    // 같은 날 취침 (드문 경우)
-                    totalStudyMinutes -= (end - start);
-                }
-            } else if (schedule.category === '학원/과외' || schedule.category === '학원') {
-                // 학원/과외: 이동시간 앞뒤 1시간씩 포함
-                const classMinutes = end - start;
-                const bufferMinutes = 120; // 앞뒤 1시간씩
-                totalStudyMinutes -= (classMinutes + bufferMinutes);
-            } else {
-                // 일반 스케줄: 전체 시간 차감 (버퍼 없음)
-                totalStudyMinutes -= (end - start);
-            }
-        });
-        
-        // 최소 0분 보장
-        const availableStudyMinutes = Math.max(0, totalStudyMinutes);
-        const availableStudyHours = Math.floor(availableStudyMinutes / 60);
-        const availableStudyMinutesRemainder = availableStudyMinutes % 60;
+        const availableStudyMinutes = totalStudySlotMinutes;
+        const availableStudyHours = Math.max(0, Math.floor(availableStudyMinutes / 60));
+        const availableStudyMinutesRemainder = Math.max(0, availableStudyMinutes % 60);
         
         // 실제 순공 시간 계산
         const dayStudyRecord = studyRecords[dateKey] || {};
@@ -493,10 +340,7 @@ function updateWeeklySchedule() {
     
     // 이번주 총 실제 순공 시간 계산
     let totalWeeklyActualStudyMinutes = 0;
-    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
-    for (let d = new Date(startYear, startMonth, startDate); 
-         d <= new Date(endYear, endMonth, endDate); 
-         d.setDate(d.getDate() + 1)) {
+    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         const dayStudyRecord = studyRecords[dateKey] || {};
         const actualStudyMinutes = Object.values(dayStudyRecord).reduce((sum, record) => {
@@ -518,12 +362,7 @@ function updateWeeklySchedule() {
         studyHoursHtml += `<p><strong style="color: #8b5cf6;">이번주 시간 점유율: ${weeklyEfficiency}%</strong></p>`;
     }
     
-    weeklySchedulesContainer.innerHTML = weeklySchedulesHtml;
     weeklyStudyContainer.innerHTML = studyHoursHtml;
-    
-    console.log('📝 주요일정 HTML 업데이트:', weeklySchedulesHtml.length, '글자');
-    console.log('⏰ 순공시간 HTML 업데이트:', studyHoursHtml.length, '글자');
-    console.log('✅ updateWeeklySchedule() 완료!');
 }
 
 // 데이터 관리 함수
@@ -560,30 +399,8 @@ async function loadDataFromStorage() {
                 if (hasKVData) {
                     // KV에서 데이터 로드
                     if (data.vacationPeriod) {
-                        // 🚨 디버깅: 원본 방학 기간 데이터 확인
-                        console.log('🎯 원본 방학 데이터:', data.vacationPeriod);
-                        console.log('🎯 시작일 문자열:', data.vacationPeriod.start);
-                        console.log('🎯 종료일 문자열:', data.vacationPeriod.end);
-                        
-                        // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
-                        const [startYear, startMonth, startDay] = data.vacationPeriod.start.split('-').map(Number);
-                        const [endYear, endMonth, endDay] = data.vacationPeriod.end.split('-').map(Number);
-                        
-                        console.log('🎯 파싱된 날짜 구성요소:', {
-                            start: { year: startYear, month: startMonth, day: startDay },
-                            end: { year: endYear, month: endMonth, day: endDay }
-                        });
-                        
-                        vacationStartDate = new Date(startYear, startMonth - 1, startDay);
-                        vacationEndDate = new Date(endYear, endMonth - 1, endDay);
-                        
-                        console.log('🎯 최종 생성된 Date 객체:', {
-                            start: vacationStartDate.toDateString(),
-                            startISO: vacationStartDate.toISOString(),
-                            end: vacationEndDate.toDateString(),
-                            endISO: vacationEndDate.toISOString()
-                        });
-                        
+                        vacationStartDate = new Date(data.vacationPeriod.start + 'T00:00:00');
+                        vacationEndDate = new Date(data.vacationPeriod.end + 'T00:00:00');
                         console.log(`📅 방학 기간 로드: ${vacationStartDate} ~ ${vacationEndDate}`);
                     }
                     
@@ -635,27 +452,9 @@ async function migrateFromLocalStorage() {
 function loadFromLocalStorage() {
     try {
         const savedVacation = JSON.parse(localStorage.getItem(getUserStorageKey('vacationPeriod')));
-        console.log('🎯 로컬스토리지 방학 데이터:', savedVacation);
-        
         if (savedVacation && savedVacation.start && savedVacation.end) {
-            console.log('🎯 로컬스토리지 시작일/종료일:', { start: savedVacation.start, end: savedVacation.end });
-            
-            // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
-            const [startYear, startMonth, startDay] = savedVacation.start.split('-').map(Number);
-            const [endYear, endMonth, endDay] = savedVacation.end.split('-').map(Number);
-            
-            console.log('🎯 로컬스토리지 파싱된 구성요소:', {
-                start: { year: startYear, month: startMonth, day: startDay },
-                end: { year: endYear, month: endMonth, day: endDay }
-            });
-            
-            vacationStartDate = new Date(startYear, startMonth - 1, startDay);
-            vacationEndDate = new Date(endYear, endMonth - 1, endDay);
-            
-            console.log('🎯 로컬스토리지에서 생성된 Date:', {
-                start: vacationStartDate.toDateString(),
-                end: vacationEndDate.toDateString()
-            });
+            vacationStartDate = new Date(savedVacation.start + 'T00:00:00');
+            vacationEndDate = new Date(savedVacation.end + 'T00:00:00');
         }
     } catch (e) {
         console.error("Error loading vacation period:", e);
@@ -669,7 +468,7 @@ function loadFromLocalStorage() {
         schedules = schedules.filter(schedule => {
             if (!schedule || typeof schedule !== 'object') {
                 console.warn('Invalid schedule found and removed:', schedule);
-                return false;
+        return false;
             }
             if (!schedule.startTime || !schedule.endTime || !schedule.category) {
                 console.warn('Incomplete schedule found and removed:', schedule);
@@ -702,11 +501,6 @@ function loadFromLocalStorage() {
             }
             if (schedule.periodEnd === undefined) {
                 schedule.periodEnd = null;
-            }
-            
-            // 예외 날짜 필드 초기화 (새로운 기능)
-            if (!schedule.excludeDates) {
-                schedule.excludeDates = [];
             }
             
             return true;
@@ -803,8 +597,7 @@ function generateSchedulesByDate() {
         return;
     }
     
-        // 🚨 FIX: Date 객체 공유 문제 해결 - 각 날짜마다 독립적인 객체 생성
-        for (let d = new Date(vacationStartDate.getTime()); d <= vacationEndDate; d.setDate(d.getDate() + 1)) {
+        for (let d = new Date(vacationStartDate); d <= vacationEndDate; d.setDate(d.getDate() + 1)) {
             if (shouldIncludeSchedule(schedule, d)) {
                 const dateKey = toYYYYMMDD(d);
                 if (!schedulesByDate[dateKey]) {
@@ -818,8 +611,8 @@ function generateSchedulesByDate() {
         }
     });
     
-    // 각 날짜에 순공 가능 시간대 추가 - 🚨 FIX: Date 객체 독립성 보장
-    for (let d = new Date(vacationStartDate.getTime()); d <= vacationEndDate; d.setDate(d.getDate() + 1)) {
+    // 각 날짜에 순공 가능 시간대 추가
+    for (let d = new Date(vacationStartDate); d <= vacationEndDate; d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         addStudyTimeSlots(dateKey);
     }
@@ -828,11 +621,6 @@ function generateSchedulesByDate() {
 function shouldIncludeSchedule(schedule, date) {
     const dayOfWeek = date.getDay();
     const dateString = toYYYYMMDD(date);
-    
-    // 🚨 NEW: 예외 날짜 체크 - 반복 일정에서 특정 날짜 제외
-    if (schedule.excludeDates && schedule.excludeDates.includes(dateString)) {
-        return false; // 예외 날짜에 포함된 경우 제외
-    }
     
     // 스케줄 타입에 따른 처리
     if (schedule.scheduleType === 'specific') {
@@ -854,13 +642,9 @@ function shouldIncludeSchedule(schedule, date) {
         
         // 반복 일정의 기간 제한 확인 (Date 객체로 정확한 비교)
         if (schedule.periodStart && schedule.periodEnd) {
-            // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
-            const [dateYear, dateMonth, dateDay] = dateString.split('-').map(Number);
-            const [startYear, startMonth, startDay] = schedule.periodStart.split('-').map(Number);
-            const [endYear, endMonth, endDay] = schedule.periodEnd.split('-').map(Number);
-            const scheduleDate = new Date(dateYear, dateMonth - 1, dateDay);
-            const startDate = new Date(startYear, startMonth - 1, startDay);
-            const endDate = new Date(endYear, endMonth - 1, endDay);
+            const scheduleDate = new Date(dateString + 'T00:00:00');
+            const startDate = new Date(schedule.periodStart + 'T00:00:00');
+            const endDate = new Date(schedule.periodEnd + 'T00:00:00');
             
             if (scheduleDate < startDate || scheduleDate > endDate) {
                 return false;
@@ -890,46 +674,34 @@ function addStudyTimeSlots(dateKey) {
     // 해당 날짜의 등록된 스케줄들 (순공시간 제외)
     const existingSchedules = schedulesByDate[dateKey].filter(s => !s.isStudySlot);
     
-    // 방학 첫날 체크
-    const isFirstVacationDay = vacationStartDate && dateKey === toYYYYMMDD(vacationStartDate);
-    
-    // 기본 순공 가능 시간: 방학 첫날은 09:00~24:00, 그 외는 00:00~24:00
-    let totalStudyMinutes = isFirstVacationDay ? (24 - 9) * 60 : 24 * 60; // 첫날은 15시간
+    // 기본 순공 가능 시간: 00:00~24:00 (24시간 = 1440분)
+    let totalStudyMinutes = 24 * 60;
     
     console.log(`📅 ${dateKey} 순공시간 계산:`);
-    if (isFirstVacationDay) {
-        console.log(`🌅 방학 첫날: 09:00부터 시작 (15시간 0분)`);
-    } else {
-        console.log(`🕐 기본: 24시간 0분`);
-    }
+    console.log(`🕐 기본: 24시간 0분`);
     
-    // 1️⃣ 방학 첫날이 아닌 경우만 전일 취침시간 확인
-    if (!isFirstVacationDay) {
-        const [year, month, day] = dateKey.split('-').map(Number);
-        const currentDate = new Date(year, month - 1, day);
-        const previousDate = new Date(currentDate);
-        previousDate.setDate(previousDate.getDate() - 1);
-        const previousDateKey = toYYYYMMDD(previousDate);
-        
-        // 전일 스케줄 중 자정을 넘는 취침시간 찾기
-        const previousSchedules = schedulesByDate[previousDateKey] || [];
-        previousSchedules.forEach(schedule => {
-            if (schedule.category === '취침') {
-                const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
-                const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
-                
-                // 자정을 넘는 취침시간 확인: endMinutes > 24*60이면 다음날로 넘어감
-                if (endMinutes > 24 * 60) {
-                    // 당일 새벽 부분 차단 (00:00부터 기상시간까지)
-                    const morningEndMinutes = endMinutes - 24 * 60; // 기상시간
-                    busyTimes.push({
-                        start: 0,
-                        end: morningEndMinutes
-                    });
-                }
+    // 1️⃣ 먼저 전일에서 넘어온 취침시간 확인
+    const [year, month, day] = dateKey.split('-').map(Number);
+    const currentDate = new Date(year, month - 1, day);
+    const previousDate = new Date(currentDate);
+    previousDate.setDate(previousDate.getDate() - 1);
+    const previousDateKey = toYYYYMMDD(previousDate);
+    
+    // 전일 스케줄 중 자정을 넘는 취침시간 찾기
+    const previousSchedules = schedulesByDate[previousDateKey] || [];
+    previousSchedules.forEach(schedule => {
+        if (schedule.category === '취침') {
+            const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
+            const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
+            
+            if (endMinutes < startMinutes) {
+                // 자정을 넘는 취침시간 → 당일 새벽 부분 차감
+                const morningMinutes = endMinutes + 60; // 기상 후 1시간 포함
+                totalStudyMinutes -= morningMinutes;
+                console.log(`😴 전일 취침(새벽): -${formatHoursMinutes(morningMinutes)} (00:00-${schedule.endTime} + 기상후 1시간)`);
             }
-        });
-    }
+        }
+    });
     
     // 2️⃣ 당일 스케줄들 차감
     let scheduleMinutes = 0;
@@ -938,16 +710,18 @@ function addStudyTimeSlots(dateKey) {
         const end = timeToMinutes(schedule.endTime, true, schedule.category);
         
         if (schedule.category === '취침') {
-            // 취침: 취침시간만 차감 (버퍼 없음)
+            // 취침: 취침 전 1시간 + 취침시간 + 기상 후 1시간
             if (end < start) {
                 // 다음날로 넘어가는 취침 → 당일 밤 부분만
-                const nightMinutes = (24 * 60 - start);
+                const nightMinutes = (24 * 60 - start) + 60; // 취침 전 1시간 포함
                 scheduleMinutes = nightMinutes;
-                console.log(`😴 ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-24:00)`);
+                console.log(`😴 ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-24:00 + 취침전 1시간)`);
             } else {
                 // 같은 날 취침 (드문 경우)
-                scheduleMinutes = end - start;
-                console.log(`😴 ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-${schedule.endTime})`);
+                const sleepMinutes = end - start;
+                const bufferMinutes = 120; // 앞뒤 1시간씩
+                scheduleMinutes = sleepMinutes + bufferMinutes;
+                console.log(`😴 ${schedule.title || schedule.category}: -${formatHoursMinutes(scheduleMinutes)} (${schedule.startTime}-${schedule.endTime} + 앞뒤 각 1시간)`);
             }
         } else if (schedule.category === '학원/과외' || schedule.category === '학원') {
             // 학원/과외: 이동시간 앞뒤 1시간씩 포함
@@ -977,63 +751,48 @@ function addStudyTimeSlots(dateKey) {
         const start = timeToMinutes(schedule.startTime, false, schedule.category);
         let end = timeToMinutes(schedule.endTime, true, schedule.category);
         
-        if (schedule.category === '취침') {
-            // 취침의 경우 버퍼 없음
+        // 학원/과외의 경우 이동시간 포함
+        if (schedule.category === '학원/과외' || schedule.category === '학원') {
+            busyTimes.push({
+                start: Math.max(0, start - 60), // 1시간 전
+                end: Math.min(24 * 60, end + 60) // 1시간 후
+            });
+        } else if (schedule.category === '취침') {
+            // 취침의 경우 전후 1시간 포함
             if (end < start) {
                 // 다음날로 넘어가는 취침
                 busyTimes.push({
-                    start: start,
+                    start: Math.max(0, start - 60),
                     end: 24 * 60
                 });
             } else {
                 busyTimes.push({
-                    start: start,
-                    end: end
+                    start: Math.max(0, start - 60),
+                    end: Math.min(24 * 60, end + 60)
                 });
             }
-        } else if (schedule.category === '학원/과외' || schedule.category === '학원') {
-            // 학원/과외: 이동시간 앞뒤 1시간씩 포함하여 차단
-            const bufferMinutes = 60; // 앞뒤 각 1시간
-            const blockedStart = Math.max(0, start - bufferMinutes);
-            const blockedEnd = Math.min(24 * 60, end + bufferMinutes);
-            busyTimes.push({ 
-                start: blockedStart, 
-                end: blockedEnd 
-            });
         } else {
             busyTimes.push({ start, end });
         }
     });
     
-    // 방학 첫날이 아닌 경우만 전일 취침 고려
-    if (!isFirstVacationDay) {
-        const [year, month, day] = dateKey.split('-').map(Number);
-        const currentDate = new Date(year, month - 1, day);
-        const previousDate = new Date(currentDate);
-        previousDate.setDate(previousDate.getDate() - 1);
-        const previousDateKey = toYYYYMMDD(previousDate);
-        const previousSchedules = schedulesByDate[previousDateKey] || [];
-        
-        previousSchedules.forEach(schedule => {
-            if (schedule.category === '취침') {
-                const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
-                const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
-                
-                // 자정을 넘는 취침시간 확인: endMinutes > 24*60이면 다음날로 넘어감
-                if (endMinutes > 24 * 60) {
-                    // 당일 새벽 부분 차단 (00:00부터 기상시간까지)
-                    const morningEndMinutes = endMinutes - 24 * 60; // 기상시간
-                    busyTimes.push({
-                        start: 0,
-                        end: morningEndMinutes
-                    });
-                }
+    // 전일 취침 고려
+    previousSchedules.forEach(schedule => {
+        if (schedule.category === '취침') {
+            const startMinutes = timeToMinutes(schedule.startTime, false, schedule.category);
+            const endMinutes = timeToMinutes(schedule.endTime, true, schedule.category);
+            
+            if (endMinutes < startMinutes) {
+                busyTimes.push({
+                    start: 0,
+                    end: Math.min(24 * 60, endMinutes + 60) // 기상 후 1시간 포함
+                });
             }
-        });
-    }
+        }
+    });
     
     // 빈 시간대 계산하여 순공 슬롯 생성
-    const studyPeriods = calculateStudyPeriods(busyTimes, dateKey);
+    const studyPeriods = calculateStudyPeriods(busyTimes);
     
     studyPeriods.forEach((period, index) => {
         const startHour = Math.floor(period.start / 60);
@@ -1105,11 +864,8 @@ function minutesToTime(minutes) {
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
 }
 
-function calculateStudyPeriods(busyTimes, dateKey) {
-    // 방학 첫날 체크
-    const isFirstVacationDay = vacationStartDate && dateKey === toYYYYMMDD(vacationStartDate);
-    
-    const dayStart = isFirstVacationDay ? 9 * 60 : 0 * 60; // 방학 첫날은 09:00, 그 외는 00:00
+function calculateStudyPeriods(busyTimes) {
+    const dayStart = 0 * 60; // 00:00 (24시간 기준)
     const dayEnd = 24 * 60; // 24:00
     
     // 🐛 디버그: 바쁜 시간들 확인
@@ -1223,15 +979,10 @@ function renderVacationCalendar(container) {
             continue;
         }
         
-        // 방학 기간 내 날짜 - 각 루프마다 새로운 Date 객체 생성
-        const currentDate = new Date(vacationStartDate.getTime());
-        currentDate.setDate(currentDate.getDate() + dayIndex);
+        // 방학 기간 내 날짜
+        const currentDate = new Date(vacationStartDate);
+        currentDate.setDate(vacationStartDate.getDate() + dayIndex);
         const dateKey = toYYYYMMDD(currentDate);
-        
-        // 🚨 디버깅: 날짜 계산 과정 확인  
-        console.log(`🔥 캘린더 셀 생성: dayIndex=${dayIndex}, 기준날짜=${vacationStartDate.getDate()}, 계산된 날짜=${currentDate.getDate()}, dateKey=${dateKey}`);
-        console.log(`🔥 상세 날짜 정보: vacationStartDate=${vacationStartDate.toDateString()}, currentDate=${currentDate.toDateString()}`);
-        console.log(`🔥 Date 객체 독립성 확인: startTime=${vacationStartDate.getTime()}, currentTime=${currentDate.getTime()}`);
         
         dayCell.className = 'day-cell';
         
@@ -1245,9 +996,6 @@ function renderVacationCalendar(container) {
         
         // 해당 날짜의 스케줄들을 시간순으로 정렬하여 표시
         const daySchedules = schedulesByDate[dateKey] || [];
-        
-        // 🚨 디버깅: schedulesByDate 매칭 확인
-        console.log(`🔥 스케줄 데이터 매칭: dateKey=${dateKey}, schedulesFound=${daySchedules.length}, firstSchedule=${daySchedules[0]?.title || 'none'}`);
         
         // 시간순으로 정렬
         const sortedSchedules = daySchedules.sort((a, b) => {
@@ -1299,70 +1047,12 @@ function renderVacationCalendar(container) {
         if (totalStudyMinutes > 0) {
             const studyTimeDisplay = document.createElement('div');
             studyTimeDisplay.className = 'daily-study-time';
-            
-            // 한 줄 포맷: 간결하게 표시
-            const hours = Math.floor(totalStudyMinutes / 60);
-            const mins = totalStudyMinutes % 60;
-            let timeText;
-            
-            if (hours === 0) {
-                timeText = `실적 ${mins}분`;
-            } else if (mins === 0) {
-                timeText = `실적 ${hours}시간`;
-            } else {
-                timeText = `실적 ${hours}h${mins}m`;
-            }
-            
-            studyTimeDisplay.textContent = timeText;
+            studyTimeDisplay.textContent = `실제순공: ${formatMinutes(totalStudyMinutes)}`;
             dayCell.appendChild(studyTimeDisplay);
         }
         
-        // 클릭 이벤트 - 클로저 문제 해결을 위해 즉시 실행 함수 사용
-        dayCell.addEventListener('click', ((capturedDateKey, capturedSchedules, capturedIndex, capturedCurrentDate) => {
-            return (event) => {
-                event.stopPropagation(); // 이벤트 버블링 방지
-                event.preventDefault();  // 기본 동작 방지
-                console.log('🔥 클릭된 날짜:', capturedDateKey, '스케줄 수:', capturedSchedules.length);
-                console.log('🔥 이벤트 리스너 상세:', {
-                    cellIndex: capturedIndex,
-                    capturedKey: capturedDateKey,
-                    expectedDate: capturedCurrentDate.toDateString(),
-                    scheduleData: capturedSchedules.map(s => s.title || s.category),
-                    realDataCheck: schedulesByDate[capturedDateKey]?.length || 0
-                });
-                
-                // 🚨 긴급 확인: 실시간 schedulesByDate와 비교
-                const realTimeSchedules = schedulesByDate[capturedDateKey] || [];
-                if (realTimeSchedules.length !== capturedSchedules.length) {
-                    console.error('🚨 MISMATCH: capturedSchedules와 실시간 데이터가 다름!', {
-                        captured: capturedSchedules.length,
-                        realTime: realTimeSchedules.length,
-                        capturedData: capturedSchedules.map(s => s.title),
-                        realTimeData: realTimeSchedules.map(s => s.title)
-                    });
-                }
-                
-                showDayModal(capturedDateKey, capturedSchedules);
-            };
-        })(dateKey, daySchedules, dayIndex, currentDate));
-        
-        // 🚨 NEW: 우클릭 이벤트 - 반복 일정 예외 처리
-        dayCell.addEventListener('contextmenu', ((capturedDateKey, capturedCurrentDate) => {
-            return (event) => {
-                event.preventDefault(); // 기본 우클릭 메뉴 방지
-                
-                // 해당 날짜의 반복 일정들 찾기
-                const repeatSchedules = schedules.filter(schedule => 
-                    schedule.scheduleType === 'repeat' && 
-                    shouldIncludeSchedule(schedule, capturedCurrentDate) &&
-                    !schedule.isStudySlot
-                );
-                
-                if (repeatSchedules.length > 0) {
-                    showExceptionDateMenu(capturedDateKey, repeatSchedules, event.clientX, event.clientY);
-                }
-            };
-        })(dateKey, currentDate));
+        // 클릭 이벤트
+        dayCell.addEventListener('click', () => showDayModal(dateKey, daySchedules));
         
         calendarGrid.appendChild(dayCell);
     }
@@ -1371,40 +1061,16 @@ function renderVacationCalendar(container) {
     container.appendChild(calendarDiv);
 }
 
-// 중복 호출 방지를 위한 변수
-let isModalOpening = false;
-
 // 모달 관리
 function showDayModal(dateKey, daySchedules) {
-    // 중복 호출 방지
-    if (isModalOpening) {
-        console.log('🚫 showDayModal 중복 호출 차단:', dateKey);
-        return;
-    }
-    
-    isModalOpening = true;
-    
     const modal = document.getElementById('day-summary-modal');
     const title = document.getElementById('day-summary-title');
     const content = document.getElementById('day-summary-content');
     
-    // 🚨 디버깅: 입력값 확인
-    console.log('🔥 showDayModal 호출됨:', { dateKey, schedulesCount: daySchedules.length });
-    
-    // dateKey에서 직접 날짜 추출 (Date 객체 생성 없이)
+    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
     const [year, month, day] = dateKey.split('-').map(Number);
-    
-    // 🚨 디버깅: 파싱된 값들 확인
-    console.log('🔥 파싱된 날짜:', { year, month, day, dateKey });
-    
-    // 날짜 표시 개선 - dateKey 기반으로 직접 포맷 (Date 객체 사용 안함)
-    const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
-    const formattedDate = `${monthNames[month - 1]} ${day}일`;
-    
-    // 🚨 디버깅: 최종 포맷 확인
-    console.log('🔥 최종 날짜 포맷:', { formattedDate, finalTitle: `${formattedDate} 요약` });
-    
-    title.textContent = `${formattedDate} 요약`;
+    const date = new Date(year, month - 1, day);
+    title.textContent = `${formatDate(date)} 요약`;
     
     // 통계 계산
     // 하루 총 시간 (24시간 = 1440분)
@@ -1448,11 +1114,11 @@ function showDayModal(dateKey, daySchedules) {
             <div class="summary-stat">
                 <div class="summary-stat-value">${formatMinutes(totalPossibleTime)}</div>
                 <div class="summary-stat-label">순공 가능 시간</div>
-            </div>
+        </div>
             <div class="summary-stat">
                 <div class="summary-stat-value">${formatMinutes(actualStudyTime)}</div>
                 <div class="summary-stat-label">실제 순공 시간</div>
-            </div>
+        </div>
             <div class="summary-stat">
                 <div class="summary-stat-value">${efficiency}%</div>
                 <div class="summary-stat-label">시간 점유율</div>
@@ -1508,10 +1174,10 @@ function showDayModal(dateKey, daySchedules) {
                 <div class="time-slot" onclick="showStudyTimeModal('${slotId}', '${dateKey}', '${slot.startTime}', '${slot.endTime}')">
                     <div class="slot-info">
                         ${slot.title} (${slot.startTime} - ${slot.endTime})
-                    </div>
+                </div>
                     <div class="slot-recorded">
                         ${recordedTime > 0 ? formatMinutes(recordedTime) : '미입력'}
-                    </div>
+                </div>
                 </div>
             `;
         });
@@ -1539,11 +1205,6 @@ function showDayModal(dateKey, daySchedules) {
     
     content.innerHTML = modalHtml;
     openModal('day-summary-modal');
-    
-    // 모달 열기 완료 후 플래그 리셋
-    setTimeout(() => {
-        isModalOpening = false;
-    }, 100);
 }
 
 function showStudyTimeModal(slotId, dateKey, startTime, endTime) {
@@ -1731,10 +1392,6 @@ function editSchedule(scheduleId) {
         if (schedule.periodEnd) {
             document.getElementById('repeat-period-end').value = schedule.periodEnd;
         }
-        
-        // 예외 날짜 불러오기 (NEW)
-        currentExceptionDates = schedule.excludeDates ? [...schedule.excludeDates] : [];
-        updateExceptionDatesList();
     } else if (scheduleType === 'specific') {
         document.getElementById('specific-date-section').style.display = 'block';
         
@@ -1874,7 +1531,6 @@ function resetScheduleForm() {
     document.getElementById('custom-days-section').style.display = 'block';
     document.getElementById('specific-date-section').style.display = 'none';
     document.getElementById('period-section').style.display = 'none';
-    document.getElementById('exception-dates-section').style.display = 'block'; // 예외 날짜 표시
     
     // 요일별 체크박스 초기화
     document.querySelectorAll('input[name="custom-days"]').forEach(checkbox => {
@@ -1893,9 +1549,6 @@ function resetScheduleForm() {
     document.getElementById('repeat-period-start').value = '';
     document.getElementById('repeat-period-end').value = '';
     
-    // 예외 날짜 초기화 (NEW)
-    clearExceptionDates();
-    
     // 시간 선택 초기화
     populateTimeSelects();
 }
@@ -1912,11 +1565,8 @@ function handleVacationSetup(e) {
         return;
     }
     
-    // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
-    const [startYear, startMonth, startDay] = startDate.split('-').map(Number);
-    const [endYear, endMonth, endDay] = endDate.split('-').map(Number);
-    const start = new Date(startYear, startMonth - 1, startDay);
-    const end = new Date(endYear, endMonth - 1, endDay);
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T00:00:00');
     
     if (start >= end) {
         showToast('종료일은 시작일보다 늦어야 합니다.', 'error');
@@ -1986,17 +1636,20 @@ function handleScheduleSubmit(e) {
             let blockedStart = existingStart;
             let blockedEnd = existingEnd;
             
-            // 모든 스케줄 실제 시간만 차단 (이동시간 버퍼 제거)
-            if (schedule.category === '취침') {
-                // 취침 시간은 버퍼 없이 정확한 시간만 차단
+            // 학원/과외와 취침의 경우 앞뒤 시간도 차단
+            if (schedule.category === '학원/과외' || schedule.category === '학원') {
+                blockedStart = Math.max(0, existingStart - 60);
+                blockedEnd = Math.min(24 * 60, existingEnd + 60);
+            } else if (schedule.category === '취침') {
+                // 취침 시간이 자정을 넘나드는 경우 특별 처리
                 if (existingEnd > 24 * 60) {
-                    // 첫 번째 블록: 취침 시작부터 자정까지
-                    const firstBlockStart = existingStart;
+                    // 첫 번째 블록: 취침 전부터 자정까지
+                    const firstBlockStart = Math.max(0, existingStart - 60);
                     const firstBlockEnd = 24 * 60;
                     
-                    // 두 번째 블록: 자정부터 기상까지
+                    // 두 번째 블록: 자정부터 기상 후까지
                     const secondBlockStart = 0;
-                    const secondBlockEnd = existingEnd - 24 * 60;
+                    const secondBlockEnd = Math.min(24 * 60, (existingEnd - 24 * 60) + 60);
                     
                     // 새 스케줄이 두 블록 중 하나라도 겹치는지 확인
                     const conflictFirst = (newStartMinutes < firstBlockEnd && newEndMinutes > firstBlockStart);
@@ -2005,7 +1658,7 @@ function handleScheduleSubmit(e) {
                     if (conflictFirst || conflictSecond) {
                         return {
                             conflict: true,
-                            message: `취침 시간(${schedule.startTime}-${schedule.endTime})과 겹칩니다.`
+                            message: `취침 시간(${schedule.startTime}-${schedule.endTime})의 앞뒤 1시간은 등록할 수 없습니다.`
                         };
                     }
                     continue; // 이 스케줄은 이미 처리했으므로 다음으로
@@ -2019,7 +1672,11 @@ function handleScheduleSubmit(e) {
             if (newStartMinutes < blockedEnd && newEndMinutes > blockedStart) {
                 return {
                     conflict: true,
-                    message: `기존 스케줄(${schedule.startTime}-${schedule.endTime})과 시간이 겹칩니다.`
+                    message: (schedule.category === '학원/과외' || schedule.category === '학원') ? 
+                        `학원/과외 시간(${schedule.startTime}-${schedule.endTime})의 앞뒤 1시간은 등록할 수 없습니다.` :
+                        schedule.category === '취침' ?
+                        `취침 시간(${schedule.startTime}-${schedule.endTime})의 앞뒤 1시간은 등록할 수 없습니다.` :
+                        `기존 스케줄(${schedule.startTime}-${schedule.endTime})과 시간이 겹칩니다.`
                 };
             }
         }
@@ -2060,8 +1717,8 @@ function handleScheduleSubmit(e) {
         if (repeatStartValue && repeatEndValue) {
             if (new Date(repeatStartValue) > new Date(repeatEndValue)) {
                 showToast('종료 날짜는 시작 날짜보다 늦어야 합니다.', 'error');
-                return;
-            }
+        return;
+    }
             periodStart = repeatStartValue;
             periodEnd = repeatEndValue;
         }
@@ -2096,7 +1753,7 @@ function handleScheduleSubmit(e) {
         return;
         }
     }
-    
+
     const newSchedule = {
         id: isEditMode ? editId : Date.now().toString(),
         title: subject,
@@ -2110,7 +1767,6 @@ function handleScheduleSubmit(e) {
         specificWeekday: specificWeekday,
         periodStart: periodStart,
         periodEnd: periodEnd,
-        excludeDates: [...currentExceptionDates], // 예외 날짜 추가 (NEW)
         createdAt: isEditMode ? schedules.find(s => s.id === editId)?.createdAt || new Date().toISOString() : new Date().toISOString()
     };
     
@@ -2118,7 +1774,7 @@ function handleScheduleSubmit(e) {
     let hasConflict = false;
     let conflictMessage = '';
     
-    for (let date = new Date(vacationStartDate.getTime()); date <= vacationEndDate; date.setDate(date.getDate() + 1)) {
+    for (let date = new Date(vacationStartDate); date <= vacationEndDate; date.setDate(date.getDate() + 1)) {
         if (shouldIncludeSchedule(newSchedule, date)) {
             const dateKey = toYYYYMMDD(date);
             let existingSchedules = schedulesByDate[dateKey] || [];
@@ -2158,20 +1814,10 @@ function handleScheduleSubmit(e) {
     
     saveDataToStorage();
     
-    // 스케줄 저장 후 전체 UI 새로고침
-    console.log('🔄 스케줄 저장 후 UI 업데이트 시작...');
-    
     generateSchedulesByDate();
-    console.log('✅ schedulesByDate 재생성 완료:', Object.keys(schedulesByDate).length, '일');
-    
     renderCalendar();
-    console.log('✅ 캘린더 렌더링 완료');
-    
     updateWeeklySchedule();
-    console.log('✅ 이번주 주요일정 업데이트 완료');
-    
     updateWeeklyEvaluation();
-    console.log('✅ 주간 평가 업데이트 완료');
     
     closeScheduleModal();
     resetScheduleForm();
@@ -2268,34 +1914,9 @@ function markdownToHtml(text) {
 
 // 초기화
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('🚀 플래너 시작');
-    
     console.log('🚀 플래너 페이지 초기화 시작');
     console.log('📍 현재 URL:', window.location.href);
     console.log('🕒 현재 시간:', new Date().toISOString());
-    console.log('🌍 User Agent:', navigator.userAgent);
-    
-    // 아이패드 디버깅을 위한 상세 정보
-    console.log('📱 디바이스 정보:', {
-        platform: navigator.platform,
-        userAgent: navigator.userAgent,
-        language: navigator.language,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    });
-    
-    try {
-        console.log('📅 한국 시간 함수 테스트 시작');
-        const koreanDate = getCurrentKoreanDate();
-        const koreanDateString = getCurrentKoreanDateString();
-        console.log('✅ 한국 시간 성공:', koreanDateString);
-        console.log('🇰🇷 한국 시간:', koreanDate);
-        console.log('📅 한국 날짜 문자열:', koreanDateString);
-    } catch (error) {
-        console.error('❌ 한국 시간 함수 호출 오류:', error);
-        console.error('스택 트레이스:', error.stack);
-        console.log('⚠️ 한국 시간 함수 오류 무시하고 계속 진행');
-        // return; // 오류 무시하고 계속 진행
-    }
     
     // URL 파라미터 확인 (OAuth 콜백에서 타임스탬프가 있는지)
     const urlParams = new URLSearchParams(window.location.search);
@@ -2307,39 +1928,29 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.history.replaceState({}, document.title, cleanUrl);
     }
     
-    try {
-        console.log('🔍 세션 확인 시작');
-        // 세션 확인을 먼저 수행
-        console.log('🔍 세션 확인 중...');
-        const isAuthenticated = await checkSession();
-        if (!isAuthenticated) {
-            console.log('❌ 세션이 유효하지 않습니다. 로그인 페이지로 이동합니다.');
-            window.location.href = '/login';
-            return;
-        }
-        console.log('✅ 세션 확인 완료');
-        
-        console.log('📊 데이터 로딩 시작...');
-        await loadDataFromStorage();
-        console.log('✅ 데이터 로딩 완료');
-        
-        // 방학 기간이 설정되어 있으면 플래너 화면으로
-        if (vacationStartDate && vacationEndDate) {
-            console.log('📅 방학 기간 설정됨, 플래너 화면 표시');
-            showPlannerScreen();
-        } else {
-            console.log('⚙️ 방학 기간 미설정, 설정 화면 표시');
-            showSetupScreen();
-        }
-        console.log('✅ 플래너 페이지 초기화 완료');
-        
-    } catch (error) {
-        console.error('❌ 초기화 중 오류 발생:', error);
-        console.error('스택 트레이스:', error.stack);
-        
-        // 오류 발생 시 토스트 알림으로 변경
-        showToast('초기화 오류가 발생했습니다. 페이지를 새로고침해주세요.', 'error');
+    // 세션 확인을 먼저 수행
+    console.log('🔍 세션 확인 중...');
+    const isAuthenticated = await checkSession();
+    if (!isAuthenticated) {
+        console.log('❌ 세션이 유효하지 않습니다. 로그인 페이지로 이동합니다.');
+        window.location.href = '/login';
+        return;
     }
+    console.log('✅ 세션 확인 완료');
+    
+    console.log('📊 데이터 로딩 시작...');
+    await loadDataFromStorage();
+    console.log('✅ 데이터 로딩 완료');
+    
+    // 방학 기간이 설정되어 있으면 플래너 화면으로
+    if (vacationStartDate && vacationEndDate) {
+        console.log('📅 방학 기간 설정됨, 플래너 화면 표시');
+        showPlannerScreen();
+    } else {
+        console.log('⚙️ 방학 기간 미설정, 설정 화면 표시');
+        showSetupScreen();
+    }
+    console.log(' 플래너 페이지 초기화 완료');
     
     // 이벤트 리스너 등록
     document.getElementById('vacation-setup-form').addEventListener('submit', handleVacationSetup);
@@ -2391,14 +2002,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             customDaysSection.style.display = 'none';
             specificSection.style.display = 'none';
             periodSection.style.display = 'none';
-            const exceptionSection = document.getElementById('exception-dates-section');
-            if (exceptionSection) exceptionSection.style.display = 'none';
             
             // 선택된 타입에 따라 해당 섹션 표시
             const selectedType = this.dataset.type;
             if (selectedType === 'repeat') {
                 repeatSection.style.display = 'block';
-                if (exceptionSection) exceptionSection.style.display = 'block'; // 반복 일정에서만 예외 날짜 표시
                 // 반복 타입이 요일별인 경우 요일 선택 섹션도 표시
                 const activeRepeatBtn = document.querySelector('.repeat-btn.active');
                 if (activeRepeatBtn && activeRepeatBtn.dataset.repeat === 'custom') {
@@ -2456,9 +2064,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
     });
-    
-    // 예외 날짜 기능 초기화 (NEW)
-    initializeExceptionDates();
 });
 
 // MBTI 학습 코칭 기능
@@ -2525,7 +2130,7 @@ async function getMBTICoaching(mbtiType) {
         showToast('MBTI 타입을 선택해주세요.', 'error');
         return;
     }
-
+    
     // 로딩 표시
     resultContainer.style.display = 'block';
     resultContainer.innerHTML = `
@@ -2823,55 +2428,24 @@ function updateWeeklyEvaluation() {
     let totalCompletedHours = 0;
     let totalStudyDays = 0;
     let studyDaysWithRecords = 0;
-    
-    // 주간 범위와 방학 기간의 교집합에서 경과일 계산
     let elapsedDays = 0;
     
-    console.log('📅 주간 평가 계산 시작:', {
-        weekStart: weekRange.start,
-        weekEnd: weekRange.end,
-        vacationStart: vacationStartDate,
-        vacationEnd: vacationEndDate,
-        currentDate: now
-    });
-    
     // 현재 주 범위에서만 계산 (방학 기간과 교집합)
-    // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
-    const weekStartYear = weekRange.start.getFullYear();
-    const weekStartMonth = weekRange.start.getMonth();
-    const weekStartDate = weekRange.start.getDate();
-    const weekEndYear = weekRange.end.getFullYear();
-    const weekEndMonth = weekRange.end.getMonth();
-    const weekEndDate = weekRange.end.getDate();
-    
-    for (let d = new Date(weekStartYear, weekStartMonth, weekStartDate); 
-         d <= new Date(weekEndYear, weekEndMonth, weekEndDate); 
-         d.setDate(d.getDate() + 1)) {
+    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         
         // 방학 기간 내 날짜만 계산
         if (vacationStartDate && vacationEndDate) {
-            // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
-            const [year, month, day] = dateKey.split('-').map(Number);
-            const currentDate = new Date(year, month - 1, day);
+            const currentDate = new Date(dateKey + 'T00:00:00');
             if (currentDate < vacationStartDate || currentDate > vacationEndDate) {
                 continue; // 방학 기간 외 날짜는 제외
             }
         }
         
-        // 현재 날짜까지만 경과일로 계산 (해당 주 + 방학 기간 + 현재까지)
-        const [year, month, day] = dateKey.split('-').map(Number);
-        const currentLoopDate = new Date(year, month - 1, day);
-        const today = new Date();
-        today.setHours(23, 59, 59, 999); // 오늘 끝까지 포함
-        
-        if (currentLoopDate <= today) {
-            elapsedDays++;
-            console.log(`📅 경과일 카운트: ${dateKey} (총 ${elapsedDays}일)`);
-        }
-        
         const daySchedules = schedulesByDate[dateKey] || [];
         const dayStudyRecord = studyRecords[dateKey] || {};
+        
+        elapsedDays++;
         
         // 계획된 학습 시간 계산
         let dayPlannedHours = 0;
@@ -2979,16 +2553,14 @@ async function handleShareLinks() {
     try {
         console.log('🔍 클라이언트 기반 공유 링크 생성 시작...');
         
-        // 🎯 로컬 데이터 수집 (최신 데이터로 새로고침)
-        const shareData = await collectCurrentPlannerData();
+        // 🎯 로컬 데이터 수집
+        const shareData = collectCurrentPlannerData();
         
-        if (!shareData) {
-            showErrorMessage('데이터 수집에 실패했습니다. 페이지를 새로고침하고 다시 시도해주세요.');
-            return;
-        }
-        
-        console.log('📤 현재 상태 그대로 공유 진행:', shareData);
-        
+        if (!shareData || !shareData.vacationPeriod) {
+            showErrorMessage('공유할 데이터가 없습니다. 먼저 방학 기간을 설정해주세요.');
+        return;
+    }
+
         // 🔄 서버에 데이터 저장하고 토큰 생성
         console.log('📤 서버에 공유 데이터 저장 중...');
         await generateShareLinksFromData(shareData);
@@ -2999,19 +2571,16 @@ async function handleShareLinks() {
     }
 }
 
-// 현재 플래너의 모든 데이터 수집 (최신 데이터로 강제 새로고침)
-async function collectCurrentPlannerData() {
+// 현재 플래너의 모든 데이터 수집
+function collectCurrentPlannerData() {
     try {
-        // 먼저 서버에서 최신 데이터를 가져와서 로컬스토리지 동기화
-        await refreshDataFromServer();
-        
         // 로컬스토리지에서 데이터 수집
         const vacationPeriod = JSON.parse(localStorage.getItem('vacationPeriod'));
         const schedules = JSON.parse(localStorage.getItem('schedules')) || [];
         const studyRecords = JSON.parse(localStorage.getItem('studyRecords')) || {};
         const completedSchedules = JSON.parse(localStorage.getItem('completedSchedules')) || {};
         
-        console.log('✅ 최신 데이터로 공유 링크 생성:', {
+        console.log('📊 수집된 데이터:', {
             vacationPeriod: !!vacationPeriod,
             schedulesCount: schedules.length,
             studyRecordsCount: Object.keys(studyRecords).length,
@@ -3028,47 +2597,6 @@ async function collectCurrentPlannerData() {
     } catch (error) {
         console.error('데이터 수집 오류:', error);
         return null;
-    }
-}
-
-// 서버에서 최신 데이터 가져와서 로컬스토리지 동기화
-async function refreshDataFromServer() {
-    try {
-        console.log('🔄 서버에서 최신 데이터 새로고침 중...');
-        
-        // 서버에서 최신 데이터 조회
-        const response = await fetch('/api/user/data');
-        if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.data) {
-                const { vacationPeriod, schedules, studyRecords, completedSchedules } = result.data;
-                
-                // 로컬스토리지 업데이트
-                if (vacationPeriod) localStorage.setItem('vacationPeriod', JSON.stringify(vacationPeriod));
-                if (schedules) localStorage.setItem('schedules', JSON.stringify(schedules));
-                if (studyRecords) localStorage.setItem('studyRecords', JSON.stringify(studyRecords));
-                if (completedSchedules) localStorage.setItem('completedSchedules', JSON.stringify(completedSchedules));
-                
-                console.log('✅ 로컬스토리지 최신 데이터로 동기화 완료');
-            }
-        }
-    } catch (error) {
-        console.warn('⚠️ 서버 데이터 새로고침 실패, 로컬 데이터 사용:', error.message);
-    }
-}
-
-// 데이터 새로고침 후 새 링크 생성
-async function refreshAndGenerateNewLinks() {
-    try {
-        const shareData = await collectCurrentPlannerData();
-        if (shareData) {
-            await generateShareLinksFromData(shareData);
-        } else {
-            showErrorMessage('최신 데이터를 가져올 수 없습니다.');
-        }
-    } catch (error) {
-        console.error('새 링크 생성 오류:', error);
-        showErrorMessage('새 링크 생성에 실패했습니다.');
     }
 }
 
@@ -3123,8 +2651,8 @@ function displayNewLinks(viewToken, recordToken) {
     const modal = document.getElementById('share-modal');
     const content = modal.querySelector('.modal-body');
     const baseUrl = window.location.origin;
-    const viewUrl = `${baseUrl}/shared/view/${viewToken}`;
-    const recordUrl = `${baseUrl}/shared/record/${recordToken}`;
+    const viewUrl = `${baseUrl}/view/${viewToken}`;
+    const recordUrl = `${baseUrl}/record/${recordToken}`;
     
     content.innerHTML = `
         <div class="share-content">
@@ -3152,14 +2680,14 @@ function displayNewLinks(viewToken, recordToken) {
             
             <div class="share-actions">
                 <button class="revoke-btn" onclick="revokeShareLinks()">🗑️ 링크 삭제</button>
-                <button class="new-link-btn" onclick="refreshAndGenerateNewLinks()">🔄 새 링크 생성</button>
+                <button class="new-link-btn" onclick="generateShareLinksFromData(collectCurrentPlannerData())">🔄 새 링크 생성</button>
             </div>
             
             <div class="share-info">
                 <p><strong>💡 사용 방법:</strong></p>
                 <ul>
-                    <li><strong>조회 전용:</strong> 나의 방학 플랜을 공유할 수 있습니다</li>
-                    <li><strong>실적 입력:</strong> 스케쥴 작성자와 수행자가 다를 경우 수행자가 실적을 입력할 수 있습니다</li>
+                    <li><strong>조회 전용:</strong> 친구들이 내 계획을 볼 수 있습니다</li>
+                    <li><strong>실적 입력:</strong> 스터디 메이트가 내 실적을 기록할 수 있습니다</li>
                 </ul>
             </div>
         </div>
@@ -3201,87 +2729,30 @@ async function generateShareLinksFromData(shareData) {
             </div>
         `;
         
-        console.log('🌐 브라우저 정보:', {
-            userAgent: navigator.userAgent,
-            platform: navigator.platform,
-            isSafari: /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent),
-            isChrome: /Chrome/.test(navigator.userAgent),
-            origin: window.location.origin
-        });
-        
-        // 🔍 기본 연결 테스트
-        console.log('🔍 기본 연결 테스트 시작...');
-        try {
-            const testResponse = await fetch('/api/user', { credentials: 'include' });
-            console.log('🔍 /api/user 테스트 결과:', {
-                status: testResponse.status,
-                ok: testResponse.ok,
-                url: testResponse.url
-            });
-        } catch (testError) {
-            console.error('❌ 기본 연결 테스트 실패:', testError);
-        }
-        
-        // 사파리 브라우저 감지
-        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-        console.log('🔍 브라우저 감지:', { isSafari });
-        
-        const requestOptions = {
+        const response = await fetch('/api/share/create', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(shareData),
-            credentials: 'include'  // 사파리를 위한 쿠키 포함
-        };
-        
-        console.log('📤 요청 옵션:', requestOptions);
-        console.log('📤 요청 URL:', `${window.location.origin}/api/share/create`);
-        
-        const response = await fetch('/api/share/create', requestOptions);
-        
-        console.log('📡 API 응답 상태:', response.status);
-        console.log('📡 응답 URL:', response.url);
-        console.log('📡 응답 헤더:', Object.fromEntries(response.headers.entries()));
+            body: JSON.stringify(shareData)
+        });
         
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ API 응답 오류:', errorText);
-            console.error('❌ 응답 상세:', {
-                status: response.status,
-                statusText: response.statusText,
-                url: response.url,
-                redirected: response.redirected
-            });
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+            throw new Error(`HTTP ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('📦 응답 데이터:', data);
         
         if (data.success) {
             console.log('✅ 공유 링크 생성 성공');
-            console.log('🔗 생성된 토큰:', {
-                viewToken: data.viewToken?.substring(0, 8) + '...',
-                recordToken: data.recordToken?.substring(0, 8) + '...',
-                fullViewToken: data.viewToken,
-                fullRecordToken: data.recordToken
-            });
             displayNewLinks(data.viewToken, data.recordToken);
-        } else {
+    } else {
             throw new Error(data.error || '링크 생성 실패');
         }
         
     } catch (error) {
         console.error('링크 생성 오류:', error);
-        console.error('오류 스택:', error.stack);
-        
-        // 404 오류인 경우 특별 처리
-        if (error.message.includes('404')) {
-            showErrorMessage(`서버에서 API를 찾을 수 없습니다. 페이지를 새로고침하고 다시 로그인해보세요.`);
-        } else {
-            showErrorMessage(`링크 생성에 실패했습니다: ${error.message}`);
-        }
+        showErrorMessage(`링크 생성에 실패했습니다: ${error.message}`);
     }
 }
 
@@ -3297,8 +2768,8 @@ async function generateNewLinks() {
             <div class="share-content">
                 <p>🔄 새 공유 링크를 생성하고 있습니다...</p>
                 <div class="loading-spinner"></div>
-            </div>
-        `;
+                    </div>
+                `;
         
         const response = await fetch('/api/share/generate', {
             method: 'POST',
@@ -3345,8 +2816,7 @@ async function generateNewLinks() {
         console.error('새 링크 생성 오류:', error);
         
         // 에러 시 수동 옵션 다시 표시
-        const modal = document.getElementById('share-modal');
-        const content = modal.querySelector('.modal-body');
+        const content = document.getElementById('share-modal-content');
         content.innerHTML = `
             <div class="share-content">
                 <p>❌ 링크 생성에 실패했습니다.</p>
@@ -3466,179 +2936,4 @@ function copyToClipboard(inputId) {
             showToast('복사에 실패했습니다. 링크를 직접 선택해서 복사해주세요.', 'error');
         }
     });
-}
-
-// 예외 날짜 관리 함수들 (NEW)
-let currentExceptionDates = [];
-
-function initializeExceptionDates() {
-    const addBtn = document.getElementById('add-exception-btn');
-    const dateInput = document.getElementById('exception-date-input');
-    
-    if (addBtn) {
-        addBtn.addEventListener('click', addExceptionDate);
-    }
-    
-    if (dateInput) {
-        dateInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addExceptionDate();
-            }
-        });
-    }
-}
-
-function addExceptionDate() {
-    const dateInput = document.getElementById('exception-date-input');
-    const selectedDate = dateInput.value;
-    
-    if (!selectedDate) {
-        showToast('날짜를 선택해주세요.', 'warning');
-        return;
-    }
-    
-    if (currentExceptionDates.includes(selectedDate)) {
-        showToast('이미 추가된 날짜입니다.', 'warning');
-        return;
-    }
-    
-    currentExceptionDates.push(selectedDate);
-    dateInput.value = '';
-    updateExceptionDatesList();
-    showToast('예외 날짜가 추가되었습니다.', 'success');
-}
-
-function removeExceptionDate(dateToRemove) {
-    currentExceptionDates = currentExceptionDates.filter(date => date !== dateToRemove);
-    updateExceptionDatesList();
-    showToast('예외 날짜가 제거되었습니다.', 'info');
-}
-
-function updateExceptionDatesList() {
-    const listContainer = document.getElementById('exception-dates-list');
-    if (!listContainer) return;
-    
-    if (currentExceptionDates.length === 0) {
-        listContainer.innerHTML = '<p class="no-exceptions">추가된 예외 날짜가 없습니다.</p>';
-        return;
-    }
-    
-    const sortedDates = [...currentExceptionDates].sort();
-    const html = sortedDates.map(date => {
-        const dateObj = new Date(date + 'T00:00:00');
-        const formatted = dateObj.toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            weekday: 'short'
-        });
-        
-        return `
-            <div class="exception-date-item">
-                <span class="exception-date-text">${formatted}</span>
-                <button type="button" class="remove-exception-btn" onclick="removeExceptionDate('${date}')">
-                    ❌
-                </button>
-            </div>
-        `;
-    }).join('');
-    
-    listContainer.innerHTML = html;
-}
-
-function clearExceptionDates() {
-    currentExceptionDates = [];
-    updateExceptionDatesList();
-}
-
-// 우클릭 예외 날짜 메뉴 표시 (NEW)
-function showExceptionDateMenu(dateKey, repeatSchedules, x, y) {
-    // 기존 메뉴가 있으면 제거
-    const existingMenu = document.getElementById('exception-menu');
-    if (existingMenu) {
-        existingMenu.remove();
-    }
-    
-    const menu = document.createElement('div');
-    menu.id = 'exception-menu';
-    menu.className = 'context-menu';
-    menu.style.position = 'fixed';
-    menu.style.left = x + 'px';
-    menu.style.top = y + 'px';
-    menu.style.zIndex = '10000';
-    
-    const dateObj = new Date(dateKey + 'T00:00:00');
-    const formattedDate = dateObj.toLocaleDateString('ko-KR', {
-        month: 'long',
-        day: 'numeric',
-        weekday: 'short'
-    });
-    
-    menu.innerHTML = `
-        <div class="context-menu-header">
-            <strong>${formattedDate} 반복 일정</strong>
-        </div>
-        ${repeatSchedules.map(schedule => `
-            <div class="context-menu-item" onclick="addExceptionForSchedule('${schedule.id}', '${dateKey}')">
-                <span>❌</span>
-                <span>${schedule.title || schedule.category} 제외</span>
-            </div>
-        `).join('')}
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-item cancel" onclick="closeExceptionMenu()">
-            <span>✖️</span>
-            <span>취소</span>
-        </div>
-    `;
-    
-    document.body.appendChild(menu);
-    
-    // 메뉴 외부 클릭 시 닫기
-    setTimeout(() => {
-        document.addEventListener('click', closeExceptionMenu, { once: true });
-    }, 100);
-}
-
-function addExceptionForSchedule(scheduleId, dateKey) {
-    const schedule = schedules.find(s => s.id === scheduleId);
-    if (!schedule) {
-        showToast('스케줄을 찾을 수 없습니다.', 'error');
-        return;
-    }
-    
-    // 예외 날짜 추가
-    if (!schedule.excludeDates) {
-        schedule.excludeDates = [];
-    }
-    
-    if (schedule.excludeDates.includes(dateKey)) {
-        showToast('이미 예외 처리된 날짜입니다.', 'warning');
-        closeExceptionMenu();
-        return;
-    }
-    
-    schedule.excludeDates.push(dateKey);
-    
-    // 저장 및 UI 업데이트
-    saveDataToStorage();
-    generateSchedulesByDate();
-    renderCalendar();
-    updateWeeklySchedule();
-    
-    const dateObj = new Date(dateKey + 'T00:00:00');
-    const formattedDate = dateObj.toLocaleDateString('ko-KR', {
-        month: 'long',
-        day: 'numeric'
-    });
-    
-    showToast(`${formattedDate} ${schedule.title || schedule.category} 일정이 제외되었습니다.`, 'success');
-    closeExceptionMenu();
-}
-
-function closeExceptionMenu() {
-    const menu = document.getElementById('exception-menu');
-    if (menu) {
-        menu.remove();
-    }
-}
+} 
