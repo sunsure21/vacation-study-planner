@@ -809,29 +809,37 @@ app.post('/api/share/create', requireAuth, async (req, res) => {
         console.log('🔍 환경 변수 체크:', {
             NODE_ENV: process.env.NODE_ENV,
             hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
-            isProduction: process.env.NODE_ENV === 'production'
+            hasUpstashToken: !!process.env.UPSTASH_REDIS_REST_TOKEN
         });
         
-        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
-            console.log('💾 Vercel KV에 토큰 저장 시도');
-            try {
-                const { Redis } = require('@upstash/redis');
-                const kvStore = Redis.fromEnv();
-                console.log('🔗 Redis 연결 성공, 토큰 저장 중...');
-                await kvStore.set(`token:view:${viewToken}`, userEmail);
-                await kvStore.set(`token:record:${recordToken}`, userEmail);
-                console.log('✅ Redis에 토큰 저장 완료');
-            } catch (error) {
-                console.log('⚠️ Redis 연결 실패, 메모리 저장소 사용:', error.message);
-                console.log('📝 메모리 저장소에 토큰 저장');
-                memoryStore.set(`token:view:${viewToken}`, userEmail);
-                memoryStore.set(`token:record:${recordToken}`, userEmail);
-            }
-        } else {
-            // 로컬 개발 환경: 메모리 저장소 사용
-            console.log('📝 로컬 환경 - 메모리 저장소에 토큰 저장');
+        // 🔧 개선: 환경에 관계없이 항상 Redis 우선 시도
+        let redisSuccess = false;
+        try {
+            console.log('💾 Redis에 토큰 저장 시도');
+            const { Redis } = require('@upstash/redis');
+            const kvStore = Redis.fromEnv();
+            
+            // Redis 연결 테스트 먼저 실행
+            await kvStore.ping();
+            console.log('🔗 Redis 연결 테스트 성공');
+            
+            // 토큰 저장 (만료 시간 7일)
+            await kvStore.set(`token:view:${viewToken}`, userEmail, { ex: 7 * 24 * 60 * 60 });
+            await kvStore.set(`token:record:${recordToken}`, userEmail, { ex: 7 * 24 * 60 * 60 });
+            
+            console.log('✅ Redis에 토큰 저장 완료');
+            redisSuccess = true;
+        } catch (error) {
+            console.log('⚠️ Redis 저장 실패:', error.message);
+            console.log('📝 메모리 저장소로 fallback');
+        }
+        
+        // Redis 실패 시 메모리 저장소 사용
+        if (!redisSuccess) {
+            console.log('📝 메모리 저장소에 토큰 저장');
             memoryStore.set(`token:view:${viewToken}`, userEmail);
             memoryStore.set(`token:record:${recordToken}`, userEmail);
+            console.log('⚠️ 주의: 메모리 저장소는 서버 재시작 시 초기화됩니다');
         }
         
         console.log('✅ 공유 데이터 저장 완료:', {
@@ -949,11 +957,17 @@ app.get('/shared/view/:token', async (req, res) => {
             isProduction: process.env.NODE_ENV === 'production'
         });
         
-        // 🔧 개선: Redis와 메모리 저장소 모두에서 조회 시도
+        // 🔧 개선: Redis 우선 시도, 실패 시 메모리 저장소 조회
         console.log('🔍 Redis에서 토큰 조회 시도');
+        
         try {
             const { Redis } = require('@upstash/redis');
             const kvStore = Redis.fromEnv();
+            
+            // Redis 연결 테스트
+            await kvStore.ping();
+            console.log('🔗 Redis 연결 테스트 성공');
+            
             userEmail = await kvStore.get(`token:view:${token}`);
             console.log('📦 Redis 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
         } catch (error) {
@@ -1001,6 +1015,11 @@ app.get('/shared/record/:token', async (req, res) => {
         try {
             const { Redis } = require('@upstash/redis');
             const kvStore = Redis.fromEnv();
+            
+            // Redis 연결 테스트
+            await kvStore.ping();
+            console.log('🔗 Redis 연결 테스트 성공');
+            
             userEmail = await kvStore.get(`token:record:${token}`);
             console.log('📦 Redis 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
         } catch (error) {
@@ -1337,6 +1356,61 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
 </html>
     `;
 }
+
+// 🔧 디버깅용: 토큰 상태 확인 API
+app.get('/api/debug/token/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        console.log('🔍 토큰 디버깅 요청:', token);
+        
+        const result = {
+            token: token,
+            redisCheck: null,
+            memoryCheck: null,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Redis 체크
+        try {
+            const { Redis } = require('@upstash/redis');
+            const kvStore = Redis.fromEnv();
+            
+            await kvStore.ping();
+            console.log('🔗 Redis 연결 성공');
+            
+            const viewUser = await kvStore.get(`token:view:${token}`);
+            const recordUser = await kvStore.get(`token:record:${token}`);
+            
+            result.redisCheck = {
+                connected: true,
+                viewUser: viewUser || null,
+                recordUser: recordUser || null
+            };
+        } catch (error) {
+            result.redisCheck = {
+                connected: false,
+                error: error.message
+            };
+        }
+        
+        // 메모리 체크
+        const memViewUser = memoryStore.get(`token:view:${token}`);
+        const memRecordUser = memoryStore.get(`token:record:${token}`);
+        
+        result.memoryCheck = {
+            viewUser: memViewUser || null,
+            recordUser: memRecordUser || null,
+            totalTokens: memoryStore.size
+        };
+        
+        console.log('📊 토큰 디버깅 결과:', result);
+        res.json(result);
+        
+    } catch (error) {
+        console.error('토큰 디버깅 오류:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 app.listen(port, () => {
     console.log(`✨ 서버가 시작되었습니다. http://localhost:${port} 에서 확인하세요.`);
