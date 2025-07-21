@@ -673,12 +673,12 @@ html {
     left: 4px;
     right: 4px;
     font-size: 10px;
-    color: var(--primary-purple-2);
+    color: #ea580c;
     font-weight: 600;
-    background-color: rgba(149, 246, 158, 0.95);
+    background-color: rgba(251, 146, 60, 0.9);
     padding: 3px 4px;
     border-radius: 3px;
-    border: 1px solid var(--category-study);
+    border: 1px solid #ea580c;
     white-space: pre-line;
     z-index: 10;
     text-align: center;
