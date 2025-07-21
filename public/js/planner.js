@@ -14,7 +14,10 @@ let currentUser = null; // 현재 로그인한 사용자 정보
 
 // 유틸리티 함수
 function toYYYYMMDD(date) {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 // 세션 유효성 확인 함수
