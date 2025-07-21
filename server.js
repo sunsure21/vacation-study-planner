@@ -1237,7 +1237,7 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             left: 4px;
             right: 4px;
             font-size: 10px;
-            color: #ea580c;
+            color: white;
             font-weight: 600;
             background-color: rgba(251, 146, 60, 0.9);
             padding: 3px 4px;
