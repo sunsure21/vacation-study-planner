@@ -1289,7 +1289,21 @@ function renderVacationCalendar(container) {
         if (totalStudyMinutes > 0) {
             const studyTimeDisplay = document.createElement('div');
             studyTimeDisplay.className = 'daily-study-time';
-            studyTimeDisplay.textContent = `실제: ${formatMinutes(totalStudyMinutes)}`;
+            
+            // 더 간결한 포맷 사용
+            const hours = Math.floor(totalStudyMinutes / 60);
+            const mins = totalStudyMinutes % 60;
+            let displayText;
+            
+            if (hours === 0) {
+                displayText = `${mins}분`;
+            } else if (mins === 0) {
+                displayText = `${hours}h`;
+            } else {
+                displayText = `${hours}h${mins}m`;
+            }
+            
+            studyTimeDisplay.textContent = displayText;
             dayCell.appendChild(studyTimeDisplay);
         }
         
