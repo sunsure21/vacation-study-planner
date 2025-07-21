@@ -491,8 +491,6 @@ body.modal-open {
     overflow-y: auto;
     overflow-x: hidden;
     margin-top: 4px;
-    margin-bottom: 40px;
-    height: 180px;
     position: relative;
     padding: 2px 0; /* 상하 여백 추가 */
     display: flex;
