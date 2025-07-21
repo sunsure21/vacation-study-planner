@@ -397,20 +397,20 @@ function renderCalendar() {
             const studyTimeDisplay = document.createElement('div');
             studyTimeDisplay.className = 'daily-study-time';
             
-            // 두 줄 포맷: 첫 줄은 '순공 실적', 둘째 줄은 시간
+            // 한 줄 포맷: 간결하게 표시
             const hours = Math.floor(totalStudyMinutes / 60);
-            const minutes = totalStudyMinutes % 60;
+            const mins = totalStudyMinutes % 60;
             let timeText;
             
             if (hours === 0) {
-                timeText = `${minutes}분`;
-            } else if (minutes === 0) {
-                timeText = `${hours}시간`;
+                timeText = `실적 ${mins}분`;
+            } else if (mins === 0) {
+                timeText = `실적 ${hours}시간`;
             } else {
-                timeText = `${hours}시간 ${minutes}분`;
+                timeText = `실적 ${hours}h${mins}m`;
             }
             
-            studyTimeDisplay.textContent = `순공 실적\n${timeText}`;
+            studyTimeDisplay.textContent = timeText;
             dayCell.appendChild(studyTimeDisplay);
         }
         
