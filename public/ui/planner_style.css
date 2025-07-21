@@ -669,23 +669,24 @@ html {
 
 .daily-study-time {
     position: absolute;
-    bottom: 8px;
-    left: 8px;
-    right: 8px;
-    font-size: 8px;
+    bottom: 5px;
+    left: 4px;
+    right: 4px;
+    font-size: 7px;
     color: var(--primary-purple-2);
     font-weight: 600;
-    background-color: rgba(149, 246, 158, 0.9);
-    padding: 2px 6px;
-    border-radius: 4px;
+    background-color: rgba(149, 246, 158, 0.95);
+    padding: 1px 3px;
+    border-radius: 3px;
     border: 1px solid var(--category-study);
     white-space: nowrap;
     z-index: 10;
     text-align: center;
     box-sizing: border-box;
-    max-width: calc(100% - 16px);
+    max-width: calc(100% - 8px);
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.2;
 }
 
 /* 7. Popup Styles */

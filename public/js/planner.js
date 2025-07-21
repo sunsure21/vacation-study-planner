@@ -1289,7 +1289,7 @@ function renderVacationCalendar(container) {
         if (totalStudyMinutes > 0) {
             const studyTimeDisplay = document.createElement('div');
             studyTimeDisplay.className = 'daily-study-time';
-            studyTimeDisplay.textContent = `실제순공: ${formatMinutes(totalStudyMinutes)}`;
+            studyTimeDisplay.textContent = `실제: ${formatMinutes(totalStudyMinutes)}`;
             dayCell.appendChild(studyTimeDisplay);
         }
         
