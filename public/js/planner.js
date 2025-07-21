@@ -2824,19 +2824,16 @@ function updateWeeklyEvaluation() {
     let totalStudyDays = 0;
     let studyDaysWithRecords = 0;
     
-    // 방학 시작일부터 현재까지의 경과일 계산
+    // 주간 범위와 방학 기간의 교집합에서 경과일 계산
     let elapsedDays = 0;
-    if (vacationStartDate) {
-        const today = new Date();
-        const diffTime = today - vacationStartDate;
-        elapsedDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1은 시작일 포함
-        
-        // 방학 종료일을 넘어서면 전체 방학 기간으로 제한
-        if (vacationEndDate) {
-            const totalVacationDays = Math.floor((vacationEndDate - vacationStartDate) / (1000 * 60 * 60 * 24)) + 1;
-            elapsedDays = Math.min(elapsedDays, totalVacationDays);
-        }
-    }
+    
+    console.log('📅 주간 평가 계산 시작:', {
+        weekStart: weekRange.start,
+        weekEnd: weekRange.end,
+        vacationStart: vacationStartDate,
+        vacationEnd: vacationEndDate,
+        currentDate: now
+    });
     
     // 현재 주 범위에서만 계산 (방학 기간과 교집합)
     // 시간대 이슈 방지를 위해 명시적으로 로컬 날짜 생성
@@ -2862,7 +2859,16 @@ function updateWeeklyEvaluation() {
             }
         }
         
-        // 경과일은 이미 위에서 계산됨 (방학 시작일부터 현재까지)
+        // 현재 날짜까지만 경과일로 계산 (해당 주 + 방학 기간 + 현재까지)
+        const [year, month, day] = dateKey.split('-').map(Number);
+        const currentLoopDate = new Date(year, month - 1, day);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // 오늘 끝까지 포함
+        
+        if (currentLoopDate <= today) {
+            elapsedDays++;
+            console.log(`📅 경과일 카운트: ${dateKey} (총 ${elapsedDays}일)`);
+        }
         
         const daySchedules = schedulesByDate[dateKey] || [];
         const dayStudyRecord = studyRecords[dateKey] || {};
