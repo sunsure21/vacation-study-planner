@@ -519,6 +519,16 @@ body.modal-open {
     background: rgba(0,0,0,0.5);
 }
 
+/* 모바일에서 스크롤바 숨기기 */
+@media (max-width: 768px) {
+    .schedules-container::-webkit-scrollbar {
+        display: none;
+    }
+    .schedules-container {
+        scrollbar-width: none; /* Firefox */
+    }
+}
+
 .schedule-item {
     font-size: 10px;
     padding: 3px 6px;
@@ -1594,7 +1604,10 @@ body.modal-open {
 
 /* 일일 순공시간 표시 */
 .daily-study-time {
-    position: relative;
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    right: 4px;
     font-size: 9px;
     color: white;
     font-weight: 600;
@@ -1610,10 +1623,9 @@ body.modal-open {
     line-height: 1.2;
     height: 18px;
     max-height: 18px;
+    min-height: 18px;
     display: block;
-    width: 100%; /* 너비 100%로 수정 */
-    margin: 2px 0; /* 좌우 마진 제거 */
-    flex-shrink: 0;
+    z-index: 10;
 }
 
 /* 주간 평가 섹션 개선 */
