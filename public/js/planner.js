@@ -556,11 +556,30 @@ async function loadDataFromStorage() {
                 if (hasKVData) {
                     // KV에서 데이터 로드
                     if (data.vacationPeriod) {
+                        // 🚨 디버깅: 원본 방학 기간 데이터 확인
+                        console.log('🎯 원본 방학 데이터:', data.vacationPeriod);
+                        console.log('🎯 시작일 문자열:', data.vacationPeriod.start);
+                        console.log('🎯 종료일 문자열:', data.vacationPeriod.end);
+                        
                         // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
                         const [startYear, startMonth, startDay] = data.vacationPeriod.start.split('-').map(Number);
                         const [endYear, endMonth, endDay] = data.vacationPeriod.end.split('-').map(Number);
+                        
+                        console.log('🎯 파싱된 날짜 구성요소:', {
+                            start: { year: startYear, month: startMonth, day: startDay },
+                            end: { year: endYear, month: endMonth, day: endDay }
+                        });
+                        
                         vacationStartDate = new Date(startYear, startMonth - 1, startDay);
                         vacationEndDate = new Date(endYear, endMonth - 1, endDay);
+                        
+                        console.log('🎯 최종 생성된 Date 객체:', {
+                            start: vacationStartDate.toDateString(),
+                            startISO: vacationStartDate.toISOString(),
+                            end: vacationEndDate.toDateString(),
+                            endISO: vacationEndDate.toISOString()
+                        });
+                        
                         console.log(`📅 방학 기간 로드: ${vacationStartDate} ~ ${vacationEndDate}`);
                     }
                     
@@ -612,12 +631,27 @@ async function migrateFromLocalStorage() {
 function loadFromLocalStorage() {
     try {
         const savedVacation = JSON.parse(localStorage.getItem(getUserStorageKey('vacationPeriod')));
+        console.log('🎯 로컬스토리지 방학 데이터:', savedVacation);
+        
         if (savedVacation && savedVacation.start && savedVacation.end) {
+            console.log('🎯 로컬스토리지 시작일/종료일:', { start: savedVacation.start, end: savedVacation.end });
+            
             // 타임존 문제 방지를 위해 명시적으로 로컬 날짜 생성
             const [startYear, startMonth, startDay] = savedVacation.start.split('-').map(Number);
             const [endYear, endMonth, endDay] = savedVacation.end.split('-').map(Number);
+            
+            console.log('🎯 로컬스토리지 파싱된 구성요소:', {
+                start: { year: startYear, month: startMonth, day: startDay },
+                end: { year: endYear, month: endMonth, day: endDay }
+            });
+            
             vacationStartDate = new Date(startYear, startMonth - 1, startDay);
             vacationEndDate = new Date(endYear, endMonth - 1, endDay);
+            
+            console.log('🎯 로컬스토리지에서 생성된 Date:', {
+                start: vacationStartDate.toDateString(),
+                end: vacationEndDate.toDateString()
+            });
         }
     } catch (e) {
         console.error("Error loading vacation period:", e);
