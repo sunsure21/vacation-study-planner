@@ -785,23 +785,37 @@ app.post('/api/share/create', requireAuth, async (req, res) => {
         
         // 실시간 연동: 토큰에 사용자 이메일 연결 (데이터 복사 없음)
         const userEmail = req.user?.email;
+        console.log('🔍 공유 링크 생성 - 사용자 이메일:', userEmail);
+        
         if (!userEmail) {
+            console.log('❌ 사용자 이메일이 없음');
             return res.status(401).json({ error: '인증이 필요합니다.' });
         }
         
+        console.log('🔍 환경 변수 체크:', {
+            NODE_ENV: process.env.NODE_ENV,
+            hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+            isProduction: process.env.NODE_ENV === 'production'
+        });
+        
         if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            console.log('💾 Vercel KV에 토큰 저장 시도');
             try {
                 const { Redis } = require('@upstash/redis');
                 const kvStore = Redis.fromEnv();
+                console.log('🔗 Redis 연결 성공, 토큰 저장 중...');
                 await kvStore.set(`token:view:${viewToken}`, userEmail);
                 await kvStore.set(`token:record:${recordToken}`, userEmail);
+                console.log('✅ Redis에 토큰 저장 완료');
             } catch (error) {
                 console.log('⚠️ Redis 연결 실패, 메모리 저장소 사용:', error.message);
+                console.log('📝 메모리 저장소에 토큰 저장');
                 memoryStore.set(`token:view:${viewToken}`, userEmail);
                 memoryStore.set(`token:record:${recordToken}`, userEmail);
             }
         } else {
             // 로컬 개발 환경: 메모리 저장소 사용
+            console.log('📝 로컬 환경 - 메모리 저장소에 토큰 저장');
             memoryStore.set(`token:view:${viewToken}`, userEmail);
             memoryStore.set(`token:record:${recordToken}`, userEmail);
         }
@@ -910,27 +924,41 @@ app.post('/api/share/revoke', requireAuth, async (req, res) => {
 app.get('/shared/view/:token', async (req, res) => {
     try {
         const { token } = req.params;
+        console.log('🔍 공유 링크 접근 시도 - view 토큰:', token);
         
         // 실시간 연동: 토큰 검증 후 HTML 반환
         let userEmail = null;
         
+        console.log('🔍 토큰 조회 환경 체크:', {
+            NODE_ENV: process.env.NODE_ENV,
+            hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+            isProduction: process.env.NODE_ENV === 'production'
+        });
+        
         if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            console.log('🔍 Redis에서 토큰 조회 시도');
             try {
                 const { Redis } = require('@upstash/redis');
                 const kvStore = Redis.fromEnv();
                 userEmail = await kvStore.get(`token:view:${token}`);
+                console.log('📦 Redis 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
             } catch (error) {
                 console.log('⚠️ Redis 조회 실패, 메모리 저장소 사용:', error.message);
                 userEmail = memoryStore.get(`token:view:${token}`);
+                console.log('📦 메모리 저장소 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
             }
         } else {
+            console.log('📝 메모리 저장소에서 토큰 조회');
             userEmail = memoryStore.get(`token:view:${token}`);
+            console.log('📦 메모리 저장소 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
         }
         
         if (!userEmail) {
+            console.log('❌ 유효하지 않은 토큰:', token);
             return res.status(404).send('<h1>❌ 유효하지 않은 공유 링크입니다.</h1>');
         }
         
+        console.log('✅ 토큰 검증 성공, 공유 캘린더 HTML 생성');
         res.send(generateSharedCalendarHTML(userEmail, token, 'view'));
         
     } catch (error) {
@@ -943,27 +971,41 @@ app.get('/shared/view/:token', async (req, res) => {
 app.get('/shared/record/:token', async (req, res) => {
     try {
         const { token } = req.params;
+        console.log('🔍 공유 링크 접근 시도 - record 토큰:', token);
         
         // 실시간 연동: 토큰 검증 후 HTML 반환
         let userEmail = null;
         
+        console.log('🔍 토큰 조회 환경 체크:', {
+            NODE_ENV: process.env.NODE_ENV,
+            hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+            isProduction: process.env.NODE_ENV === 'production'
+        });
+        
         if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            console.log('🔍 Redis에서 토큰 조회 시도');
             try {
                 const { Redis } = require('@upstash/redis');
                 const kvStore = Redis.fromEnv();
                 userEmail = await kvStore.get(`token:record:${token}`);
+                console.log('📦 Redis 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
             } catch (error) {
                 console.log('⚠️ Redis 조회 실패, 메모리 저장소 사용:', error.message);
                 userEmail = memoryStore.get(`token:record:${token}`);
+                console.log('📦 메모리 저장소 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
             }
         } else {
+            console.log('📝 메모리 저장소에서 토큰 조회');
             userEmail = memoryStore.get(`token:record:${token}`);
+            console.log('📦 메모리 저장소 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
         }
         
         if (!userEmail) {
+            console.log('❌ 유효하지 않은 토큰:', token);
             return res.status(404).send('<h1>❌ 유효하지 않은 공유 링크입니다.</h1>');
         }
         
+        console.log('✅ 토큰 검증 성공, 공유 캘린더 HTML 생성');
         res.send(generateSharedCalendarHTML(userEmail, token, 'record'));
         
     } catch (error) {
