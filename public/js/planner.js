@@ -760,7 +760,8 @@ function generateSchedulesByDate() {
         return;
     }
     
-        for (let d = new Date(vacationStartDate); d <= vacationEndDate; d.setDate(d.getDate() + 1)) {
+        // 🚨 FIX: Date 객체 공유 문제 해결 - 각 날짜마다 독립적인 객체 생성
+        for (let d = new Date(vacationStartDate.getTime()); d <= vacationEndDate; d.setDate(d.getDate() + 1)) {
             if (shouldIncludeSchedule(schedule, d)) {
                 const dateKey = toYYYYMMDD(d);
                 if (!schedulesByDate[dateKey]) {
@@ -774,8 +775,8 @@ function generateSchedulesByDate() {
         }
     });
     
-    // 각 날짜에 순공 가능 시간대 추가
-    for (let d = new Date(vacationStartDate); d <= vacationEndDate; d.setDate(d.getDate() + 1)) {
+    // 각 날짜에 순공 가능 시간대 추가 - 🚨 FIX: Date 객체 독립성 보장
+    for (let d = new Date(vacationStartDate.getTime()); d <= vacationEndDate; d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         addStudyTimeSlots(dateKey);
     }
@@ -2028,7 +2029,7 @@ function handleScheduleSubmit(e) {
     let hasConflict = false;
     let conflictMessage = '';
     
-    for (let date = new Date(vacationStartDate); date <= vacationEndDate; date.setDate(date.getDate() + 1)) {
+    for (let date = new Date(vacationStartDate.getTime()); date <= vacationEndDate; date.setDate(date.getDate() + 1)) {
         if (shouldIncludeSchedule(newSchedule, date)) {
             const dateKey = toYYYYMMDD(date);
             let existingSchedules = schedulesByDate[dateKey] || [];
