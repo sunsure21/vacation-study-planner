@@ -490,8 +490,8 @@ body.modal-open {
     overflow-y: auto;
     overflow-x: hidden;
     margin-top: 4px;
-    margin-bottom: 35px;
-    height: 190px;
+    margin-bottom: 40px;
+    height: 180px;
     position: relative;
 }
 
@@ -1557,24 +1557,25 @@ body.modal-open {
 /* 일일 순공시간 표시 */
 .daily-study-time {
     position: absolute;
-    bottom: 6px;
-    left: 6px;
-    right: 6px;
-    font-size: 9px;
+    bottom: 4px;
+    left: 4px;
+    right: 4px;
+    font-size: 10px;
     color: var(--primary-purple-2);
     font-weight: 600;
     background-color: rgba(149, 246, 158, 0.95);
-    padding: 2px 4px;
+    padding: 3px 4px;
     border-radius: 3px;
     border: 1px solid #4caf50;
-    white-space: nowrap;
+    white-space: pre-line;
     z-index: 10;
     text-align: center;
     box-sizing: border-box;
-    max-width: calc(100% - 12px);
+    max-width: calc(100% - 8px);
     overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.3;
+    line-height: 1.2;
+    height: auto;
+    min-height: 24px;
 }
 
 /* 주간 평가 섹션 개선 */
@@ -2896,24 +2897,25 @@ body.modal-open {
 
 .daily-study-time {
     position: absolute;
-    bottom: 6px;
-    left: 6px;
-    right: 6px;
-    font-size: 9px;
+    bottom: 4px;
+    left: 4px;
+    right: 4px;
+    font-size: 10px;
     color: var(--primary-purple-2);
     font-weight: 600;
     background-color: rgba(149, 246, 158, 0.95);
-    padding: 2px 4px;
+    padding: 3px 4px;
     border-radius: 3px;
     border: 1px solid #4caf50;
-    white-space: nowrap;
+    white-space: pre-line;
     z-index: 10;
     text-align: center;
     box-sizing: border-box;
-    max-width: calc(100% - 12px);
+    max-width: calc(100% - 8px);
     overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.3;
+    line-height: 1.2;
+    height: auto;
+    min-height: 24px;
 }
 
 /* 공유 모달 개선 스타일 */

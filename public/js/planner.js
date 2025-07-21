@@ -1290,20 +1290,20 @@ function renderVacationCalendar(container) {
             const studyTimeDisplay = document.createElement('div');
             studyTimeDisplay.className = 'daily-study-time';
             
-            // 더 간결한 포맷 사용
+            // 두 줄 포맷: 첫 줄은 '순공 실적', 둘째 줄은 시간
             const hours = Math.floor(totalStudyMinutes / 60);
             const mins = totalStudyMinutes % 60;
-            let displayText;
+            let timeText;
             
             if (hours === 0) {
-                displayText = `${mins}분`;
+                timeText = `${mins}분`;
             } else if (mins === 0) {
-                displayText = `${hours}h`;
+                timeText = `${hours}시간`;
             } else {
-                displayText = `${hours}h${mins}m`;
+                timeText = `${hours}시간 ${mins}분`;
             }
             
-            studyTimeDisplay.textContent = displayText;
+            studyTimeDisplay.textContent = `순공 실적\n${timeText}`;
             dayCell.appendChild(studyTimeDisplay);
         }
         

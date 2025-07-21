@@ -534,10 +534,10 @@ html {
     overflow-y: auto;
     overflow-x: hidden;
     margin-top: 4px;
-    margin-bottom: 35px;
-    max-height: 260px;
+    margin-bottom: 40px;
+    max-height: 250px;
     min-height: 0;
-    height: 260px;
+    height: 250px;
     position: relative;
 }
 
@@ -669,24 +669,25 @@ html {
 
 .daily-study-time {
     position: absolute;
-    bottom: 6px;
-    left: 6px;
-    right: 6px;
-    font-size: 9px;
+    bottom: 4px;
+    left: 4px;
+    right: 4px;
+    font-size: 10px;
     color: var(--primary-purple-2);
     font-weight: 600;
     background-color: rgba(149, 246, 158, 0.95);
-    padding: 2px 4px;
+    padding: 3px 4px;
     border-radius: 3px;
     border: 1px solid var(--category-study);
-    white-space: nowrap;
+    white-space: pre-line;
     z-index: 10;
     text-align: center;
     box-sizing: border-box;
-    max-width: calc(100% - 12px);
+    max-width: calc(100% - 8px);
     overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.3;
+    line-height: 1.2;
+    height: auto;
+    min-height: 24px;
 }
 
 /* 7. Popup Styles */
