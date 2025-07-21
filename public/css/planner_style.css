@@ -1814,22 +1814,25 @@ body.modal-open {
 
 /* MBTI 모바일 반응형 */
 @media (max-width: 768px) {
-    /* 메인 컨테이너 최적화 */
+    /* 메인 컨테이너 최적화 - 폭 최대 활용 */
     .planner-screen {
-        padding: 15px;
+        padding: 8px;
         overflow-x: hidden;
     }
     
     .planner-container {
-        padding: 25px 20px;
-        border-radius: 15px;
+        padding: 15px 8px;
+        border-radius: 12px;
         max-width: 100%;
+        width: 100%;
         margin: 0;
         overflow: hidden;
     }
     
     .container {
-        padding: 10px;
+        padding: 5px;
+        width: 100%;
+        max-width: 100%;
     }
     
     .setup-container {
@@ -1848,11 +1851,13 @@ body.modal-open {
         line-height: 1.4;
     }
     
-    /* 헤더 최적화 */
+    /* 헤더 최적화 - 폭 최대 활용 */
     .header {
-        padding: 15px 20px;
+        padding: 12px 8px;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
     }
     
     .header h1 {
@@ -2194,46 +2199,52 @@ body.modal-open {
         max-width: 100%;
     }
     
-    /* 캘린더 컨테이너 전체 너비 사용 */
+    /* 캘린더 컨테이너 최대 폭 활용 */
     .calendar-container {
         margin: 0;
         padding: 0;
         width: 100%;
+        max-width: 100%;
         overflow: visible;
     }
     
     .calendar-month {
         width: 100%;
-        margin-bottom: 15px;
+        max-width: 100%;
+        margin-bottom: 12px;
         min-width: auto; /* 최소 너비 제거 */
     }
     
     .calendar-grid {
-        gap: 6px;
+        gap: 4px;
         width: 100%;
+        max-width: 100%;
         min-width: auto; /* 최소 너비 제거 */
     }
     
     .days-header {
-        gap: 6px;
+        gap: 4px;
         width: 100%;
+        max-width: 100%;
         min-width: auto; /* 최소 너비 제거 */
     }
     
     .day-header {
-        padding: 8px 4px;
-        font-size: 12px;
+        padding: 6px 2px;
+        font-size: 11px;
         min-width: 0; /* 텍스트 오버플로우 방지 */
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        flex: 1; /* 동일한 폭으로 분할 */
     }
     
     .day-cell {
-        height: 120px;
-        padding: 4px;
-        font-size: 11px;
+        height: 130px;
+        padding: 3px;
+        font-size: 10px;
         min-width: 0; /* 최소 너비 제거 */
+        flex: 1; /* 동일한 폭으로 분할 */
     }
     
     .day-number {
@@ -2297,43 +2308,62 @@ body.modal-open {
     }
 }
 
-/* 480px 이하 모바일 */
+/* 480px 이하 모바일 - 최대 폭 활용 */
 @media (max-width: 480px) {
-    .container {
+    .planner-screen {
         padding: 5px;
     }
     
+    .planner-container {
+        padding: 10px 5px;
+        border-radius: 8px;
+    }
+    
+    .container {
+        padding: 3px;
+        width: 100%;
+        max-width: 100%;
+    }
+    
     .calendar-container {
-        margin: 0 -5px; /* 컨테이너 패딩만큼 음수 마진 */
-        padding: 0 5px;
-        width: calc(100% + 10px);
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        max-width: 100%;
         box-sizing: border-box;
     }
     
     .calendar-month {
         width: 100%;
-        margin-bottom: 15px;
+        max-width: 100%;
+        margin-bottom: 10px;
     }
     
     .calendar-grid {
-        gap: 4px;
+        gap: 2px;
         width: 100%;
+        max-width: 100%;
     }
     
     .days-header {
-        gap: 4px;
+        gap: 2px;
         width: 100%;
+        max-width: 100%;
     }
     
     .day-header {
-        padding: 6px 2px;
-        font-size: 11px;
+        padding: 4px 1px;
+        font-size: 10px;
+        flex: 1; /* 동일한 폭으로 분할 */
+        min-width: 0;
     }
     
     .day-cell {
-        height: 100px;
-        padding: 3px;
-        font-size: 10px;
+        height: 110px;
+        padding: 2px;
+        font-size: 9px;
+        flex: 1; /* 동일한 폭으로 분할 */
+        min-width: 0;
     }
     
     .day-number {
