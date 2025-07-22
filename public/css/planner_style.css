@@ -1189,11 +1189,11 @@ body.modal-open {
     
     .day-cell {
         height: 110px;
-        padding: 3px;
-        font-size: 11px;
+        padding: 2px 2px 25px 2px; /* 하단 패딩 추가 */
+        font-size: 9px;
         border-radius: 6px;
         min-height: 44px; /* 터치 타겟 고려 */
-        min-width: 50px; /* 셀 최소 너비 */
+        min-width: 0;
     }
     
     .day-number {
@@ -1223,24 +1223,23 @@ body.modal-open {
     
     .daily-study-time {
         position: absolute;
-        bottom: 8px; /* 하단에서 8px 위치 */
-        left: 8px;  /* 좌측에서 8px 위치 */
-        right: 8px; /* 우측에서 8px 위치 */
-        font-size: 9px;
+        bottom: 4px;
+        left: 2px;
+        right: 2px;
+        font-size: 8px;
         color: white;
         font-weight: 600;
         background-color: rgba(251, 146, 60, 0.9);
-        padding: 3px 4px;
-        border-radius: 3px;
-        border: 1px solid #ea580c;
+        padding: 1px 2px;
+        border-radius: 2px;
         white-space: nowrap;
         text-align: center;
         box-sizing: border-box;
         overflow: hidden;
         text-overflow: ellipsis;
         line-height: 1.2;
-        height: 18px;
-        max-height: 18px;
+        height: 16px;
+        max-height: 16px;
         display: block;
         z-index: 10;
     }
