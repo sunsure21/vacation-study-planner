@@ -2178,13 +2178,6 @@ function showManualLinkGeneration() {
         `;
     }
 
-    // 데이터 기반 공유 링크 생성
-    async function generateShareLinksFromData(shareData) {
-        // ... existing code ... */
-    }
-}
-
-// ... existing code ... */
     return recentActivity;
 }
 
@@ -2286,4 +2279,7 @@ function updateWeeklyEvaluation() {
 // 로그아웃 함수
 function handleLogout() {
     if (confirm('정말 로그아웃하시겠습니까?')) {
-// ... existing code ... */
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
+}
