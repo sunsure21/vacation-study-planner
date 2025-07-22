@@ -454,7 +454,7 @@ body.modal-open {
     height: 280px;
     background-color: var(--background-color);
     border-radius: 8px;
-    padding: 8px;
+    padding: 8px 8px 30px 8px; /* 하단 패딩(30px) 추가 */
     border: 1px solid var(--border-color); /* 테두리 복원 */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 그림자 유지 */
     display: flex;
@@ -465,6 +465,7 @@ body.modal-open {
     contain: layout style;
     cursor: pointer;
     transition: all 0.3s ease;
+    background: rgba(0,0,0,0.5);
 }
 
 .day-cell:hover {
@@ -1222,23 +1223,26 @@ body.modal-open {
     
     .daily-study-time {
         position: absolute;
-        bottom: 8px;
-        left: 8px;
-        right: 8px;
-        font-size: 8px;
-        color: var(--primary-purple-2);
+        bottom: 8px; /* 하단에서 8px 위치 */
+        left: 8px;  /* 좌측에서 8px 위치 */
+        right: 8px; /* 우측에서 8px 위치 */
+        font-size: 9px;
+        color: white;
         font-weight: 600;
-        background-color: rgba(149, 246, 158, 0.9);
-        padding: 2px 6px;
-        border-radius: 4px;
-        border: 1px solid #4caf50;
+        background-color: rgba(251, 146, 60, 0.9);
+        padding: 3px 4px;
+        border-radius: 3px;
+        border: 1px solid #ea580c;
         white-space: nowrap;
-        z-index: 10;
         text-align: center;
         box-sizing: border-box;
-        max-width: calc(100% - 16px);
         overflow: hidden;
         text-overflow: ellipsis;
+        line-height: 1.2;
+        height: 18px;
+        max-height: 18px;
+        display: block;
+        z-index: 10;
     }
     
     /* 주간 디테일 최적화 */
@@ -1602,7 +1606,10 @@ body.modal-open {
 
 /* 일일 순공시간 표시 */
 .daily-study-time {
-    position: relative; /* position을 relative로 유지 */
+    position: absolute;
+    bottom: 8px; /* 하단에서 8px 위치 */
+    left: 8px;  /* 좌측에서 8px 위치 */
+    right: 8px; /* 우측에서 8px 위치 */
     font-size: 9px;
     color: white;
     font-weight: 600;
@@ -1619,9 +1626,7 @@ body.modal-open {
     height: 18px;
     max-height: 18px;
     display: block;
-    width: 100%; /* 너비를 100%로 설정 */
-    margin: 2px 0; /* 상하 마진 추가 */
-    flex-shrink: 0;
+    z-index: 10;
 }
 
 /* 주간 평가 섹션 개선 */

@@ -1051,7 +1051,7 @@ function renderVacationCalendar(container) {
             const studyTimeDisplay = document.createElement('div');
             studyTimeDisplay.className = 'daily-study-time';
             studyTimeDisplay.textContent = `실제순공: ${formatMinutes(totalStudyMinutes)}`;
-            schedulesContainer.appendChild(studyTimeDisplay); // schedulesContainer에 추가
+            dayCell.appendChild(studyTimeDisplay);
         }
         
         // 클릭 이벤트
