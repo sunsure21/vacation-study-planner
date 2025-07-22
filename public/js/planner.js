@@ -842,7 +842,7 @@ function getScheduleEmoji(category) {
     return emojiMap[category] || '📅';
 }
 
-function timeToMinutes(timeStr, isEndTime = false, category = null) {
+function timeToMinutes(timeStr, isEndTime = false, category = null, startTimeStr = null) {
     if (!timeStr || typeof timeStr !== 'string') {
         console.error('Invalid time string:', timeStr);
         return 0;
@@ -851,9 +851,12 @@ function timeToMinutes(timeStr, isEndTime = false, category = null) {
     let totalMinutes = hours * 60 + minutes;
     
     // 취침 시간의 종료 시간이 시작 시간보다 작으면 다음 날로 처리
-    if (category === '취침' && isEndTime) {
-        // 종료 시간이 12시 이전이면 다음 날로 간주 (24시간 추가)
-        if (hours < 12) {
+    if (category === '취침' && isEndTime && startTimeStr) {
+        const [startHours] = startTimeStr.split(':').map(Number);
+        const startMinutes = startHours * 60 + parseInt(startTimeStr.split(':')[1]);
+        
+        // 종료 시간이 시작 시간보다 작으면 다음 날로 간주
+        if (totalMinutes <= startMinutes) {
             totalMinutes += 24 * 60;
         }
     }
@@ -1628,13 +1631,13 @@ function handleScheduleSubmit(e) {
     // 시간 충돌 검증 함수
     function checkTimeConflict(newStart, newEnd, existingSchedules, newCategory) {
         const newStartMinutes = timeToMinutes(newStart, false, newCategory);
-        const newEndMinutes = timeToMinutes(newEnd, true, newCategory);
+        const newEndMinutes = timeToMinutes(newEnd, true, newCategory, newStart);
         
         for (const schedule of existingSchedules) {
             if (schedule.isStudySlot) continue; // 순공시간은 제외
             
             const existingStart = timeToMinutes(schedule.startTime, false, schedule.category);
-            const existingEnd = timeToMinutes(schedule.endTime, true, schedule.category);
+            const existingEnd = timeToMinutes(schedule.endTime, true, schedule.category, schedule.startTime);
             
             let blockedStart = existingStart;
             let blockedEnd = existingEnd;
