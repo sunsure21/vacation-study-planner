@@ -2264,7 +2264,11 @@ function updateWeeklyEvaluation() {
     let elapsedDays = 0;
     
     // 현재 주 범위에서만 계산 (방학 기간과 교집합)
-    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
+    // 하지만 경과일은 일요일부터 오늘까지만 계산
+    const today = new Date(now);
+    const endCalculationDate = today > new Date(weekRange.end) ? new Date(weekRange.end) : today;
+    
+    for (let d = new Date(weekRange.start); d <= endCalculationDate; d.setDate(d.getDate() + 1)) {
         const dateKey = toYYYYMMDD(d);
         
         // 방학 기간 내 날짜만 계산
