@@ -2183,3 +2183,107 @@ function showManualLinkGeneration() {
         // ... existing code ... */
     }
 }
+
+// ... existing code ... */
+    return recentActivity;
+}
+
+// 주간 평가 데이터 업데이트 함수
+function updateWeeklyEvaluation() {
+    const now = getCurrentKoreanDate(); // 한국 시간 기준으로 변경
+    const weekRange = getWeekRange(now); // 현재 주 범위 사용
+    
+    let totalPlannedHours = 0;
+    let totalCompletedHours = 0;
+    let totalStudyDays = 0;
+    let studyDaysWithRecords = 0;
+    let elapsedDays = 0;
+    
+    // 현재 주 범위에서만 계산 (방학 기간과 교집합)
+    for (let d = new Date(weekRange.start); d <= weekRange.end; d.setDate(d.getDate() + 1)) {
+        const dateKey = toYYYYMMDD(d);
+        
+        // 방학 기간 내 날짜만 계산
+        if (vacationStartDate && vacationEndDate) {
+            const currentDate = new Date(dateKey + 'T00:00:00');
+            if (currentDate < vacationStartDate || currentDate > vacationEndDate) {
+                continue; // 방학 기간 외 날짜는 제외
+            }
+        }
+        
+        const daySchedules = schedulesByDate[dateKey] || [];
+        const dayStudyRecord = studyRecords[dateKey] || {};
+        
+        elapsedDays++;
+        
+        // 계획된 학습 시간 계산
+        let dayPlannedHours = 0;
+        daySchedules.forEach(schedule => {
+            if (schedule.isStudySlot) {
+                dayPlannedHours += schedule.duration || 0;
+            }
+        });
+        
+        if (dayPlannedHours > 0) {
+            totalStudyDays++;
+            totalPlannedHours += dayPlannedHours;
+            
+            // 실제 완료된 학습 시간 계산
+            const completedHours = Object.values(dayStudyRecord).reduce((sum, record) => {
+                return sum + (record.minutes || 0);
+            }, 0);
+            
+            if (completedHours > 0) {
+                studyDaysWithRecords++;
+                totalCompletedHours += completedHours;
+            }
+        }
+    }
+    
+    // 달성률 계산 (이번주 기준)
+    const achievementRate = totalPlannedHours > 0 ? 
+        Math.round((totalCompletedHours / totalPlannedHours) * 100) : 0;
+    
+    // 평가 메시지 생성
+    let evaluationMessage = '';
+    if (achievementRate >= 80) {
+        evaluationMessage = '🎉 훌륭합니다! 계획을 잘 지키고 있어요.';
+    } else if (achievementRate >= 60) {
+        evaluationMessage = '👍 좋은 성과입니다. 조금 더 노력해보세요.';
+    } else if (achievementRate >= 40) {
+        evaluationMessage = '⚠️ 계획 대비 부족합니다. 더 집중해보세요.';
+    } else {
+        evaluationMessage = '🚨 계획 실행이 많이 부족합니다. 계획을 재검토해보세요.';
+    }
+    
+    // UI 업데이트
+    const evaluationContainer = document.querySelector('.evaluation-box');
+    if (evaluationContainer) {
+        evaluationContainer.innerHTML = `
+            <div class="evaluation-stats">
+                <div class="eval-stat">
+                    <span class="eval-label">경과일:</span>
+                    <span class="eval-value">${elapsedDays}일</span>
+                </div>
+                <div class="eval-stat">
+                    <span class="eval-label">계획 순공시간:</span>
+                    <span class="eval-value">${formatMinutes(totalPlannedHours)}</span>
+                </div>
+                <div class="eval-stat">
+                    <span class="eval-label">실제 순공시간:</span>
+                    <span class="eval-value">${formatMinutes(totalCompletedHours)}</span>
+                </div>
+                <div class="eval-stat">
+                    <span class="eval-label">달성률:</span>
+                    <span class="eval-value">${achievementRate}%</span>
+                </div>
+            </div>
+            <div class="evaluation-message">${evaluationMessage}</div>
+        `;
+    }
+}
+
+// 로그아웃 함수
+function handleLogout() {
+    if (confirm('정말 로그아웃하시겠습니까?')) {
+// ... existing code ... */
