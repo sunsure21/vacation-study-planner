@@ -2157,9 +2157,8 @@ function collectCurrentPlannerData() {
 
 // 수동 링크 생성 옵션 표시
 function showManualLinkGeneration() {
-    // ... existing code ... */
-    // 에러 메시지 표시
-    function showErrorMessage(message) {
+// 에러 메시지 표시
+function showErrorMessage(message) {
         const modal = document.getElementById('share-modal');
         const content = modal.querySelector('.modal-body');
         content.innerHTML = `
@@ -2179,6 +2178,78 @@ function showManualLinkGeneration() {
     }
 
     return recentActivity;
+}
+
+// 공유 모달 함수들
+function showShareModal() {
+    const modal = document.getElementById('share-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        document.body.classList.add('modal-open');
+        handleShareLinks(); // 모달이 열릴 때 자동으로 공유 링크 생성 시도
+    }
+}
+
+function closeShareModal() {
+    const modal = document.getElementById('share-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+}
+
+// 공유 링크 처리 함수
+async function handleShareLinks() {
+    try {
+        const plannerData = collectCurrentPlannerData();
+        if (!plannerData) {
+            showErrorMessage('공유할 데이터가 없습니다.');
+            return;
+        }
+        
+        // 공유 링크 생성 로직 (서버 API 호출)
+        const response = await fetch('/api/share', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(plannerData)
+        });
+        
+        if (!response.ok) {
+            throw new Error('공유 링크 생성에 실패했습니다.');
+        }
+        
+        const result = await response.json();
+        showShareLinks(result);
+        
+    } catch (error) {
+        console.error('공유 처리 오류:', error);
+        showErrorMessage('공유 링크 생성 중 오류가 발생했습니다.');
+    }
+}
+
+function showShareLinks(shareData) {
+    const modal = document.getElementById('share-modal');
+    const content = modal.querySelector('.modal-body');
+    content.innerHTML = `
+        <div class="share-content">
+            <h3>📅 캘린더 공유</h3>
+            <p>생성된 공유 링크:</p>
+            <div class="share-link">
+                <input type="text" value="${shareData.shareUrl}" readonly>
+                <button onclick="copyToClipboard('${shareData.shareUrl}')">복사</button>
+            </div>
+        </div>
+    `;
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('링크가 클립보드에 복사되었습니다!');
+    }).catch(() => {
+        alert('복사에 실패했습니다.');
+    });
 }
 
 // 주간 평가 데이터 업데이트 함수
