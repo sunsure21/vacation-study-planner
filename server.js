@@ -1730,14 +1730,18 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
         
         // 공유 모드용 완수 토글 함수
         window.toggleScheduleComplete = function(scheduleId, dateKey) {
-            if (!window.SHARED_MODE.canRecord) {
-                showToast('읽기 전용 모드에서는 완수 처리할 수 없습니다.', 'error');
-                return;
-            }
+            console.log('🔍 완수 처리 권한 체크:', {
+                canRecord: window.SHARED_MODE?.canRecord,
+                pathname: window.location.pathname,
+                token: window.SHARED_MODE?.token
+            });
             
-            // 토큰 타입 확인 (view 토큰으로는 완수 처리 불가)
-            if (window.SHARED_MODE.token && !window.location.pathname.includes('/record/')) {
-                showToast('실적 입력 권한이 있는 링크로 접근해야 완수 처리가 가능합니다.', 'error');
+            // 권한 체크 - canRecord가 false이거나 view URL인 경우 차단
+            if (!window.SHARED_MODE?.canRecord || !window.location.pathname.includes('/record/')) {
+                const message = !window.SHARED_MODE?.canRecord 
+                    ? '읽기 전용 모드에서는 완수 처리할 수 없습니다.'
+                    : '이 링크는 읽기 전용입니다. 실적 입력 가능한 링크를 사용해주세요.';
+                showToast(message, 'error');
                 return;
             }
             
@@ -1843,6 +1847,11 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
         function setupSharedModeEventListeners() {
             console.log('🔗 공유 모드 이벤트 리스너 설정 시작');
             
+            // 읽기 전용 모드에서는 완수 버튼 숨기기
+            if (!window.SHARED_MODE?.canRecord) {
+                hideCompleteButtonsInReadOnlyMode();
+            }
+            
             // 모달 닫기 이벤트들
             const dayModalClose = document.getElementById('day-modal-close');
             if (dayModalClose) {
@@ -1866,6 +1875,37 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             }
             
             console.log('🎯 공유 모드 이벤트 리스너 설정 완료');
+        }
+        
+        // 읽기 전용 모드에서 완수 버튼 숨기기
+        function hideCompleteButtonsInReadOnlyMode() {
+            // 현재 있는 완수 버튼들 숨기기
+            const completeButtons = document.querySelectorAll('.btn-complete');
+            completeButtons.forEach(btn => {
+                btn.style.display = 'none';
+            });
+            
+            // 모달이 새로 열릴 때마다 완수 버튼 숨기기 (MutationObserver 사용)
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList') {
+                        const newCompleteButtons = mutation.target.querySelectorAll('.btn-complete');
+                        newCompleteButtons.forEach(btn => {
+                            btn.style.display = 'none';
+                        });
+                    }
+                });
+            });
+            
+            // 모달 컨테이너 관찰
+            const modalContainer = document.body;
+            if (modalContainer) {
+                observer.observe(modalContainer, {
+                    childList: true,
+                    subtree: true
+                });
+                console.log('🔒 읽기 전용 모드: 완수 버튼 숨김 처리 완료');
+            }
         }
     </script>
 </body>
