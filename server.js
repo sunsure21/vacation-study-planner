@@ -1555,13 +1555,26 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
     <script>
         // 공유 모드에서만 필요한 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            // 공유 데이터 로드
-            loadSharedData();
+            console.log('🔧 공유 모드 초기화 시작');
+            
             // 메뉴 숨기기
             const sidebar = document.querySelector('.sidebar');
             if (sidebar) sidebar.style.display = 'none';
             const header = document.querySelector('.header');
             if (header) header.style.display = 'none';
+            
+            // 불필요한 버튼들 숨기기
+            const scheduleBtn = document.getElementById('schedule-register-btn');
+            if (scheduleBtn) scheduleBtn.style.display = 'none';
+            const mbtiBtn = document.getElementById('mbti-coaching-btn');
+            if (mbtiBtn) mbtiBtn.style.display = 'none';
+            const shareBtn = document.getElementById('share-calendar-btn');
+            if (shareBtn) shareBtn.style.display = 'none';
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            
+            // 공유 데이터 로드
+            loadSharedData();
         });
         
         async function loadSharedData() {
@@ -1586,6 +1599,50 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             } catch (error) {
                 console.error('공유 데이터 로드 오류:', error);
             }
+        }
+        
+        // 공유 모드용 완수 토글 함수
+        window.toggleScheduleComplete = function(scheduleId, dateKey) {
+            if (!window.SHARED_MODE.canRecord) {
+                showToast('읽기 전용 모드에서는 완수 처리할 수 없습니다.', 'error');
+                return;
+            }
+            
+            if (!completedSchedules[dateKey]) {
+                completedSchedules[dateKey] = {};
+            }
+            
+            // 완수 상태 토글
+            if (completedSchedules[dateKey][scheduleId]) {
+                delete completedSchedules[dateKey][scheduleId];
+                showToast('완수 취소되었습니다.', 'info');
+            } else {
+                completedSchedules[dateKey][scheduleId] = true;
+                showToast('완수 처리되었습니다!', 'success');
+            }
+            
+            // 서버에 완수 데이터 저장
+            fetch(\`/api/shared/\${window.SHARED_MODE.token}/study-record\`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    dateKey: dateKey,
+                    studyRecords: studyRecords,
+                    completedSchedules: completedSchedules
+                })
+            }).catch(error => {
+                console.error('완수 데이터 저장 오류:', error);
+            });
+            
+            // 캘린더 다시 렌더링
+            renderCalendar();
+            
+            // 모달 내용 업데이트
+            setTimeout(() => {
+                showDaySummary(dateKey);
+            }, 100);
         }
     </script>
 </body>

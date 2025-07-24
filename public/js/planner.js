@@ -2232,10 +2232,22 @@ async function getMBTICoaching(mbtiType) {
         const coaching = await response.json();
         console.log('📋 코칭 데이터 수신:', coaching);
         
+        // 마크다운을 HTML로 변환하는 함수
+        function markdownToHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **볼드**
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *이탤릭*
+                .replace(/\n\n/g, '</p><p>')                       // 문단 구분
+                .replace(/\n/g, '<br>')                            // 줄바꿈
+                .replace(/^/, '<p>')                               // 시작 태그
+                .replace(/$/, '</p>');                             // 끝 태그
+        }
+        
         // 코칭 결과 표시
         const title = coaching.title || `${mbtiType} 맞춤 학습 코칭`;
-        const analysis = coaching.mbtiAnalysis || coaching.description || '분석 정보가 없습니다.';
-        const strategy = coaching.personalizedStrategy || coaching.motivationAdvice || '전략 정보가 없습니다.';
+        const analysis = markdownToHtml(coaching.mbtiAnalysis || coaching.description || '분석 정보가 없습니다.');
+        const strategy = markdownToHtml(coaching.personalizedStrategy || coaching.motivationAdvice || '전략 정보가 없습니다.');
         const tips = coaching.studyTips || ['학습 팁이 없습니다.'];
         
         resultContainer.innerHTML = `
@@ -2244,18 +2256,18 @@ async function getMBTICoaching(mbtiType) {
                 <div class="coaching-content">
                     <div class="analysis-section">
                         <h4>📊 MBTI 학습 특성 분석</h4>
-                        <p>${analysis}</p>
+                        <div class="content-text">${analysis}</div>
                     </div>
                     <div class="strategy-section">
                         <h4>💡 개인화된 학습 전략</h4>
-                        <p>${strategy}</p>
+                        <div class="content-text">${strategy}</div>
                     </div>
                     <div class="tips-section">
                         <h4>📚 추천 학습 방법</h4>
                         <ul>
                             ${Array.isArray(tips) ? 
-                                tips.map(tip => `<li>${tip}</li>`).join('') : 
-                                `<li>${tips}</li>`
+                                tips.map(tip => `<li>${markdownToHtml(tip)}</li>`).join('') : 
+                                `<li>${markdownToHtml(tips)}</li>`
                             }
                         </ul>
                     </div>
