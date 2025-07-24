@@ -1462,8 +1462,8 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
         <div class="main-content">
             <!-- 공유 모드 알림 -->
             <div class="shared-header">
-                <h1>🏖️ 방학 순공 플래너</h1>
-                <p>공유된 캘린더 <span class="permission-badge">${permissionText}</span></p>
+                <h1 style="color: white !important; font-size: 2rem !important; margin: 0 !important;">🏖️ 방학 순공 플래너</h1>
+                <p style="color: white !important; margin: 10px 0 !important;">공유된 캘린더 <span class="permission-badge">${permissionText}</span></p>
                 <div class="shared-info">
                     <p><strong>📌 이 캘린더는 공유 링크로 접근하고 있습니다.</strong></p>
                     ${canRecord ? 
@@ -1560,7 +1560,7 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 const header = document.querySelector('.header');
                 if (header) header.style.display = 'none';
                 
-                // 불필요한 버튼들 숨기기
+                // 불필요한 버튼들 및 섹션 숨기기
                 const scheduleBtn = document.getElementById('schedule-register-btn');
                 if (scheduleBtn) scheduleBtn.style.display = 'none';
                 const mbtiBtn = document.getElementById('mbti-coaching-btn');
@@ -1569,6 +1569,10 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 if (shareBtn) shareBtn.style.display = 'none';
                 const logoutBtn = document.getElementById('logout-btn');
                 if (logoutBtn) logoutBtn.style.display = 'none';
+                
+                // 주간 스케줄 평가 섹션 숨기기
+                const weeklyEvaluationSection = document.querySelector('.weekly-evaluation-section');
+                if (weeklyEvaluationSection) weeklyEvaluationSection.style.display = 'none';
                 
                 // 공유 데이터 로드
                 loadSharedData();
@@ -1618,9 +1622,10 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                     updateWeeklySchedule();
                 }
                 
-                if (typeof updateWeeklyEvaluation === 'function') {
-                    updateWeeklyEvaluation();
-                }
+                // 주간 평가는 공유 모드에서 제외
+                // if (typeof updateWeeklyEvaluation === 'function') {
+                //     updateWeeklyEvaluation();
+                // }
                 
                 console.log('✅ 공유 데이터 로드 및 렌더링 완료');
             } catch (error) {
