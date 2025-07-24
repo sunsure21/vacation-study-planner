@@ -1629,6 +1629,11 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             userEmail: '${userEmail}'
         };
         
+        // 디버깅: 공유 모드 설정 확인
+        console.log('🔧 SHARED_MODE 설정:', window.SHARED_MODE);
+        console.log('🌐 현재 URL:', window.location.href);
+        console.log('📍 pathname:', window.location.pathname);
+        
         // 공유 모드 플래그 (planner.js 로드 전에 설정)
         window.isSharedMode = true;
     </script>
@@ -1879,33 +1884,64 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
         
         // 읽기 전용 모드에서 완수 버튼 숨기기
         function hideCompleteButtonsInReadOnlyMode() {
-            // 현재 있는 완수 버튼들 숨기기
-            const completeButtons = document.querySelectorAll('.btn-complete');
-            completeButtons.forEach(btn => {
-                btn.style.display = 'none';
-            });
+            console.log('🔒 완수 버튼 숨김 함수 실행 시작');
             
-            // 모달이 새로 열릴 때마다 완수 버튼 숨기기 (MutationObserver 사용)
+            // 강력한 완수 버튼 숨김 함수
+            function forceHideCompleteButtons() {
+                const completeButtons = document.querySelectorAll('.btn-complete');
+                console.log(\`🔍 발견된 완수 버튼 수: \${completeButtons.length}\`);
+                
+                completeButtons.forEach((btn, index) => {
+                    btn.style.display = 'none !important';
+                    btn.style.visibility = 'hidden';
+                    btn.disabled = true;
+                    btn.remove(); // 아예 DOM에서 제거
+                    console.log(\`🚫 완수 버튼 \${index + 1} 제거됨\`);
+                });
+                
+                return completeButtons.length;
+            }
+            
+            // 즉시 실행
+            const initialCount = forceHideCompleteButtons();
+            
+            // 정기적으로 체크 (setInterval)
+            const intervalId = setInterval(() => {
+                const count = forceHideCompleteButtons();
+                if (count > 0) {
+                    console.log(\`🔄 추가 완수 버튼 \${count}개 제거\`);
+                }
+            }, 500); // 0.5초마다
+            
+            // MutationObserver로 실시간 감지
             const observer = new MutationObserver((mutations) => {
+                let found = false;
                 mutations.forEach((mutation) => {
-                    if (mutation.type === 'childList') {
-                        const newCompleteButtons = mutation.target.querySelectorAll('.btn-complete');
-                        newCompleteButtons.forEach(btn => {
-                            btn.style.display = 'none';
-                        });
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        const count = forceHideCompleteButtons();
+                        if (count > 0) {
+                            found = true;
+                        }
                     }
                 });
+                if (found) {
+                    console.log('🔍 MutationObserver: 새로운 완수 버튼 감지 및 제거');
+                }
             });
             
-            // 모달 컨테이너 관찰
-            const modalContainer = document.body;
-            if (modalContainer) {
-                observer.observe(modalContainer, {
-                    childList: true,
-                    subtree: true
-                });
-                console.log('🔒 읽기 전용 모드: 완수 버튼 숨김 처리 완료');
-            }
+            // DOM 전체 관찰
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            
+            console.log(\`🔒 읽기 전용 모드: 완수 버튼 숨김 처리 완료 (초기 \${initialCount}개 제거)\`);
+            
+            // 5초 후 interval 정리 (성능을 위해)
+            setTimeout(() => {
+                clearInterval(intervalId);
+                console.log('⏰ 완수 버튼 체크 interval 정리됨');
+            }, 5000);
         }
     </script>
 </body>
