@@ -2233,21 +2233,31 @@ async function getMBTICoaching(mbtiType) {
         console.log('📋 코칭 데이터 수신:', coaching);
         
         // 코칭 결과 표시
+        const title = coaching.title || `${mbtiType} 맞춤 학습 코칭`;
+        const analysis = coaching.mbtiAnalysis || coaching.description || '분석 정보가 없습니다.';
+        const strategy = coaching.personalizedStrategy || coaching.motivationAdvice || '전략 정보가 없습니다.';
+        const tips = coaching.studyTips || ['학습 팁이 없습니다.'];
+        
         resultContainer.innerHTML = `
             <div class="coaching-result">
-                <h3>🎯 ${coaching.title}</h3>
+                <h3>🎯 ${title}</h3>
                 <div class="coaching-content">
                     <div class="analysis-section">
                         <h4>📊 MBTI 학습 특성 분석</h4>
-                        <p>${coaching.mbtiAnalysis}</p>
+                        <p>${analysis}</p>
                     </div>
-                    <div class="advice-section">
-                        <h4>💡 맞춤 학습 조언</h4>
-                        <p>${coaching.studyAdvice}</p>
+                    <div class="strategy-section">
+                        <h4>💡 개인화된 학습 전략</h4>
+                        <p>${strategy}</p>
                     </div>
-                    <div class="methods-section">
+                    <div class="tips-section">
                         <h4>📚 추천 학습 방법</h4>
-                        <p>${coaching.studyMethods}</p>
+                        <ul>
+                            ${Array.isArray(tips) ? 
+                                tips.map(tip => `<li>${tip}</li>`).join('') : 
+                                `<li>${tips}</li>`
+                            }
+                        </ul>
                     </div>
                 </div>
             </div>
