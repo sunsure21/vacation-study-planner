@@ -1922,6 +1922,12 @@ function markdownToHtml(text) {
 
 // 초기화
 document.addEventListener('DOMContentLoaded', async function() {
+    // 공유 모드에서는 자동 초기화 건너뛰기
+    if (window.isSharedMode) {
+        console.log('📤 공유 모드 감지, 자동 초기화 건너뛰기');
+        return;
+    }
+    
     console.log('🚀 플래너 페이지 초기화 시작');
     console.log('📍 현재 URL:', window.location.href);
     console.log('🕒 현재 시간:', new Date().toISOString());
@@ -1960,26 +1966,49 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     console.log(' 플래너 페이지 초기화 완료');
     
-    // 이벤트 리스너 등록
-    document.getElementById('vacation-setup-form').addEventListener('submit', handleVacationSetup);
-    document.getElementById('schedule-form').addEventListener('submit', handleScheduleSubmit);
-    document.getElementById('reset-period-btn').addEventListener('click', handleResetPeriod);
+    // 이벤트 리스너 등록 (요소 존재 확인 후)
+    const setupForm = document.getElementById('vacation-setup-form');
+    if (setupForm) setupForm.addEventListener('submit', handleVacationSetup);
+    
+    const scheduleForm = document.getElementById('schedule-form');
+    if (scheduleForm) scheduleForm.addEventListener('submit', handleScheduleSubmit);
+    
+    const resetBtn = document.getElementById('reset-period-btn');
+    if (resetBtn) resetBtn.addEventListener('click', handleResetPeriod);
     
     // 버튼 이벤트
-    document.getElementById('schedule-register-btn').addEventListener('click', showScheduleModal);
-    document.getElementById('mbti-coaching-btn').addEventListener('click', showMBTICoaching);
-    document.getElementById('share-calendar-btn').addEventListener('click', showShareModal);
-    document.getElementById('logout-btn').addEventListener('click', handleLogout);
+    const scheduleBtn = document.getElementById('schedule-register-btn');
+    if (scheduleBtn) scheduleBtn.addEventListener('click', showScheduleModal);
+    
+    const mbtiBtn = document.getElementById('mbti-coaching-btn');
+    if (mbtiBtn) mbtiBtn.addEventListener('click', showMBTICoaching);
+    
+    const shareBtn = document.getElementById('share-calendar-btn');
+    if (shareBtn) shareBtn.addEventListener('click', showShareModal);
+    
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     
     // 모달 닫기 이벤트
-    document.getElementById('schedule-modal-close').addEventListener('click', closeScheduleModal);
-    document.getElementById('schedule-cancel-btn').addEventListener('click', closeScheduleModal); // 취소 버튼 추가
-    document.getElementById('day-modal-close').addEventListener('click', () => {
+    const scheduleModalClose = document.getElementById('schedule-modal-close');
+    if (scheduleModalClose) scheduleModalClose.addEventListener('click', closeScheduleModal);
+    
+    const scheduleCancelBtn = document.getElementById('schedule-cancel-btn');
+    if (scheduleCancelBtn) scheduleCancelBtn.addEventListener('click', closeScheduleModal);
+    
+    const dayModalClose = document.getElementById('day-modal-close');
+    if (dayModalClose) dayModalClose.addEventListener('click', () => {
         closeModal('day-summary-modal');
     });
-    document.getElementById('study-modal-close').addEventListener('click', closeStudyTimeModal);
-    document.getElementById('mbti-modal-close').addEventListener('click', closeMBTICoachingModal);
-    document.getElementById('share-modal-close').addEventListener('click', closeShareModal);
+    
+    const studyModalClose = document.getElementById('study-modal-close');
+    if (studyModalClose) studyModalClose.addEventListener('click', closeStudyTimeModal);
+    
+    const mbtiModalClose = document.getElementById('mbti-modal-close');
+    if (mbtiModalClose) mbtiModalClose.addEventListener('click', closeMBTICoachingModal);
+    
+    const shareModalClose = document.getElementById('share-modal-close');
+    if (shareModalClose) shareModalClose.addEventListener('click', closeShareModal);
     
     // 모달 외부 클릭 시 닫기
     window.addEventListener('click', (event) => {
