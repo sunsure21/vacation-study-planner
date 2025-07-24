@@ -2231,17 +2231,31 @@ function showShareLinks(shareData) {
     const modal = document.getElementById('share-modal');
     const content = modal.querySelector('.modal-body');
     
-    // 서버에서 viewToken을 받아서 공유 URL 생성
+    // 서버에서 viewToken과 recordToken을 받아서 공유 URL 생성
     const baseUrl = window.location.origin;
-    const shareUrl = `${baseUrl}/shared/${shareData.viewToken}`;
+    const viewUrl = `${baseUrl}/shared/view/${shareData.viewToken}`;
+    const recordUrl = `${baseUrl}/shared/record/${shareData.recordToken}`;
     
     content.innerHTML = `
         <div class="share-content">
             <h3>📅 캘린더 공유</h3>
-            <p>생성된 공유 링크:</p>
-            <div class="share-link">
-                <input type="text" value="${shareUrl}" readonly>
-                <button onclick="copyToClipboard('${shareUrl}')">복사</button>
+            
+            <div class="share-section">
+                <h4>👀 보기 전용 링크</h4>
+                <p>캘린더를 조회만 할 수 있습니다</p>
+                <div class="share-link">
+                    <input type="text" value="${viewUrl}" readonly>
+                    <button onclick="copyToClipboard('${viewUrl}')">복사</button>
+                </div>
+            </div>
+            
+            <div class="share-section">
+                <h4>✏️ 실적 입력 가능 링크</h4>
+                <p>순공 실적을 입력할 수 있습니다</p>
+                <div class="share-link">
+                    <input type="text" value="${recordUrl}" readonly>
+                    <button onclick="copyToClipboard('${recordUrl}')">복사</button>
+                </div>
             </div>
         </div>
     `;
