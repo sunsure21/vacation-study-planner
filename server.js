@@ -1260,25 +1260,61 @@ app.get('/api/shared/:token/data', async (req, res) => {
         let userEmail = null;
         let canRecord = false;
         
-        // 🔧 개선: Redis와 메모리 저장소 모두에서 조회 시도
+        // 🔧 개선: Redis → KV Store → 메모리 순으로 토큰 조회
         let viewUserEmail = null;
         let recordUserEmail = null;
         
-        try {
-            const { Redis } = require('@upstash/redis');
-            const kvStore = Redis.fromEnv();
-            
-            // view 또는 record 토큰으로 사용자 이메일 조회
-            viewUserEmail = await kvStore.get(`token:view:${token}`);
-            recordUserEmail = await kvStore.get(`token:record:${token}`);
-        } catch (error) {
-            console.log('⚠️ Redis 조회 실패:', error.message);
+        // 1. Redis 먼저 시도 (환경 변수가 있는 경우)
+        if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+            try {
+                const { Redis } = require('@upstash/redis');
+                const kvStore = Redis.fromEnv();
+                
+                // view 또는 record 토큰으로 사용자 이메일 조회
+                viewUserEmail = await kvStore.get(`token:view:${token}`);
+                recordUserEmail = await kvStore.get(`token:record:${token}`);
+                console.log('📦 Redis 조회 결과:', { viewUserEmail, recordUserEmail });
+            } catch (error) {
+                console.log('⚠️ Redis 조회 실패:', error.message);
+            }
+        } else {
+            console.log('⚠️ Redis 환경 변수 없음 - KV Store 사용');
         }
         
-        // Redis에서 찾지 못한 경우 메모리 저장소에서도 조회
+        // 2. Redis 실패 시 KV Store에서 조회
         if (!viewUserEmail && !recordUserEmail) {
+            try {
+                console.log('🔍 KV Store에서 토큰 조회 시도');
+                const viewTokenKey = `shareToken_view_${token}`;
+                const recordTokenKey = `shareToken_record_${token}`;
+                
+                const viewTokenData = await getUserData('system', viewTokenKey);
+                const recordTokenData = await getUserData('system', recordTokenKey);
+                
+                if (viewTokenData.success && viewTokenData.data && viewTokenData.data.userEmail) {
+                    viewUserEmail = viewTokenData.data.userEmail;
+                    console.log(`✅ KV Store에서 view 토큰 발견: ${viewUserEmail}`);
+                }
+                
+                if (recordTokenData.success && recordTokenData.data && recordTokenData.data.userEmail) {
+                    recordUserEmail = recordTokenData.data.userEmail;
+                    console.log(`✅ KV Store에서 record 토큰 발견: ${recordUserEmail}`);
+                }
+                
+                if (!viewUserEmail && !recordUserEmail) {
+                    console.log(`📝 KV Store에서 토큰 없음: ${viewTokenKey}, ${recordTokenKey}`);
+                }
+            } catch (kvError) {
+                console.log('⚠️ KV Store 조회 실패:', kvError.message);
+            }
+        }
+        
+        // 3. 최후 수단: 메모리 저장소 확인
+        if (!viewUserEmail && !recordUserEmail) {
+            console.log('📝 메모리 저장소에서 토큰 조회');
             viewUserEmail = memoryStore.get(`token:view:${token}`);
             recordUserEmail = memoryStore.get(`token:record:${token}`);
+            console.log('📦 메모리 조회 결과:', { viewUserEmail, recordUserEmail });
         }
         
         userEmail = viewUserEmail || recordUserEmail;
