@@ -1283,6 +1283,12 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <style>
+        /* 공유 화면 전용 스타일 - 메인 화면과 통일 */
+        body {
+            background: var(--body-bg, #f8fafc) !important;
+            font-family: var(--font-family, 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif) !important;
+        }
+        
         .shared-header {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
@@ -1292,11 +1298,12 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             text-align: center;
         }
         .shared-info {
-            background: #f8f9fa;
+            background: var(--surface-bg, #ffffff);
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
             border-left: 4px solid #667eea;
+            border: 1px solid var(--border-color, #e2e8f0);
         }
         .permission-badge {
             display: inline-block;

@@ -472,6 +472,7 @@ function showDayModal(dateKey, daySchedules) {
         regularSchedules.forEach(schedule => {
             const isCompleted = completedSchedules[dateKey] && completedSchedules[dateKey][schedule.id];
             const scheduleCardClass = isCompleted ? 'schedule-card completed' : 'schedule-card';
+            const completeButtonText = isCompleted ? '완수취소' : '완수';
             
             modalHtml += `
                 <div class="${scheduleCardClass}">
@@ -479,7 +480,10 @@ function showDayModal(dateKey, daySchedules) {
                         <div class="schedule-title">${schedule.title || schedule.category}</div>
                         <div class="schedule-time">${schedule.startTime} - ${schedule.endTime}</div>
                     </div>
-                    ${!canRecord ? '<div class="readonly-badge">읽기 전용</div>' : ''}
+                    ${canRecord ? 
+                        `<button class="complete-btn" onclick="toggleScheduleComplete('${schedule.id}', '${dateKey}')">${completeButtonText}</button>` :
+                        '<div class="readonly-badge">읽기 전용</div>'
+                    }
                 </div>
             `;
         });
@@ -756,6 +760,54 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // 스케줄 완수 토글 함수 (공유 화면용)
+    window.toggleScheduleComplete = function(scheduleId, dateKey) {
+        if (!canRecord) {
+            showToast('읽기 전용 모드에서는 완수 처리할 수 없습니다.', 'error');
+            return;
+        }
+        
+        if (!completedSchedules[dateKey]) {
+            completedSchedules[dateKey] = {};
+        }
+        
+        // 완수 상태 토글
+        if (completedSchedules[dateKey][scheduleId]) {
+            delete completedSchedules[dateKey][scheduleId];
+            showToast('완수 취소되었습니다.', 'info');
+        } else {
+            completedSchedules[dateKey][scheduleId] = true;
+            showToast('완수 처리되었습니다!', 'success');
+        }
+        
+        // 서버에 완수 데이터 저장 (실적 입력 API 재사용)
+        fetch(`/api/shared/${token}/study-record`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                dateKey: dateKey,
+                studyRecords: studyRecords,
+                completedSchedules: completedSchedules
+            })
+        }).then(response => {
+            if (!response.ok) {
+                console.error('완수 데이터 저장 실패');
+            }
+        }).catch(error => {
+            console.error('완수 데이터 저장 오류:', error);
+        });
+        
+        // 캘린더 다시 렌더링
+        renderCalendar();
+        
+        // 모달 내용 업데이트 (작은 지연 후)
+        setTimeout(() => {
+            showDaySummary(dateKey);
+        }, 100);
+    };
     
     // 데이터 로드
     loadSharedData();
