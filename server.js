@@ -1116,24 +1116,46 @@ app.get('/shared/view/:token', async (req, res) => {
             isProduction: process.env.NODE_ENV === 'production'
         });
         
-        // 🔧 개선: Redis 우선 시도, 실패 시 메모리 저장소 조회
-        console.log('🔍 Redis에서 토큰 조회 시도');
+        // 🔧 개선: Redis → KV Store → 메모리 순으로 토큰 조회
         
-        try {
-            const { Redis } = require('@upstash/redis');
-            const kvStore = Redis.fromEnv();
-            
-            // Redis 연결 테스트
-            await kvStore.ping();
-            console.log('🔗 Redis 연결 테스트 성공');
-            
-            userEmail = await kvStore.get(`token:view:${token}`);
-            console.log('📦 Redis 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
-        } catch (error) {
-            console.log('⚠️ Redis 조회 실패:', error.message);
+        // 1. Redis 먼저 시도 (환경 변수가 있는 경우)
+        if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+            try {
+                console.log('🔍 Redis에서 토큰 조회 시도');
+                const { Redis } = require('@upstash/redis');
+                const kvStore = Redis.fromEnv();
+                
+                await kvStore.ping();
+                console.log('🔗 Redis 연결 테스트 성공');
+                
+                userEmail = await kvStore.get(`token:view:${token}`);
+                console.log('📦 Redis 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
+            } catch (error) {
+                console.log('⚠️ Redis 조회 실패:', error.message);
+            }
+        } else {
+            console.log('⚠️ Redis 환경 변수 없음 - KV Store 사용');
         }
         
-        // Redis에서 찾지 못한 경우 메모리 저장소에서도 조회
+        // 2. Redis 실패 시 KV Store에서 조회
+        if (!userEmail) {
+            try {
+                console.log('🔍 KV Store에서 토큰 조회 시도');
+                const viewTokenKey = `shareToken_view_${token}`;
+                const tokenData = await getUserData('system', viewTokenKey);
+                
+                if (tokenData.success && tokenData.data && tokenData.data.userEmail) {
+                    userEmail = tokenData.data.userEmail;
+                    console.log(`✅ KV Store에서 토큰 발견: ${userEmail}`);
+                } else {
+                    console.log(`📝 KV Store에서 토큰 없음: ${viewTokenKey}`);
+                }
+            } catch (kvError) {
+                console.log('⚠️ KV Store 조회 실패:', kvError.message);
+            }
+        }
+        
+        // 3. 최후 수단: 메모리 저장소 확인
         if (!userEmail) {
             console.log('📝 메모리 저장소에서 토큰 조회');
             userEmail = memoryStore.get(`token:view:${token}`);
@@ -1169,23 +1191,46 @@ app.get('/shared/record/:token', async (req, res) => {
             isProduction: process.env.NODE_ENV === 'production'
         });
         
-        // 🔧 개선: Redis와 메모리 저장소 모두에서 조회 시도
-        console.log('🔍 Redis에서 토큰 조회 시도');
-        try {
-            const { Redis } = require('@upstash/redis');
-            const kvStore = Redis.fromEnv();
-            
-            // Redis 연결 테스트
-            await kvStore.ping();
-            console.log('🔗 Redis 연결 테스트 성공');
-            
-            userEmail = await kvStore.get(`token:record:${token}`);
-            console.log('📦 Redis 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
-        } catch (error) {
-            console.log('⚠️ Redis 조회 실패:', error.message);
+        // 🔧 개선: Redis → KV Store → 메모리 순으로 토큰 조회
+        
+        // 1. Redis 먼저 시도 (환경 변수가 있는 경우)
+        if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+            try {
+                console.log('🔍 Redis에서 토큰 조회 시도');
+                const { Redis } = require('@upstash/redis');
+                const kvStore = Redis.fromEnv();
+                
+                await kvStore.ping();
+                console.log('🔗 Redis 연결 테스트 성공');
+                
+                userEmail = await kvStore.get(`token:record:${token}`);
+                console.log('📦 Redis 조회 결과:', userEmail ? `사용자: ${userEmail}` : '토큰 없음');
+            } catch (error) {
+                console.log('⚠️ Redis 조회 실패:', error.message);
+            }
+        } else {
+            console.log('⚠️ Redis 환경 변수 없음 - KV Store 사용');
         }
         
-        // Redis에서 찾지 못한 경우 메모리 저장소에서도 조회
+        // 2. Redis 실패 시 KV Store에서 조회
+        if (!userEmail) {
+            try {
+                console.log('🔍 KV Store에서 토큰 조회 시도');
+                const recordTokenKey = `shareToken_record_${token}`;
+                const tokenData = await getUserData('system', recordTokenKey);
+                
+                if (tokenData.success && tokenData.data && tokenData.data.userEmail) {
+                    userEmail = tokenData.data.userEmail;
+                    console.log(`✅ KV Store에서 토큰 발견: ${userEmail}`);
+                } else {
+                    console.log(`📝 KV Store에서 토큰 없음: ${recordTokenKey}`);
+                }
+            } catch (kvError) {
+                console.log('⚠️ KV Store 조회 실패:', kvError.message);
+            }
+        }
+        
+        // 3. 최후 수단: 메모리 저장소 확인
         if (!userEmail) {
             console.log('📝 메모리 저장소에서 토큰 조회');
             userEmail = memoryStore.get(`token:record:${token}`);
