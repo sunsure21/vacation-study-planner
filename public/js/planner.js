@@ -592,10 +592,16 @@ async function saveDataToStorage() {
         } catch (error) {
             console.error('KV 저장 오류:', error);
         }
-    } else if (window.SHARED_MODE && window.SHARED_MODE.canRecord) {
+    } else if (window.SHARED_MODE && window.SHARED_MODE.canRecord && window.location.pathname.includes('/record/')) {
         // 공유 모드에서 실적 입력 권한이 있는 경우 서버에 저장
         try {
             console.log('📤 공유 모드 서버 저장 시작');
+            console.log('🔍 권한 확인:', {
+                canRecord: window.SHARED_MODE.canRecord,
+                pathname: window.location.pathname,
+                token: window.SHARED_MODE.token
+            });
+            
             const response = await fetch(`/api/shared/${window.SHARED_MODE.token}/study-record`, {
                 method: 'POST',
                 headers: {
@@ -616,6 +622,11 @@ async function saveDataToStorage() {
         } catch (error) {
             console.error('❌ 공유 모드 서버 저장 오류:', error);
         }
+    } else if (window.SHARED_MODE && window.SHARED_MODE.isShared) {
+        // 읽기 전용 공유 모드에서는 서버 저장 건너뛰기
+        console.log('🔒 읽기 전용 공유 모드 - 서버 저장 건너뛰기');
+        console.log('📍 현재 URL:', window.location.pathname);
+        console.log('🎯 실적 입력이 필요하다면 /record/ 링크를 사용해주세요.');
     }
 }
 
