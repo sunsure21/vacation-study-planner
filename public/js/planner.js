@@ -237,7 +237,11 @@ function updateWeeklySchedule() {
     const now = getCurrentKoreanDate();
     const weekRange = getWeekRange(now);
     
-    document.getElementById('current-week-range').textContent = weekRange.text;
+    // 공유 모드에서 안전하게 처리
+    const weekRangeElement = document.getElementById('current-week-range');
+    if (weekRangeElement) {
+        weekRangeElement.textContent = weekRange.text;
+    }
     
     // 이번 주 등록된 스케줄 표시 (식사, 취침 제외)
     const weeklySchedulesContainer = document.getElementById('weekly-registered-schedules');
@@ -285,7 +289,9 @@ function updateWeeklySchedule() {
         weeklySchedulesHtml = '<p>등록된 스케줄이 없습니다.</p>';
     }
     
-    weeklySchedulesContainer.innerHTML = weeklySchedulesHtml;
+    if (weeklySchedulesContainer) {
+        weeklySchedulesContainer.innerHTML = weeklySchedulesHtml;
+    }
     
     // 순공 가능 시간 계산 (24시간 - 식사, 학원, 취침, 기타 시간)
     let studyHoursHtml = '';
@@ -365,7 +371,9 @@ function updateWeeklySchedule() {
         studyHoursHtml += `<p><strong style="color: #8b5cf6;">이번주 시간 점유율: ${weeklyEfficiency}%</strong></p>`;
     }
     
-    weeklyStudyContainer.innerHTML = studyHoursHtml;
+    if (weeklyStudyContainer) {
+        weeklyStudyContainer.innerHTML = studyHoursHtml;
+    }
 }
 
 // 데이터 관리 함수
