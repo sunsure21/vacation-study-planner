@@ -2158,29 +2158,24 @@ function collectCurrentPlannerData() {
     }
 }
 
-// 수동 링크 생성 옵션 표시
-function showManualLinkGeneration() {
 // 에러 메시지 표시
 function showErrorMessage(message) {
-        const modal = document.getElementById('share-modal');
-        const content = modal.querySelector('.modal-body');
-        content.innerHTML = `
-            <div class="share-content">
-                <h3>⚠️ 오류 발생</h3>
-                <p>${message}</p>
-                <div class="error-actions">
-                    <button class="retry-btn" onclick="handleShareLinks()">
-                        🔄 다시 시도
-                    </button>
-                    <button class="close-btn" onclick="closeShareModal()">
-                        ❌ 닫기
-                    </button>
-                </div>
+    const modal = document.getElementById('share-modal');
+    const content = modal.querySelector('.modal-body');
+    content.innerHTML = `
+        <div class="share-content">
+            <h3>⚠️ 오류 발생</h3>
+            <p>${message}</p>
+            <div class="error-actions">
+                <button class="retry-btn" onclick="handleShareLinks()">
+                    🔄 다시 시도
+                </button>
+                <button class="close-btn" onclick="closeShareModal()">
+                    ❌ 닫기
+                </button>
             </div>
-        `;
-    }
-
-    return recentActivity;
+        </div>
+    `;
 }
 
 // 공유 모달 함수들
@@ -2211,7 +2206,7 @@ async function handleShareLinks() {
         }
         
         // 공유 링크 생성 로직 (서버 API 호출)
-        const response = await fetch('/api/share', {
+        const response = await fetch('/api/share/create', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
