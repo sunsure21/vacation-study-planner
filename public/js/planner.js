@@ -2372,6 +2372,6 @@ function updateWeeklyEvaluation() {
 function handleLogout() {
     if (confirm('정말 로그아웃하시겠습니까?')) {
         localStorage.clear();
-        window.location.href = 'index.html';
+        window.location.href = '/';
     }
 }
