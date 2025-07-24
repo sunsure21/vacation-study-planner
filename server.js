@@ -1627,6 +1627,9 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 //     updateWeeklyEvaluation();
                 // }
                 
+                // 공유 모드에서 모달 이벤트 리스너 등록
+                setupSharedModeEventListeners();
+                
                 console.log('✅ 공유 데이터 로드 및 렌더링 완료');
             } catch (error) {
                 console.error('❌ 공유 데이터 로드 오류:', error);
@@ -1676,6 +1679,35 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             setTimeout(() => {
                 showDaySummary(dateKey);
             }, 100);
+        }
+        
+        // 공유 모드용 모달 이벤트 리스너 설정
+        function setupSharedModeEventListeners() {
+            console.log('🔗 공유 모드 이벤트 리스너 설정 시작');
+            
+            // 모달 닫기 이벤트들
+            const dayModalClose = document.getElementById('day-modal-close');
+            if (dayModalClose) {
+                dayModalClose.addEventListener('click', () => {
+                    closeModal('day-summary-modal');
+                });
+                console.log('✅ 일별 모달 닫기 이벤트 등록');
+            }
+            
+            const studyModalClose = document.getElementById('study-modal-close');
+            if (studyModalClose) {
+                studyModalClose.addEventListener('click', () => {
+                    closeModal('study-time-modal');
+                });
+                console.log('✅ 순공 시간 모달 닫기 이벤트 등록');
+            }
+            
+            // closeModal 함수가 전역에서 사용 가능한지 확인
+            if (typeof closeModal !== 'function') {
+                console.warn('⚠️ closeModal 함수를 찾을 수 없습니다');
+            }
+            
+            console.log('🎯 공유 모드 이벤트 리스너 설정 완료');
         }
     </script>
 </body>
