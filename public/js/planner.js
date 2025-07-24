@@ -1154,7 +1154,7 @@ function showDayModal(dateKey, daySchedules) {
             const scheduleCardClass = isCompleted ? 'schedule-card completed' : 'schedule-card';
             
             modalHtml += `
-                <div class="${scheduleCardClass}">
+                <div id="schedule-card-${schedule.id}" class="${scheduleCardClass}">
                     <div class="schedule-info">
                         <div class="schedule-title">${schedule.title || schedule.category}</div>
                         <div class="schedule-time">${schedule.startTime} - ${schedule.endTime}</div>
@@ -1322,8 +1322,10 @@ function toggleScheduleComplete(scheduleId, dateKey) {
         completedSchedules[dateKey] = {};
     }
     
+    const isCompleted = completedSchedules[dateKey][scheduleId];
+    
     // 완수 상태 토글
-    if (completedSchedules[dateKey][scheduleId]) {
+    if (isCompleted) {
         delete completedSchedules[dateKey][scheduleId];
         showToast('완수 취소되었습니다.', 'info');
     } else {
@@ -1332,6 +1334,9 @@ function toggleScheduleComplete(scheduleId, dateKey) {
     }
     
     saveDataToStorage();
+    
+    // 모달 내 해당 스케줄 카드 즉시 업데이트
+    updateScheduleCardInModal(scheduleId, !isCompleted);
     
     // 캘린더 다시 렌더링
     renderCalendar();
@@ -1343,6 +1348,39 @@ function toggleScheduleComplete(scheduleId, dateKey) {
     setTimeout(() => {
         showDaySummary(dateKey);
     }, 100);
+}
+
+// 모달 내 스케줄 카드 즉시 업데이트 함수
+function updateScheduleCardInModal(scheduleId, isCompleted) {
+    const scheduleCard = document.getElementById(`schedule-card-${scheduleId}`);
+    if (!scheduleCard) return;
+    
+    const scheduleInfo = scheduleCard.querySelector('.schedule-info');
+    const completeButton = scheduleCard.querySelector('.btn-complete');
+    
+    if (isCompleted) {
+        // 완수 처리: 줄긋기 추가
+        scheduleCard.classList.add('completed');
+        if (scheduleInfo) {
+            scheduleInfo.style.textDecoration = 'line-through';
+            scheduleInfo.style.opacity = '0.6';
+        }
+        if (completeButton) {
+            completeButton.textContent = '완수 취소';
+            completeButton.classList.add('completed');
+        }
+    } else {
+        // 완수 취소: 줄긋기 제거
+        scheduleCard.classList.remove('completed');
+        if (scheduleInfo) {
+            scheduleInfo.style.textDecoration = 'none';
+            scheduleInfo.style.opacity = '1';
+        }
+        if (completeButton) {
+            completeButton.textContent = '완수';
+            completeButton.classList.remove('completed');
+        }
+    }
 }
 
 // 일정 수정 함수
