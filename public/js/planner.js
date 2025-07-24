@@ -1331,8 +1331,8 @@ function toggleScheduleComplete(scheduleId, dateKey) {
     // 이번주 주요일정 업데이트
     updateWeeklySchedule();
     
-    // 모달 새로고침
-    closeModal('day-summary-modal');
+    // 모달은 열린 상태로 유지하고 내용만 업데이트
+    showDaySummary(dateKey);
 }
 
 // 일정 수정 함수
@@ -2129,6 +2129,83 @@ function closeMBTICoachingModal() {
     closeModal('mbti-coaching-modal');
 }
 
+// MBTI 코칭 요청 함수
+async function getMBTICoaching(mbtiType) {
+    try {
+        const resultContainer = document.getElementById('mbti-coaching-result');
+        
+        // 로딩 상태 표시
+        resultContainer.innerHTML = `
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>🧠 ${mbtiType} 맞춤 학습 코칭을 준비하고 있습니다...</p>
+            </div>
+        `;
+        
+        // 현재 학습 데이터 수집
+        const studyData = {
+            schedules: schedules || [],
+            studyRecords: studyRecords || {},
+            completedSchedules: completedSchedules || {},
+            vacationPeriod: {
+                start: vacationStartDate ? toYYYYMMDD(vacationStartDate) : null,
+                end: vacationEndDate ? toYYYYMMDD(vacationEndDate) : null
+            }
+        };
+        
+        // 서버에 MBTI 코칭 요청
+        const response = await fetch('/mbti-coaching', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                mbtiType: mbtiType,
+                studyData: studyData,
+                currentSchedule: schedules
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('코칭 요청에 실패했습니다.');
+        }
+        
+        const coaching = await response.json();
+        
+        // 코칭 결과 표시
+        resultContainer.innerHTML = `
+            <div class="coaching-result">
+                <h3>🎯 ${coaching.title}</h3>
+                <div class="coaching-content">
+                    <div class="analysis-section">
+                        <h4>📊 MBTI 학습 특성 분석</h4>
+                        <p>${coaching.mbtiAnalysis}</p>
+                    </div>
+                    <div class="advice-section">
+                        <h4>💡 맞춤 학습 조언</h4>
+                        <p>${coaching.studyAdvice}</p>
+                    </div>
+                    <div class="methods-section">
+                        <h4>📚 추천 학습 방법</h4>
+                        <p>${coaching.studyMethods}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('MBTI 코칭 오류:', error);
+        const resultContainer = document.getElementById('mbti-coaching-result');
+        resultContainer.innerHTML = `
+            <div class="error-message">
+                <h4>⚠️ 오류 발생</h4>
+                <p>코칭 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p>
+                <button onclick="getMBTICoaching('${mbtiType}')" class="retry-btn">다시 시도</button>
+            </div>
+        `;
+    }
+}
+
 // 현재 플래너의 모든 데이터 수집
 function collectCurrentPlannerData() {
     try {
@@ -2243,18 +2320,18 @@ function showShareLinks(shareData) {
             <div class="share-section">
                 <h4>👀 보기 전용 링크</h4>
                 <p>캘린더를 조회만 할 수 있습니다</p>
-                <div class="share-link">
-                    <input type="text" value="${viewUrl}" readonly>
-                    <button onclick="copyToClipboard('${viewUrl}')">복사</button>
+                <div class="link-container">
+                    <input type="text" class="share-link-input" value="${viewUrl}" readonly>
+                    <button class="btn-copy" onclick="copyToClipboard('${viewUrl}')">복사</button>
                 </div>
             </div>
             
             <div class="share-section">
                 <h4>✏️ 실적 입력 가능 링크</h4>
                 <p>순공 실적을 입력할 수 있습니다</p>
-                <div class="share-link">
-                    <input type="text" value="${recordUrl}" readonly>
-                    <button onclick="copyToClipboard('${recordUrl}')">복사</button>
+                <div class="link-container">
+                    <input type="text" class="share-link-input" value="${recordUrl}" readonly>
+                    <button class="btn-copy" onclick="copyToClipboard('${recordUrl}')">복사</button>
                 </div>
             </div>
         </div>

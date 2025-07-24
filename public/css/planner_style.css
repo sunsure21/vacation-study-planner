@@ -2748,6 +2748,23 @@ body.modal-open {
     margin: 0 0 16px 0;
 }
 
+.share-section {
+    margin-bottom: 24px;
+}
+
+.share-section h4 {
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.share-section p {
+    color: var(--common-600);
+    font-size: 14px;
+    margin: 0 0 12px 0;
+}
+
 .link-container {
     display: flex;
     gap: 12px;
