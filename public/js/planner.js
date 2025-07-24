@@ -2230,13 +2230,18 @@ async function handleShareLinks() {
 function showShareLinks(shareData) {
     const modal = document.getElementById('share-modal');
     const content = modal.querySelector('.modal-body');
+    
+    // 서버에서 viewToken을 받아서 공유 URL 생성
+    const baseUrl = window.location.origin;
+    const shareUrl = `${baseUrl}/shared/${shareData.viewToken}`;
+    
     content.innerHTML = `
         <div class="share-content">
             <h3>📅 캘린더 공유</h3>
             <p>생성된 공유 링크:</p>
             <div class="share-link">
-                <input type="text" value="${shareData.shareUrl}" readonly>
-                <button onclick="copyToClipboard('${shareData.shareUrl}')">복사</button>
+                <input type="text" value="${shareUrl}" readonly>
+                <button onclick="copyToClipboard('${shareUrl}')">복사</button>
             </div>
         </div>
     `;
