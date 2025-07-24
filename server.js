@@ -1598,6 +1598,14 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                     console.log('📅 방학 기간 설정:', vacationStartDate, '~', vacationEndDate);
                 }
                 
+                // schedulesByDate 생성
+                if (typeof generateSchedulesByDate === 'function') {
+                    generateSchedulesByDate();
+                    console.log('📋 schedulesByDate 생성 완료');
+                } else {
+                    console.error('❌ generateSchedulesByDate 함수를 찾을 수 없습니다');
+                }
+
                 // 캘린더 렌더링 시도
                 console.log('🎯 캘린더 렌더링 시작');
                 if (typeof renderCalendar === 'function') {
