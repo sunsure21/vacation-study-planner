@@ -2371,7 +2371,10 @@ function updateWeeklyEvaluation() {
 // 로그아웃 함수
 function handleLogout() {
     if (confirm('정말 로그아웃하시겠습니까?')) {
+        // 클라이언트 데이터 정리
         localStorage.clear();
-        window.location.href = '/';
+        
+        // 서버 세션 정리를 위해 로그아웃 API 호출
+        window.location.href = '/logout';
     }
 }
