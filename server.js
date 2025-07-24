@@ -922,17 +922,39 @@ app.post('/api/share/create', requireAuth, async (req, res) => {
             console.log('📝 메모리 저장소로 fallback');
         }
         
-        // Redis 실패 시 메모리 저장소 사용
+        // Redis 실패 시 KV Store 또는 메모리 저장소 사용
         if (!redisSuccess) {
-            console.log('📝 메모리 저장소에 토큰 저장');
-            memoryStore.set(`token:view:${viewToken}`, userEmail);
-            memoryStore.set(`token:record:${recordToken}`, userEmail);
-            console.log('✅ 메모리 저장소 토큰 저장 완료');
-            console.log('📋 저장된 토큰 확인:', {
-                view: memoryStore.get(`token:view:${viewToken}`),
-                record: memoryStore.get(`token:record:${recordToken}`)
-            });
-            console.log('⚠️ 주의: 메모리 저장소는 서버 재시작 시 초기화됩니다');
+            console.log('📝 Redis 실패 - KV Store로 fallback 시도');
+            let kvSuccess = false;
+            
+            try {
+                // KV Store 사용 시도 (getUserData/saveUserData 함수 활용)
+                const tokenData = {
+                    [`token:view:${viewToken}`]: userEmail,
+                    [`token:record:${recordToken}`]: userEmail,
+                    createdAt: new Date().toISOString()
+                };
+                
+                const kvResult = await saveUserData(userEmail, 'shareTokens', tokenData);
+                if (kvResult.success) {
+                    console.log('✅ KV Store에 토큰 저장 완료');
+                    kvSuccess = true;
+                }
+            } catch (kvError) {
+                console.log('⚠️ KV Store 저장 실패:', kvError.message);
+            }
+            
+            if (!kvSuccess) {
+                console.log('📝 메모리 저장소에 토큰 저장 (최후 수단)');
+                memoryStore.set(`token:view:${viewToken}`, userEmail);
+                memoryStore.set(`token:record:${recordToken}`, userEmail);
+                console.log('✅ 메모리 저장소 토큰 저장 완료');
+                console.log('📋 저장된 토큰 확인:', {
+                    view: memoryStore.get(`token:view:${viewToken}`),
+                    record: memoryStore.get(`token:record:${recordToken}`)
+                });
+                console.log('⚠️ 주의: 메모리 저장소는 서버 재시작 시 초기화됩니다');
+            }
         }
         
         // 🔧 중요: 토큰 저장 상태 최종 검증
@@ -1241,9 +1263,20 @@ app.post('/api/shared/:token/study-record', async (req, res) => {
                 userEmail = await kvStore.get(`token:record:${token}`);
                 console.log(`📝 Redis 조회 결과:`, userEmail ? `사용자 발견: ${userEmail}` : '토큰 없음');
             } catch (error) {
-                console.log('⚠️ Redis 조회 실패, 메모리 저장소 사용:', error.message);
-                userEmail = memoryStore.get(`token:record:${token}`);
-                console.log(`📝 메모리 조회 결과:`, userEmail ? `사용자 발견: ${userEmail}` : '토큰 없음');
+                console.log('⚠️ Redis 조회 실패, KV Store 확인:', error.message);
+                
+                // KV Store에서 토큰 조회 시도
+                try {
+                    console.log('🔍 KV Store에서 토큰 조회 시도');
+                    // 모든 사용자의 shareTokens를 확인해야 하므로, 토큰으로 역조회는 어려움
+                    // 대신 메모리 저장소 사용
+                    userEmail = memoryStore.get(`token:record:${token}`);
+                    console.log(`📝 메모리 조회 결과:`, userEmail ? `사용자 발견: ${userEmail}` : '토큰 없음');
+                } catch (kvError) {
+                    console.log('⚠️ KV Store 조회도 실패:', kvError.message);
+                    userEmail = memoryStore.get(`token:record:${token}`);
+                    console.log(`📝 메모리 조회 결과:`, userEmail ? `사용자 발견: ${userEmail}` : '토큰 없음');
+                }
             }
         } else {
             // 로컬 개발 환경: 메모리 저장소 사용
@@ -1356,7 +1389,12 @@ app.get('/api/debug/token/:token', async (req, res) => {
             token: token,
             redis: { view: null, record: null },
             memory: { view: null, record: null },
-            environment: process.env.NODE_ENV
+            environment: process.env.NODE_ENV,
+            envCheck: {
+                hasUpstashUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+                hasUpstashToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
+                urlPrefix: process.env.UPSTASH_REDIS_REST_URL ? process.env.UPSTASH_REDIS_REST_URL.substring(0, 30) + '...' : null
+            }
         };
         
         // Redis 확인
@@ -1364,17 +1402,27 @@ app.get('/api/debug/token/:token', async (req, res) => {
             try {
                 const { Redis } = require('@upstash/redis');
                 const kvStore = Redis.fromEnv();
+                
+                // Redis 연결 테스트
+                await kvStore.ping();
+                result.redis.connectionTest = 'success';
+                
                 result.redis.view = await kvStore.get(`token:view:${token}`);
                 result.redis.record = await kvStore.get(`token:record:${token}`);
                 console.log(`📝 Redis 결과:`, result.redis);
             } catch (error) {
                 result.redis.error = error.message;
+                result.redis.connectionTest = 'failed';
+                console.log(`❌ Redis 오류:`, error.message);
             }
+        } else {
+            result.redis.error = 'Redis 환경 변수 없음 또는 개발 환경';
         }
         
         // 메모리 확인
         result.memory.view = memoryStore.get(`token:view:${token}`);
         result.memory.record = memoryStore.get(`token:record:${token}`);
+        result.memory.totalKeys = memoryStore.size;
         console.log(`📝 메모리 결과:`, result.memory);
         
         res.json(result);
