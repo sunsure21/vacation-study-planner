@@ -927,20 +927,48 @@ app.post('/api/share/create', requireAuth, async (req, res) => {
             console.log('📝 메모리 저장소에 토큰 저장');
             memoryStore.set(`token:view:${viewToken}`, userEmail);
             memoryStore.set(`token:record:${recordToken}`, userEmail);
+            console.log('✅ 메모리 저장소 토큰 저장 완료');
+            console.log('📋 저장된 토큰 확인:', {
+                view: memoryStore.get(`token:view:${viewToken}`),
+                record: memoryStore.get(`token:record:${recordToken}`)
+            });
             console.log('⚠️ 주의: 메모리 저장소는 서버 재시작 시 초기화됩니다');
+        }
+        
+        // 🔧 중요: 토큰 저장 상태 최종 검증
+        const tokenValidation = {
+            redis: redisSuccess,
+            memory: {
+                view: memoryStore.get(`token:view:${viewToken}`) ? true : false,
+                record: memoryStore.get(`token:record:${recordToken}`) ? true : false
+            }
+        };
+        
+        console.log('🔍 토큰 저장 상태 최종 검증:', tokenValidation);
+        
+        // 최소한 메모리에는 저장되어야 함
+        if (!tokenValidation.redis && (!tokenValidation.memory.view || !tokenValidation.memory.record)) {
+            console.error('❌ 치명적 오류: 토큰 저장 완전 실패');
+            return res.status(500).json({
+                success: false,
+                error: '토큰 저장에 실패했습니다. 다시 시도해주세요.'
+            });
         }
         
         console.log('✅ 공유 데이터 저장 완료:', {
             viewToken: viewToken.substring(0, 8) + '...',
             recordToken: recordToken.substring(0, 8) + '...',
-            dataSize: JSON.stringify(shareData).length
+            dataSize: JSON.stringify(shareData).length,
+            redisSuccess,
+            memoryBackup: !redisSuccess
         });
         
         res.json({
             success: true,
             viewToken,
             recordToken,
-            message: '공유 링크가 생성되었습니다'
+            message: '공유 링크가 생성되었습니다',
+            storageInfo: redisSuccess ? 'Redis 저장' : '메모리 저장 (임시)'
         });
         
     } catch (error) {
