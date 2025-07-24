@@ -1733,18 +1733,88 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             }
         }
         
-        // 공유 모드용 완수 토글 함수 (긴급 무효화)
+        // 공유 모드용 완수 토글 함수
         window.toggleScheduleComplete = function(scheduleId, dateKey) {
-            console.log('🚨 긴급 차단: 공유 페이지에서 완수 처리 시도가 차단되었습니다.');
-            console.log('🔍 권한 정보:', {
+            console.log('🔍 완수 처리 시도 - 권한 체크:', {
                 canRecord: window.SHARED_MODE?.canRecord,
                 pathname: window.location.pathname,
                 token: window.SHARED_MODE?.token
             });
             
-            // 모든 공유 페이지에서 완수 처리 차단
-            showToast('공유 페이지에서는 완수 처리가 제한됩니다. 본 서비스를 이용해주세요.', 'error');
-            return;
+            // 권한 체크: canRecord=true AND URL에 /record/ 포함
+            if (!window.SHARED_MODE?.canRecord || !window.location.pathname.includes('/record/')) {
+                const message = !window.SHARED_MODE?.canRecord 
+                    ? '읽기 전용 모드에서는 완수 처리할 수 없습니다.'
+                    : '실적 입력 권한이 있는 링크로 접근해주세요.';
+                showToast(message, 'error');
+                return;
+            }
+            
+            console.log('✅ 완수 처리 권한 확인됨 - 진행합니다.');
+            
+            if (!window.completedSchedules[dateKey]) {
+                window.completedSchedules[dateKey] = {};
+            }
+            
+            const isCompleted = window.completedSchedules[dateKey][scheduleId];
+            
+            // 완수 상태 토글
+            if (isCompleted) {
+                delete window.completedSchedules[dateKey][scheduleId];
+                showToast('완수 취소되었습니다.', 'info');
+            } else {
+                window.completedSchedules[dateKey][scheduleId] = true;
+                showToast('완수 처리되었습니다!', 'success');
+            }
+            
+            // 모달 내 해당 스케줄 카드 즉시 업데이트
+            updateScheduleCardInModal(scheduleId, !isCompleted);
+            
+            // 서버에 완수 데이터 저장
+            fetch(\`/api/shared/\${window.SHARED_MODE.token}/study-record\`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    dateKey: dateKey,
+                    studyRecords: window.studyRecords,
+                    completedSchedules: window.completedSchedules
+                })
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error(\`HTTP \${response.status}: \${response.statusText}\`);
+                }
+                return response.json();
+            }).then(data => {
+                console.log('✅ 완수 데이터 서버 저장 성공:', data);
+                if (data.isRealTime) {
+                    console.log('🔄 본 서비스에 실시간 반영 완료');
+                }
+            }).catch(error => {
+                console.error('❌ 완수 데이터 저장 오류:', error);
+                showToast('서버 저장에 실패했습니다. 다시 시도해주세요.', 'error');
+                
+                // 실패 시 UI 되돌리기
+                if (!isCompleted) {
+                    delete window.completedSchedules[dateKey][scheduleId];
+                } else {
+                    window.completedSchedules[dateKey][scheduleId] = true;
+                }
+                updateScheduleCardInModal(scheduleId, isCompleted);
+            });
+            
+            // 캘린더 다시 렌더링
+            renderCalendar();
+            
+            // 모달 내용 업데이트
+            setTimeout(() => {
+                if (typeof showDaySummary === 'function') {
+                    showDaySummary(dateKey);
+                } else {
+                    console.log('📝 showDaySummary 함수 없음 - 모달 업데이트 건너뛰기');
+                }
+            }, 100);
         }
         
         // 모달 내 스케줄 카드 즉시 업데이트 함수 (공유 모드용)
@@ -1784,9 +1854,18 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
         function setupSharedModeEventListeners() {
             console.log('🔗 공유 모드 이벤트 리스너 설정 시작');
             
-            // 모든 공유 페이지에서 완수 버튼 숨기기 (긴급 수정)
-            console.log('🚨 긴급 수정: 모든 공유 페이지에서 완수 버튼 숨김');
-            hideCompleteButtonsInReadOnlyMode();
+            // 권한에 따른 완수 버튼 처리
+            console.log('🔍 권한 체크:', {
+                canRecord: window.SHARED_MODE?.canRecord,
+                pathname: window.location.pathname
+            });
+            
+            if (window.SHARED_MODE?.canRecord && window.location.pathname.includes('/record/')) {
+                console.log('✅ 실적 입력 권한 확인됨 - 완수 버튼 활성화');
+            } else {
+                console.log('🔒 읽기 전용 모드 - 완수 버튼 숨김');
+                hideCompleteButtonsInReadOnlyMode();
+            }
             
             // 모달 닫기 이벤트들
             const dayModalClose = document.getElementById('day-modal-close');
