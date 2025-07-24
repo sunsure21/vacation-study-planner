@@ -1364,36 +1364,81 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             flex-shrink: 0;
         }
         
-        /* 공유 캘린더 레이아웃 개선 */
+        /* 공유 캘린더 레이아웃 개선 - 메인 캘린더와 동일하게 */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
+            gap: 4px;
             margin-top: 20px;
         }
         
-        .calendar-day {
+        .day-cell {
             position: relative;
-            min-height: 150px;
-            background: white;
-            border: 1px solid #e9ecef;
+            height: 140px;
+            padding: 4px;
+            font-size: 11px;
             border-radius: 8px;
-            padding: 8px;
+            min-height: 44px;
+            min-width: 0;
+            border: 1px solid var(--border-color, #e9ecef);
+            background: white;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
         
         .date-number {
             font-weight: 600;
-            margin-bottom: 4px;
-            text-align: center;
+            margin-bottom: 2px;
+            text-align: left;
+            font-size: 12px;
+            line-height: 1;
+            flex-shrink: 0;
         }
         
-        .day-schedules {
+        .schedules-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 1px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .schedule-item {
+            font-size: 8px;
+            padding: 1px 3px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+            height: 12px;
+            max-height: 12px;
+            min-height: 12px;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        
+        /* 모바일 대응 */
+        @media (max-width: 768px) {
+            .day-cell {
+                height: 110px;
+                padding: 2px;
+                font-size: 9px;
+            }
+            
+            .schedule-item {
+                font-size: 7px;
+                height: 10px;
+                max-height: 10px;
+                min-height: 10px;
+            }
+            
+            .date-number {
+                font-size: 10px;
+            }
         }
     </style>
 </head>
