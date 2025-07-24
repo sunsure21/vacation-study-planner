@@ -2173,8 +2173,19 @@ function closeMBTICoachingModal() {
 
 // MBTI 코칭 요청 함수
 async function getMBTICoaching(mbtiType) {
+    console.log('🚀 getMBTICoaching 함수 시작, MBTI:', mbtiType);
+    
     try {
         const resultContainer = document.getElementById('mbti-coaching-result');
+        console.log('📦 결과 컨테이너:', !!resultContainer);
+        
+        if (!resultContainer) {
+            console.error('❌ mbti-coaching-result 컨테이너를 찾을 수 없습니다');
+            return;
+        }
+        
+        // 컨테이너 표시
+        resultContainer.style.display = 'block';
         
         // 로딩 상태 표시
         resultContainer.innerHTML = `
@@ -2183,6 +2194,8 @@ async function getMBTICoaching(mbtiType) {
                 <p>🧠 ${mbtiType} 맞춤 학습 코칭을 준비하고 있습니다...</p>
             </div>
         `;
+        
+        console.log('⏳ 로딩 상태 표시 완료');
         
         // 현재 학습 데이터 수집
         const studyData = {
@@ -2196,6 +2209,7 @@ async function getMBTICoaching(mbtiType) {
         };
         
         // 서버에 MBTI 코칭 요청
+        console.log('📡 서버에 MBTI 코칭 요청 시작');
         const response = await fetch('/mbti-coaching', {
             method: 'POST',
             headers: {
@@ -2208,11 +2222,15 @@ async function getMBTICoaching(mbtiType) {
             })
         });
         
+        console.log('📨 서버 응답 상태:', response.status);
+        
         if (!response.ok) {
+            console.error('❌ 서버 응답 오류:', response.status);
             throw new Error('코칭 요청에 실패했습니다.');
         }
         
         const coaching = await response.json();
+        console.log('📋 코칭 데이터 수신:', coaching);
         
         // 코칭 결과 표시
         resultContainer.innerHTML = `

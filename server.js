@@ -1309,16 +1309,28 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
         }
         
         body {
-            background: var(--body-bg) !important;
-            font-family: var(--font-family) !important;
-            color: var(--text-color) !important;
-            margin: 0;
-            padding: 0;
+            background: #f8fafc !important;
+            background-color: #f8fafc !important;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif !important;
+            color: #1e293b !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         
         .container {
-            background: var(--body-bg) !important;
-            min-height: 100vh;
+            background: #f8fafc !important;
+            background-color: #f8fafc !important;
+            min-height: 100vh !important;
+        }
+        
+        /* 추가 강제 적용 */
+        html {
+            background: #f8fafc !important;
+            background-color: #f8fafc !important;
+        }
+        
+        * {
+            box-sizing: border-box;
         }
         
         .shared-header {
