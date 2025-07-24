@@ -1543,46 +1543,51 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             userEmail: '${userEmail}'
         };
         
-        // 본 서비스와 동일한 전역 변수 초기화
-        let schedules = [];
-        let studyRecords = {};
-        let completedSchedules = {};
-        let schedulesByDate = {};
-        let vacationStartDate = null;
-        let vacationEndDate = null;
+        // 공유 모드 플래그 (planner.js 로드 전에 설정)
+        window.isSharedMode = true;
     </script>
     <script src="/js/planner.js"></script>
     <script>
-        // 공유 모드에서만 필요한 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔧 공유 모드 초기화 시작');
-            
-            // 메뉴 숨기기
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar) sidebar.style.display = 'none';
-            const header = document.querySelector('.header');
-            if (header) header.style.display = 'none';
-            
-            // 불필요한 버튼들 숨기기
-            const scheduleBtn = document.getElementById('schedule-register-btn');
-            if (scheduleBtn) scheduleBtn.style.display = 'none';
-            const mbtiBtn = document.getElementById('mbti-coaching-btn');
-            if (mbtiBtn) mbtiBtn.style.display = 'none';
-            const shareBtn = document.getElementById('share-calendar-btn');
-            if (shareBtn) shareBtn.style.display = 'none';
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) logoutBtn.style.display = 'none';
-            
-            // 공유 데이터 로드
-            loadSharedData();
+        // planner.js 로드 완료를 기다린 후 초기화
+        window.addEventListener('load', function() {
+            // 약간의 지연을 두어 planner.js가 완전히 초기화되도록 함
+            setTimeout(function() {
+                console.log('🔧 공유 모드 초기화 시작');
+                
+                // 메뉴 숨기기
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar) sidebar.style.display = 'none';
+                const header = document.querySelector('.header');
+                if (header) header.style.display = 'none';
+                
+                // 불필요한 버튼들 숨기기
+                const scheduleBtn = document.getElementById('schedule-register-btn');
+                if (scheduleBtn) scheduleBtn.style.display = 'none';
+                const mbtiBtn = document.getElementById('mbti-coaching-btn');
+                if (mbtiBtn) mbtiBtn.style.display = 'none';
+                const shareBtn = document.getElementById('share-calendar-btn');
+                if (shareBtn) shareBtn.style.display = 'none';
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                
+                // 공유 데이터 로드
+                loadSharedData();
+            }, 500); // 0.5초 지연
         });
         
         async function loadSharedData() {
             try {
+                console.log('📡 공유 데이터 로드 시작, 토큰:', window.SHARED_MODE.token);
                 const response = await fetch(\`/api/shared/\${window.SHARED_MODE.token}/data\`);
-                const data = await response.json();
                 
-                // 본 서비스와 동일한 변수에 데이터 로드
+                if (!response.ok) {
+                    throw new Error(\`HTTP \${response.status}: \${response.statusText}\`);
+                }
+                
+                const data = await response.json();
+                console.log('📊 수신된 공유 데이터:', data);
+                
+                // 기존 전역 변수에 데이터 로드
                 schedules = data.schedules || [];
                 studyRecords = data.studyRecords || {};
                 completedSchedules = data.completedSchedules || {};
@@ -1590,14 +1595,29 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 if (data.vacationPeriod) {
                     vacationStartDate = new Date(data.vacationPeriod.start);
                     vacationEndDate = new Date(data.vacationPeriod.end);
+                    console.log('📅 방학 기간 설정:', vacationStartDate, '~', vacationEndDate);
                 }
                 
-                // 캘린더 렌더링
-                renderCalendar();
-                updateWeeklySchedule();
-                updateWeeklyEvaluation();
+                // 캘린더 렌더링 시도
+                console.log('🎯 캘린더 렌더링 시작');
+                if (typeof renderCalendar === 'function') {
+                    renderCalendar();
+                } else {
+                    console.error('❌ renderCalendar 함수를 찾을 수 없습니다');
+                }
+                
+                if (typeof updateWeeklySchedule === 'function') {
+                    updateWeeklySchedule();
+                }
+                
+                if (typeof updateWeeklyEvaluation === 'function') {
+                    updateWeeklyEvaluation();
+                }
+                
+                console.log('✅ 공유 데이터 로드 및 렌더링 완료');
             } catch (error) {
-                console.error('공유 데이터 로드 오류:', error);
+                console.error('❌ 공유 데이터 로드 오류:', error);
+                alert('공유 데이터를 불러오는 중 오류가 발생했습니다: ' + error.message);
             }
         }
         
