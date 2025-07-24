@@ -1283,55 +1283,7 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <style>
-        /* 공유 화면 전용 스타일 - 메인 화면과 완전 통일 */
-        :root {
-            --primary-color: #8b5cf6;
-            --secondary-color: #06b6d4;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-            --info-color: #3b82f6;
-            --text-color: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --surface-bg: #ffffff;
-            --body-bg: #f8fafc;
-            --card-bg: #ffffff;
-            --header-bg: #ffffff;
-            --sidebar-bg: #f8fafc;
-            --hover-bg: #f1f5f9;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --radius-sm: 0.375rem;
-            --radius-md: 0.5rem;
-            --radius-lg: 0.75rem;
-            --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-        }
-        
-        body {
-            background: #f8fafc !important;
-            background-color: #f8fafc !important;
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif !important;
-            color: #1e293b !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        
-        .container {
-            background: #f8fafc !important;
-            background-color: #f8fafc !important;
-            min-height: 100vh !important;
-        }
-        
-        /* 추가 강제 적용 */
-        html {
-            background: #f8fafc !important;
-            background-color: #f8fafc !important;
-        }
-        
-        * {
-            box-sizing: border-box;
-        }
+        /* 공유 화면을 본 서비스와 완전히 동일하게 만들기 */
         
         .shared-header {
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -1494,35 +1446,68 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="shared-header">
-            <h1>🏖️ 방학 순공 플래너</h1>
-            <p>공유된 캘린더 <span class="permission-badge">${permissionText}</span></p>
+    <!-- 본 서비스와 완전히 동일한 구조 -->
+    <div class="app">
+        <!-- 사이드바 (공유 모드에서 숨김) -->
+        <div class="sidebar">
+            <!-- 사이드바 내용은 CSS로 숨김 처리 -->
         </div>
         
-        <div class="shared-info">
-            <p><strong>📌 이 캘린더는 공유 링크로 접근하고 있습니다.</strong></p>
-            ${canRecord ? 
-                '<p>✅ 캘린더 보기 + 순공 시간 실적 입력이 가능합니다.</p>' : 
-                '<p>👀 캘린더와 통계만 확인할 수 있습니다.</p>'
-            }
+        <!-- 헤더 (공유 모드에서 숨김) -->
+        <div class="header">
+            <!-- 헤더 내용은 CSS로 숨김 처리 -->
         </div>
         
-        ${!canRecord ? '<div class="readonly-notice">📖 읽기 전용 모드입니다. 실적 입력 및 일정 수정은 불가능합니다.</div>' : ''}
-        
-        <!-- 캘린더 영역 -->
-        <div class="my-schedule-section">
-            <div class="section-header">
-                <h2>📚 방학 계획표</h2>
+        <!-- 메인 컨텐츠 -->
+        <div class="main-content">
+            <!-- 공유 모드 알림 -->
+            <div class="shared-header">
+                <h1>🏖️ 방학 순공 플래너</h1>
+                <p>공유된 캘린더 <span class="permission-badge">${permissionText}</span></p>
+                <div class="shared-info">
+                    <p><strong>📌 이 캘린더는 공유 링크로 접근하고 있습니다.</strong></p>
+                    ${canRecord ? 
+                        '<p>✅ 캘린더 보기 + 순공 시간 실적 입력이 가능합니다.</p>' : 
+                        '<p>👀 캘린더와 통계만 확인할 수 있습니다.</p>'
+                    }
+                    ${!canRecord ? '<div class="readonly-notice">📖 읽기 전용 모드입니다.</div>' : ''}
+                </div>
             </div>
             
-            <div id="calendar-container">
-                <div id="calendar"></div>
+            <!-- 이번 주 주요 일정 -->
+            <div class="weekly-schedule-section">
+                <div class="section-header">
+                    <h2>📋 이번 주 등록된 일정</h2>
+                </div>
+                <div id="weekly-schedule-content">
+                    <!-- 주요 일정이 여기에 표시됩니다 -->
+                </div>
+            </div>
+            
+            <!-- 내 일정 -->
+            <div class="my-schedule-section">
+                <div class="section-header">
+                    <h2>📚 방학 계획표</h2>
+                </div>
+                
+                <div id="calendar-container">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+            
+            <!-- 주간 스케줄 평가 -->
+            <div class="weekly-evaluation-section">
+                <div class="section-header">
+                    <h2>📊 주간 스케줄 평가</h2>
+                </div>
+                <div id="weekly-evaluation-content">
+                    <!-- 주간 평가가 여기에 표시됩니다 -->
+                </div>
             </div>
         </div>
     </div>
     
-    <!-- 모달들 -->
+    <!-- 본 서비스와 동일한 모달들 -->
     <div id="day-summary-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1535,7 +1520,6 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
         </div>
     </div>
     
-    ${canRecord ? `
     <div id="study-time-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1547,7 +1531,6 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             </div>
         </div>
     </div>
-    ` : ''}
     
     <div id="toast-container"></div>
     
@@ -1559,8 +1542,52 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             canRecord: ${canRecord},
             userEmail: '${userEmail}'
         };
+        
+        // 본 서비스와 동일한 전역 변수 초기화
+        let schedules = [];
+        let studyRecords = {};
+        let completedSchedules = {};
+        let schedulesByDate = {};
+        let vacationStartDate = null;
+        let vacationEndDate = null;
     </script>
-    <script src="/js/shared_planner.js"></script>
+    <script src="/js/planner.js"></script>
+    <script>
+        // 공유 모드에서만 필요한 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 공유 데이터 로드
+            loadSharedData();
+            // 메뉴 숨기기
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) sidebar.style.display = 'none';
+            const header = document.querySelector('.header');
+            if (header) header.style.display = 'none';
+        });
+        
+        async function loadSharedData() {
+            try {
+                const response = await fetch(\`/api/shared/\${window.SHARED_MODE.token}/data\`);
+                const data = await response.json();
+                
+                // 본 서비스와 동일한 변수에 데이터 로드
+                schedules = data.schedules || [];
+                studyRecords = data.studyRecords || {};
+                completedSchedules = data.completedSchedules || {};
+                
+                if (data.vacationPeriod) {
+                    vacationStartDate = new Date(data.vacationPeriod.start);
+                    vacationEndDate = new Date(data.vacationPeriod.end);
+                }
+                
+                // 캘린더 렌더링
+                renderCalendar();
+                updateWeeklySchedule();
+                updateWeeklyEvaluation();
+            } catch (error) {
+                console.error('공유 데이터 로드 오류:', error);
+            }
+        }
+    </script>
 </body>
 </html>
     `;
