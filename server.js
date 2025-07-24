@@ -1219,7 +1219,27 @@ app.post('/api/shared/:token/study-record', async (req, res) => {
         }
         
         if (!userEmail) {
-            return res.status(403).json({ error: '실적 입력 권한이 없습니다.' });
+            // view 토큰으로 시도했는지 확인
+            let isViewToken = false;
+            try {
+                if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+                    const { Redis } = require('@upstash/redis');
+                    const kvStore = Redis.fromEnv();
+                    const viewEmail = await kvStore.get(`token:view:${token}`);
+                    if (viewEmail) isViewToken = true;
+                } else {
+                    const viewEmail = memoryStore.get(`token:view:${token}`);
+                    if (viewEmail) isViewToken = true;
+                }
+            } catch (error) {
+                console.log('토큰 타입 확인 오류:', error);
+            }
+            
+            const errorMessage = isViewToken 
+                ? '읽기 전용 링크입니다. 실적 입력 권한이 있는 링크로 접근해주세요.' 
+                : '유효하지 않은 토큰이거나 실적 입력 권한이 없습니다.';
+                
+            return res.status(403).json({ error: errorMessage });
         }
         
         const { dateKey, slotId, minutes, subject, notes, studyRecords, completedSchedules } = req.body;
@@ -1715,6 +1735,12 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 return;
             }
             
+            // 토큰 타입 확인 (view 토큰으로는 완수 처리 불가)
+            if (window.SHARED_MODE.token && !window.location.pathname.includes('/record/')) {
+                showToast('실적 입력 권한이 있는 링크로 접근해야 완수 처리가 가능합니다.', 'error');
+                return;
+            }
+            
             if (!window.completedSchedules[dateKey]) {
                 window.completedSchedules[dateKey] = {};
             }
@@ -1772,7 +1798,11 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             
             // 모달 내용 업데이트
             setTimeout(() => {
-                showDaySummary(dateKey);
+                if (typeof showDaySummary === 'function') {
+                    showDaySummary(dateKey);
+                } else {
+                    console.log('📝 showDaySummary 함수 없음 - 모달 업데이트 건너뛰기');
+                }
             }, 100);
         }
         
