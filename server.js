@@ -1443,6 +1443,52 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 font-size: 10px;
             }
         }
+        
+        /* 본 서비스와 동일한 스타일 강제 적용 */
+        .calendar-grid {
+            font-size: 14px !important;
+            line-height: 1.4 !important;
+        }
+        
+        .day-cell {
+            font-size: 12px !important;
+            height: 280px !important;
+            padding: 8px 8px 30px 8px !important;
+            min-height: 280px !important;
+        }
+        
+        .date-number {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            margin-bottom: 4px !important;
+        }
+        
+        .schedule-item {
+            font-size: 10px !important;
+            height: auto !important;
+            min-height: 16px !important;
+            padding: 2px 4px !important;
+            margin-bottom: 2px !important;
+            line-height: 1.2 !important;
+        }
+        
+        .schedules-container {
+            gap: 2px !important;
+            font-size: 10px !important;
+        }
+        
+        /* 순공 실적 스타일 통일 */
+        .daily-study-time {
+            font-size: 9px !important;
+            height: 18px !important;
+            padding: 2px 4px !important;
+        }
+        
+        /* 전체 컨테이너 스타일 통일 */
+        .main-content {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif !important;
+            font-size: 14px !important;
+        }
     </style>
 </head>
 <body>
