@@ -1318,6 +1318,44 @@ app.post('/api/shared/:token/study-record', async (req, res) => {
     }
 });
 
+// 토큰 검증 API (디버깅용)
+app.get('/api/debug/token/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        console.log(`🔍 토큰 디버깅 요청: ${token}`);
+        
+        let result = {
+            token: token,
+            redis: { view: null, record: null },
+            memory: { view: null, record: null },
+            environment: process.env.NODE_ENV
+        };
+        
+        // Redis 확인
+        if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
+            try {
+                const { Redis } = require('@upstash/redis');
+                const kvStore = Redis.fromEnv();
+                result.redis.view = await kvStore.get(`token:view:${token}`);
+                result.redis.record = await kvStore.get(`token:record:${token}`);
+                console.log(`📝 Redis 결과:`, result.redis);
+            } catch (error) {
+                result.redis.error = error.message;
+            }
+        }
+        
+        // 메모리 확인
+        result.memory.view = memoryStore.get(`token:view:${token}`);
+        result.memory.record = memoryStore.get(`token:record:${token}`);
+        console.log(`📝 메모리 결과:`, result.memory);
+        
+        res.json(result);
+    } catch (error) {
+        console.error('토큰 디버깅 오류:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // 공유 토큰 생성 함수
 function generateShareToken() {
     return require('crypto').randomBytes(32).toString('hex');
