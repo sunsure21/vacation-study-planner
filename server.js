@@ -1465,12 +1465,12 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 <h1 style="color: white !important; font-size: 2rem !important; margin: 0 !important;">🏖️ 방학 순공 플래너</h1>
                 <p style="color: white !important; margin: 10px 0 !important;">공유된 캘린더 <span class="permission-badge">${permissionText}</span></p>
                 <div class="shared-info">
-                    <p><strong>📌 이 캘린더는 공유 링크로 접근하고 있습니다.</strong></p>
+                    <p style="color: #1e293b !important;"><strong>📌 이 캘린더는 공유 링크로 접근하고 있습니다.</strong></p>
                     ${canRecord ? 
-                        '<p>✅ 캘린더 보기 + 순공 시간 실적 입력이 가능합니다.</p>' : 
-                        '<p>👀 캘린더와 통계만 확인할 수 있습니다.</p>'
+                        '<p style="color: #1e293b !important;">✅ 캘린더 보기 + 순공 시간 실적 입력이 가능합니다.</p>' : 
+                        '<p style="color: #1e293b !important;">👀 캘린더와 통계만 확인할 수 있습니다.</p>'
                     }
-                    ${!canRecord ? '<div class="readonly-notice">📖 읽기 전용 모드입니다.</div>' : ''}
+                    ${!canRecord ? '<div class="readonly-notice" style="color: #1e293b !important;">📖 읽기 전용 모드입니다.</div>' : ''}
                 </div>
             </div>
             
