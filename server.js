@@ -1283,10 +1283,42 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <style>
-        /* 공유 화면 전용 스타일 - 메인 화면과 통일 */
+        /* 공유 화면 전용 스타일 - 메인 화면과 완전 통일 */
+        :root {
+            --primary-color: #8b5cf6;
+            --secondary-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --info-color: #3b82f6;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --surface-bg: #ffffff;
+            --body-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --header-bg: #ffffff;
+            --sidebar-bg: #f8fafc;
+            --hover-bg: #f1f5f9;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+        
         body {
-            background: var(--body-bg, #f8fafc) !important;
-            font-family: var(--font-family, 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif) !important;
+            background: var(--body-bg) !important;
+            font-family: var(--font-family) !important;
+            color: var(--text-color) !important;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            background: var(--body-bg) !important;
+            min-height: 100vh;
         }
         
         .shared-header {

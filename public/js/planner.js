@@ -2076,8 +2076,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // MBTI 학습 코칭 기능
 function showMBTICoaching() {
+    console.log('🧠 MBTI 코칭 모달 열기');
     const modal = document.getElementById('mbti-coaching-modal');
     const resultContainer = document.getElementById('mbti-coaching-result');
+    
+    if (!modal) {
+        console.error('❌ MBTI 모달을 찾을 수 없습니다');
+        return;
+    }
     
     // 결과 초기화
     resultContainer.style.display = 'none';
@@ -2085,7 +2091,7 @@ function showMBTICoaching() {
     
     // MBTI 버튼 이벤트 리스너 추가
     setupMBTIButtons();
-    
+
     openModal('mbti-coaching-modal');
 }
 
@@ -2093,19 +2099,43 @@ function showMBTICoaching() {
 window.selectedMbti = null;
 
 function setupMBTIButtons() {
+    console.log('🔧 MBTI 버튼 설정 시작');
+    
     const mbtiButtons = document.querySelectorAll('.mbti-btn');
     const selectedMbtiDiv = document.getElementById('selected-mbti');
     const selectedMbtiText = document.getElementById('selected-mbti-text');
     const coachingBtn = document.getElementById('mbti-get-coaching-btn');
     
+    console.log('📊 MBTI 요소 확인:', {
+        mbtiButtons: mbtiButtons.length,
+        selectedMbtiDiv: !!selectedMbtiDiv,
+        selectedMbtiText: !!selectedMbtiText,
+        coachingBtn: !!coachingBtn
+    });
+    
+    if (!selectedMbtiDiv || !selectedMbtiText || !coachingBtn) {
+        console.error('❌ MBTI 모달 요소들을 찾을 수 없습니다');
+        return;
+    }
+    
     // 초기화
     window.selectedMbti = null;
     selectedMbtiDiv.style.display = 'none';
     
+    // 기존 이벤트 리스너 제거 (클릭 이벤트만)
     mbtiButtons.forEach(button => {
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+    });
+    
+    // 새로운 버튼들에 이벤트 리스너 추가
+    const newMbtiButtons = document.querySelectorAll('.mbti-btn');
+    newMbtiButtons.forEach(button => {
         button.addEventListener('click', function() {
+            console.log('MBTI 버튼 클릭:', this.dataset.mbti);
+            
             // 기존 선택 해제
-            mbtiButtons.forEach(btn => btn.classList.remove('selected'));
+            newMbtiButtons.forEach(btn => btn.classList.remove('selected'));
             
             // 현재 버튼 선택
             this.classList.add('selected');
@@ -2117,22 +2147,24 @@ function setupMBTIButtons() {
             selectedMbtiText.textContent = `${mbtiType} - ${mbtiName}`;
             selectedMbtiDiv.style.display = 'block';
             
-            console.log('MBTI 선택됨:', window.selectedMbti);
+            console.log('✅ MBTI 선택 완료:', window.selectedMbti);
         });
     });
     
-    // 기존 이벤트 리스너 제거 후 새로 등록
+    // 코칭 버튼 이벤트 리스너 교체
     const newCoachingBtn = coachingBtn.cloneNode(true);
     coachingBtn.parentNode.replaceChild(newCoachingBtn, coachingBtn);
     
     newCoachingBtn.addEventListener('click', function() {
-        console.log('코칭 버튼 클릭, 선택된 MBTI:', window.selectedMbti);
+        console.log('🎯 코칭 버튼 클릭, 선택된 MBTI:', window.selectedMbti);
         if (window.selectedMbti) {
             getMBTICoaching(window.selectedMbti);
         } else {
             showToast('MBTI 타입을 선택해주세요.', 'error');
         }
     });
+    
+    console.log('✅ MBTI 버튼 설정 완료');
 }
 
 function closeMBTICoachingModal() {
