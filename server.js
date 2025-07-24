@@ -1222,36 +1222,56 @@ app.post('/api/shared/:token/study-record', async (req, res) => {
             return res.status(403).json({ error: '실적 입력 권한이 없습니다.' });
         }
         
-        const { dateKey, slotId, minutes, subject, notes } = req.body;
+        const { dateKey, slotId, minutes, subject, notes, studyRecords, completedSchedules } = req.body;
         
-        // 🚀 실시간 연동: 원본 사용자 데이터에 직접 실적 저장
-        const studyRecordsResult = await getUserData(userEmail, 'studyRecords');
-        const studyRecords = studyRecordsResult.success ? (studyRecordsResult.data || {}) : {};
+        // 🚀 실시간 연동: 원본 사용자 데이터에 직접 저장
+        let saveResults = [];
         
-        // 실적 데이터 업데이트
-        if (!studyRecords[dateKey]) {
-            studyRecords[dateKey] = {};
+        // 1. 순공 실적 데이터 저장 (기존 방식)
+        if (slotId && minutes !== undefined) {
+            const studyRecordsResult = await getUserData(userEmail, 'studyRecords');
+            const currentStudyRecords = studyRecordsResult.success ? (studyRecordsResult.data || {}) : {};
+            
+            if (!currentStudyRecords[dateKey]) {
+                currentStudyRecords[dateKey] = {};
+            }
+            
+            currentStudyRecords[dateKey][slotId] = {
+                minutes: parseInt(minutes) || 0,
+                subject: subject || '',
+                notes: notes || '',
+                timestamp: new Date().toISOString()
+            };
+            
+            const studyResult = await saveUserData(userEmail, 'studyRecords', currentStudyRecords);
+            saveResults.push({ type: 'studyRecords', success: studyResult.success });
         }
         
-        studyRecords[dateKey][slotId] = {
-            minutes: parseInt(minutes) || 0,
-            subject: subject || '',
-            notes: notes || '',
-            timestamp: new Date().toISOString()
-        };
+        // 2. 완수 처리 데이터 저장 (새로 추가)
+        if (completedSchedules) {
+            const completedResult = await saveUserData(userEmail, 'completedSchedules', completedSchedules);
+            saveResults.push({ type: 'completedSchedules', success: completedResult.success });
+        }
         
-        // 원본 사용자 데이터에 저장 (실시간 반영)
-        const saveResult = await saveUserData(userEmail, 'studyRecords', studyRecords);
+        // 3. 순공 실적 전체 데이터 저장 (공유 모드에서 전송된 경우)
+        if (studyRecords && !slotId) {
+            const studyResult = await saveUserData(userEmail, 'studyRecords', studyRecords);
+            saveResults.push({ type: 'studyRecords', success: studyResult.success });
+        }
         
-        if (saveResult.success) {
-            console.log(`✅ 공유에서 실적 입력 완료 - 원본 반영: ${userEmail}, ${dateKey}, ${slotId}`);
+        const allSuccess = saveResults.every(result => result.success);
+        
+        if (allSuccess) {
+            console.log(`✅ 공유에서 데이터 업데이트 완료 - 원본 반영: ${userEmail}, ${dateKey}`);
             res.json({ 
                 success: true,
-                message: '실적이 원본 스케줄에 저장되었습니다.',
-                isRealTime: true
+                message: '데이터가 원본 스케줄에 저장되었습니다.',
+                isRealTime: true,
+                savedTypes: saveResults.map(r => r.type)
             });
         } else {
-            res.status(500).json({ error: '실적 저장에 실패했습니다.' });
+            console.error('❌ 일부 데이터 저장 실패:', saveResults);
+            res.status(500).json({ error: '데이터 저장에 실패했습니다.' });
         }
         
     } catch (error) {
@@ -1694,14 +1714,19 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 completedSchedules[dateKey] = {};
             }
             
+            const isCompleted = completedSchedules[dateKey][scheduleId];
+            
             // 완수 상태 토글
-            if (completedSchedules[dateKey][scheduleId]) {
+            if (isCompleted) {
                 delete completedSchedules[dateKey][scheduleId];
                 showToast('완수 취소되었습니다.', 'info');
             } else {
                 completedSchedules[dateKey][scheduleId] = true;
                 showToast('완수 처리되었습니다!', 'success');
             }
+            
+            // 모달 내 해당 스케줄 카드 즉시 업데이트
+            updateScheduleCardInModal(scheduleId, !isCompleted);
             
             // 서버에 완수 데이터 저장
             fetch(\`/api/shared/\${window.SHARED_MODE.token}/study-record\`, {
@@ -1725,6 +1750,39 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
             setTimeout(() => {
                 showDaySummary(dateKey);
             }, 100);
+        }
+        
+        // 모달 내 스케줄 카드 즉시 업데이트 함수 (공유 모드용)
+        function updateScheduleCardInModal(scheduleId, isCompleted) {
+            const scheduleCard = document.getElementById(\`schedule-card-\${scheduleId}\`);
+            if (!scheduleCard) return;
+            
+            const scheduleInfo = scheduleCard.querySelector('.schedule-info');
+            const completeButton = scheduleCard.querySelector('.btn-complete');
+            
+            if (isCompleted) {
+                // 완수 처리: 줄긋기 추가
+                scheduleCard.classList.add('completed');
+                if (scheduleInfo) {
+                    scheduleInfo.style.textDecoration = 'line-through';
+                    scheduleInfo.style.opacity = '0.6';
+                }
+                if (completeButton) {
+                    completeButton.textContent = '완수 취소';
+                    completeButton.classList.add('completed');
+                }
+            } else {
+                // 완수 취소: 줄긋기 제거
+                scheduleCard.classList.remove('completed');
+                if (scheduleInfo) {
+                    scheduleInfo.style.textDecoration = 'none';
+                    scheduleInfo.style.opacity = '1';
+                }
+                if (completeButton) {
+                    completeButton.textContent = '완수';
+                    completeButton.classList.remove('completed');
+                }
+            }
         }
         
         // 공유 모드용 모달 이벤트 리스너 설정
