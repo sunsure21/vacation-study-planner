@@ -1200,6 +1200,7 @@ app.get('/api/shared/:token/data', async (req, res) => {
 app.post('/api/shared/:token/study-record', async (req, res) => {
     try {
         const { token } = req.params;
+        console.log(`🔍 실적 입력 요청 - 토큰: ${token}`);
         
         // 실시간 연동: record 토큰으로 사용자 이메일 조회
         let userEmail = null;
@@ -1208,28 +1209,42 @@ app.post('/api/shared/:token/study-record', async (req, res) => {
             try {
                 const { Redis } = require('@upstash/redis');
                 const kvStore = Redis.fromEnv();
+                console.log(`🔍 Redis에서 토큰 조회: token:record:${token}`);
                 userEmail = await kvStore.get(`token:record:${token}`);
+                console.log(`📝 Redis 조회 결과:`, userEmail ? `사용자 발견: ${userEmail}` : '토큰 없음');
             } catch (error) {
                 console.log('⚠️ Redis 조회 실패, 메모리 저장소 사용:', error.message);
                 userEmail = memoryStore.get(`token:record:${token}`);
+                console.log(`📝 메모리 조회 결과:`, userEmail ? `사용자 발견: ${userEmail}` : '토큰 없음');
             }
         } else {
             // 로컬 개발 환경: 메모리 저장소 사용
+            console.log(`🔍 메모리에서 토큰 조회: token:record:${token}`);
             userEmail = memoryStore.get(`token:record:${token}`);
+            console.log(`📝 메모리 조회 결과:`, userEmail ? `사용자 발견: ${userEmail}` : '토큰 없음');
         }
         
         if (!userEmail) {
             // view 토큰으로 시도했는지 확인
             let isViewToken = false;
+            let viewEmail = null;
             try {
                 if (process.env.NODE_ENV === 'production' && process.env.UPSTASH_REDIS_REST_URL) {
                     const { Redis } = require('@upstash/redis');
                     const kvStore = Redis.fromEnv();
-                    const viewEmail = await kvStore.get(`token:view:${token}`);
-                    if (viewEmail) isViewToken = true;
+                    console.log(`🔍 Redis에서 view 토큰 확인: token:view:${token}`);
+                    viewEmail = await kvStore.get(`token:view:${token}`);
+                    if (viewEmail) {
+                        isViewToken = true;
+                        console.log(`📖 view 토큰 발견: ${viewEmail}`);
+                    }
                 } else {
-                    const viewEmail = memoryStore.get(`token:view:${token}`);
-                    if (viewEmail) isViewToken = true;
+                    console.log(`🔍 메모리에서 view 토큰 확인: token:view:${token}`);
+                    viewEmail = memoryStore.get(`token:view:${token}`);
+                    if (viewEmail) {
+                        isViewToken = true;
+                        console.log(`📖 view 토큰 발견: ${viewEmail}`);
+                    }
                 }
             } catch (error) {
                 console.log('토큰 타입 확인 오류:', error);
@@ -1238,9 +1253,12 @@ app.post('/api/shared/:token/study-record', async (req, res) => {
             const errorMessage = isViewToken 
                 ? '읽기 전용 링크입니다. 실적 입력 권한이 있는 링크로 접근해주세요.' 
                 : '유효하지 않은 토큰이거나 실적 입력 권한이 없습니다.';
-                
+            
+            console.log(`❌ 토큰 검증 실패: ${errorMessage}`);
             return res.status(403).json({ error: errorMessage });
         }
+        
+        console.log(`✅ 토큰 검증 성공: ${userEmail}`);
         
         const { dateKey, slotId, minutes, subject, notes, studyRecords, completedSchedules } = req.body;
         
