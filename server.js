@@ -1658,9 +1658,14 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 console.log('📊 수신된 공유 데이터:', data);
                 
                 // 기존 전역 변수에 데이터 로드
-                schedules = data.schedules || [];
-                studyRecords = data.studyRecords || {};
-                completedSchedules = data.completedSchedules || {};
+                window.schedules = data.schedules || [];
+                window.studyRecords = data.studyRecords || {};
+                window.completedSchedules = data.completedSchedules || {};
+                
+                // 호환성을 위해 글로벌 스코프에도 설정
+                schedules = window.schedules;
+                studyRecords = window.studyRecords;
+                completedSchedules = window.completedSchedules;
                 
                 if (data.vacationPeriod) {
                     vacationStartDate = new Date(data.vacationPeriod.start);
@@ -1710,18 +1715,18 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 return;
             }
             
-            if (!completedSchedules[dateKey]) {
-                completedSchedules[dateKey] = {};
+            if (!window.completedSchedules[dateKey]) {
+                window.completedSchedules[dateKey] = {};
             }
             
-            const isCompleted = completedSchedules[dateKey][scheduleId];
+            const isCompleted = window.completedSchedules[dateKey][scheduleId];
             
             // 완수 상태 토글
             if (isCompleted) {
-                delete completedSchedules[dateKey][scheduleId];
+                delete window.completedSchedules[dateKey][scheduleId];
                 showToast('완수 취소되었습니다.', 'info');
             } else {
-                completedSchedules[dateKey][scheduleId] = true;
+                window.completedSchedules[dateKey][scheduleId] = true;
                 showToast('완수 처리되었습니다!', 'success');
             }
             
@@ -1736,11 +1741,30 @@ function generateSharedCalendarHTML(userEmail, token, permission) {
                 },
                 body: JSON.stringify({
                     dateKey: dateKey,
-                    studyRecords: studyRecords,
-                    completedSchedules: completedSchedules
+                    studyRecords: window.studyRecords,
+                    completedSchedules: window.completedSchedules
                 })
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error(\`HTTP \${response.status}: \${response.statusText}\`);
+                }
+                return response.json();
+            }).then(data => {
+                console.log('✅ 완수 데이터 서버 저장 성공:', data);
+                if (data.isRealTime) {
+                    console.log('🔄 본 서비스에 실시간 반영 완료');
+                }
             }).catch(error => {
-                console.error('완수 데이터 저장 오류:', error);
+                console.error('❌ 완수 데이터 저장 오류:', error);
+                showToast('서버 저장에 실패했습니다. 다시 시도해주세요.', 'error');
+                
+                // 실패 시 UI 되돌리기
+                if (!isCompleted) {
+                    delete window.completedSchedules[dateKey][scheduleId];
+                } else {
+                    window.completedSchedules[dateKey][scheduleId] = true;
+                }
+                updateScheduleCardInModal(scheduleId, isCompleted);
             });
             
             // 캘린더 다시 렌더링
