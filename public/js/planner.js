@@ -592,6 +592,30 @@ async function saveDataToStorage() {
         } catch (error) {
             console.error('KV 저장 오류:', error);
         }
+    } else if (window.SHARED_MODE && window.SHARED_MODE.canRecord) {
+        // 공유 모드에서 실적 입력 권한이 있는 경우 서버에 저장
+        try {
+            console.log('📤 공유 모드 서버 저장 시작');
+            const response = await fetch(`/api/shared/${window.SHARED_MODE.token}/study-record`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    studyRecords: studyRecords,
+                    completedSchedules: completedSchedules
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ 공유 모드 서버 저장 성공:', result);
+            } else {
+                console.error('❌ 공유 모드 서버 저장 실패:', response.status);
+            }
+        } catch (error) {
+            console.error('❌ 공유 모드 서버 저장 오류:', error);
+        }
     }
 }
 
